@@ -1,0 +1,2 @@
+add_executable(meshlife_demo meshlife_demo.cpp)
+target_link_libraries(meshlife_demo meshlife)
