@@ -21,6 +21,11 @@ class Viewer : public pmp::MeshViewer
 
     /// provides custom GUI elements
     void process_imgui() override;
+
+    bool find_face(int x, int y, pmp::Face& face);
+
+    void set_face_color(pmp::Face& face, pmp::Color color);
+    void set_face_gol_alive(pmp::Face& face, bool alive);
 };
 
 } // namespace meshlife
