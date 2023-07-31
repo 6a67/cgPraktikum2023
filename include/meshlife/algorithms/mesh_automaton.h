@@ -25,6 +25,8 @@ class MeshAutomaton
     /// Update the current state by computing \p num_steps timesteps
     virtual void update_state(int num_steps) = 0;
 
+    virtual void set_state(const pmp::Face& f, float value);
+
     /// Precompute data that is independent of the current state
     /// May be ignored when inheriting, but overriding is recommended for efficient state updates
     virtual void precompute()

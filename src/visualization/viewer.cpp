@@ -22,6 +22,13 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     pmp::BoundingBox bb = bounds(mesh_);
     set_scene((pmp::vec3)bb.center(), 0.5 * bb.size());
     set_draw_mode("Hidden Line");
+
+    if (!mesh_.has_face_property("f:color"))
+    {
+        mesh_.add_face_property("f:color", pmp::Color{1, 1, 1});
+        renderer_.update_opengl_buffers();
+    }
+
     update_mesh();
 }
 
@@ -95,9 +102,42 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     if (!mesh_.has_face_property("f:color"))
     {
         mesh_.add_face_property("f:color", pmp::Color{1, 1, 1});
-        mesh_.add_face_property("f:gol_alive", false);
         renderer_.update_opengl_buffers();
     }
+}
+
+void Viewer::do_processing()
+{
+    if (automaton)
+    {
+        automaton->update_state(1);
+        for (auto f : mesh_.faces())
+        {
+            auto state = automaton->state(f);
+            if (state == 0.0)
+            {
+                set_face_color(f, pmp::Color{1, 1, 1});
+            }
+            else if (state == 1.0)
+            {
+                set_face_color(f, pmp::Color{0, 0, 0});
+            }
+            else
+                set_face_color(f, pmp::Color{1, 20.0 / 255, 147.0 / 255});
+
+            if (state >= 1.0)
+            {
+                automaton->set_state(f, 0.0);
+            }
+            else
+            {
+                // random value
+                float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+                automaton->set_state(f, state + 0.01 + r);
+            }
+        }
+    }
+    renderer_.update_opengl_buffers();
 }
 
 void Viewer::process_imgui()
@@ -227,21 +267,8 @@ void Viewer::process_imgui()
 void Viewer::set_face_color(pmp::Face& face, pmp::Color color)
 {
     auto colorProperty = mesh_.get_face_property<pmp::Color>("f:color");
-    std::cout << colorProperty[face] << std::endl;
+    // std::cout << colorProperty[face] << std::endl;
     colorProperty[face] = color;
-    renderer_.update_opengl_buffers();
-}
-
-void Viewer::set_face_gol_alive(pmp::Face& face, bool alive)
-{
-    auto aliveProperty = mesh_.get_face_property<bool>("f:gol_alive");
-    std::cout << aliveProperty[face] << std::endl;
-    aliveProperty[face] = alive;
-    if (alive)
-        set_face_color(face, pmp::Color{0, 0, 0});
-    else
-        set_face_color(face, pmp::Color{1, 1, 1});
-    renderer_.update_opengl_buffers();
 }
 
 void Viewer::mouse(int button, int action, int mods)
@@ -256,7 +283,8 @@ void Viewer::mouse(int button, int action, int mods)
             // You can do something with the picked vertex here
             pmp::Face face;
             find_face(x, y, face);
-            set_face_gol_alive(face, true);
+            // TODO: maybe convert to method
+            automaton->set_state(face, 1.0);
         }
     }
     else

@@ -25,4 +25,9 @@ void MeshAutomaton::init_state_from_prop(pmp::FaceProperty<float>& prop)
     }
 }
 
+void MeshAutomaton::set_state(const pmp::Face& f, float value)
+{
+    state_[f] = value;
+}
+
 } // namespace meshlife

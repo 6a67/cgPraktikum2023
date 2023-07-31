@@ -1,3 +1,4 @@
+#include "meshlife/algorithms/mesh_gol.h"
 #include "meshlife/visualization/viewer.h"
 
 int main(int argc, char** argv)
@@ -10,6 +11,8 @@ int main(int argc, char** argv)
     else
         window.load_mesh("input.off");
 #endif
+
+    window.set_automaton<meshlife::MeshGOL>();
 
     return window.run();
 }
