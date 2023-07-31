@@ -23,13 +23,20 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     set_scene((pmp::vec3)bb.center(), 0.5 * bb.size());
     set_draw_mode("Hidden Line");
 
+    set_mesh_properties();
+
+    update_mesh();
+}
+
+void Viewer::set_mesh_properties()
+{
     if (!mesh_.has_face_property("f:color"))
     {
         mesh_.add_face_property("f:color", pmp::Color{1, 1, 1});
         renderer_.update_opengl_buffers();
     }
-
-    update_mesh();
+    if (automaton)
+        automaton->allocate_needed_properties();
 }
 
 void Viewer::keyboard(int key, int scancode, int action, int mods)
@@ -89,7 +96,9 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
         pmp::BoundingBox bb = bounds(mesh_);
         set_scene((pmp::vec3)bb.center(), 0.5 * bb.size());
         set_draw_mode("Hidden Line");
+        set_mesh_properties();
         update_mesh();
+
         break;
     }
     default:

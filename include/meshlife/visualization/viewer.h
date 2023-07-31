@@ -21,6 +21,8 @@ class Viewer : public pmp::MeshViewer
         automaton = new T(mesh_);
     }
 
+    void set_mesh_properties();
+
   protected:
     /// thandles mouse button presses
     void mouse(int button, int action, int mods) override;

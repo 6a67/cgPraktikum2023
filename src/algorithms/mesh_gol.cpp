@@ -8,7 +8,7 @@ namespace meshlife
 
 MeshGOL::MeshGOL(pmp::SurfaceMesh& mesh) : MeshAutomaton(mesh)
 {
-    state_ = mesh_.add_face_property<float>("f:gol_state", 0.0f);
+    allocate_needed_properties();
 };
 
 MeshGOL::~MeshGOL(){};
