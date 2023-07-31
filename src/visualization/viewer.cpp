@@ -119,7 +119,7 @@ void Viewer::do_processing()
 {
     if (automaton)
     {
-        automaton->update_state(1);
+        // automaton->update_state(1);
         for (auto f : mesh_.faces())
         {
             auto state = automaton->state(f);
@@ -134,18 +134,24 @@ void Viewer::do_processing()
             else
                 set_face_color(f, pmp::Color{1, 20.0 / 255, 147.0 / 255});
 
-            if (state >= 1.0)
-            {
-                automaton->set_state(f, 0.0);
-            }
-            else
-            {
-                // random value
-                float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-                automaton->set_state(f, state + 0.01 + r);
-            }
+            // if (state >= 1.0)
+            // {
+            //     automaton->set_state(f, 0.0);
+            // }
+            // else
+            // {
+            //     // random value
+            //     float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+            //     automaton->set_state(f, state + 0.01 + r);
+            // }
         }
     }
+
+    if (automaton && a_gol)
+    {
+        automaton->update_state(1);
+    }
+
     renderer_.update_opengl_buffers();
 }
 
@@ -269,6 +275,22 @@ void Viewer::process_imgui()
                 return;
             }
             update_mesh();
+        }
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Algorithms")) {
+        ImGui::Text("Game of Life Toggle");
+        ImGui::SameLine();
+        ImGui::Checkbox("", &a_gol);
+
+
+        ImGui::Text("Gome of Life Step");
+        ImGui::SameLine();
+        if (ImGui::Button("Next")) {
+            automaton->update_state(1);
         }
     }
 }

@@ -42,6 +42,7 @@ class Viewer : public pmp::MeshViewer
 
   private:
     MeshAutomaton* automaton = nullptr;
+    bool a_gol = false;
 };
 
 } // namespace meshlife
