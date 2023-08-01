@@ -14,6 +14,8 @@ class Viewer : public pmp::MeshViewer
     /// window constructor
     Viewer(const char* title, int width, int height);
 
+    ~Viewer();
+
     template <typename T>
     inline void set_automaton()
     {
@@ -40,9 +42,12 @@ class Viewer : public pmp::MeshViewer
     void set_face_color(pmp::Face& face, pmp::Color color);
     void set_face_gol_alive(pmp::Face& face, bool alive);
 
+	void read_mesh_from_file(std::string path);
+
   private:
     MeshAutomaton* automaton = nullptr;
     bool a_gol = false;
+    char* modelpath_buf;
 };
 
 } // namespace meshlife

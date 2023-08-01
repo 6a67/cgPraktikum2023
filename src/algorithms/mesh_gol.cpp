@@ -1,6 +1,6 @@
 #include "meshlife/algorithms/mesh_gol.h"
-#include "meshlife/algorithms/mesh_automaton.h"
 #include "meshlife/algorithms/helpers.h"
+#include "meshlife/algorithms/mesh_automaton.h"
 
 #include <pmp/surface_mesh.h>
 
@@ -33,7 +33,7 @@ void MeshGOL::update_state(int num_steps)
         last_state_[f] = state_[f];
     }
 
-    for (auto f: mesh_.faces())
+    for (auto f : mesh_.faces())
     {
         // get neighbored faces
         auto neighbored_faces = helpers::get_neighbored_faces(mesh_, f);
@@ -63,9 +63,7 @@ void MeshGOL::update_state(int num_steps)
         {
             state_[f] = 0.0f;
         }
-
     }
-
 }
 
 } // namespace meshlife

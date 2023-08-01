@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <filesystem>
 #include <pmp/algorithms/decimation.h>
 #include <pmp/algorithms/remeshing.h>
 #include <pmp/algorithms/shapes.h>
@@ -8,6 +10,7 @@
 
 #include "meshlife/visualization/viewer.h"
 #include "pmp/algorithms/differential_geometry.h"
+#include "pmp/io/io.h"
 #include "pmp/mat_vec.h"
 #include "pmp/surface_mesh.h"
 #include "pmp/types.h"
@@ -26,6 +29,20 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     set_mesh_properties();
 
     update_mesh();
+
+    modelpath_buf = new char[300];
+    for (int i = 0; i < 300; i++)
+    {
+        modelpath_buf[i] = 0;
+    }
+
+    std::string("./../assets/monkey.obj").copy(modelpath_buf, 299);
+    modelpath_buf[299] = '\0';
+}
+
+Viewer::~Viewer()
+{
+    delete modelpath_buf;
 }
 
 void Viewer::set_mesh_properties()
@@ -153,6 +170,24 @@ void Viewer::do_processing()
     }
 
     renderer_.update_opengl_buffers();
+}
+
+void Viewer::read_mesh_from_file(std::string path)
+{
+    std::cout << "Reading from: " << path << std::endl;
+    std::filesystem::path file{path};
+    if (std::filesystem::exists(file))
+    {
+        pmp::read(mesh_, file);
+        set_mesh_properties();
+        update_mesh();
+    }
+    else
+    {
+        std::cout << "Filepath does not exist!" << std::endl;
+    }
+
+    // mesh_.assign(mesh);
 }
 
 void Viewer::process_imgui()
@@ -327,6 +362,13 @@ void Viewer::process_imgui()
             pmp::dual(mesh_);
             set_mesh_properties();
         }
+    }
+
+    ImGui::InputText("Path: ", modelpath_buf, 300);
+
+    if (ImGui::Button("Load model from path"))
+    {
+        read_mesh_from_file(std::string(modelpath_buf));
     }
 }
 
