@@ -281,16 +281,24 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Algorithms")) {
+    if (ImGui::CollapsingHeader("Algorithms"))
+    {
         ImGui::Text("Game of Life Toggle");
         ImGui::SameLine();
         ImGui::Checkbox("", &a_gol);
 
-
         ImGui::Text("Gome of Life Step");
         ImGui::SameLine();
-        if (ImGui::Button("Next")) {
+        if (ImGui::Button("Next"))
+        {
             automaton->update_state(1);
+        }
+
+        ImGui::Text("Gome of Life Random");
+        ImGui::SameLine();
+        if (ImGui::Button("Random"))
+        {
+            automaton->init_state_random();
         }
     }
 }
