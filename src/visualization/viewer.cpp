@@ -301,6 +301,18 @@ void Viewer::process_imgui()
             automaton->init_state_random();
         }
     }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Dual Meshes"))
+    {
+        if (ImGui::Button("Create Dual Mesh"))
+        {
+            pmp::dual(mesh_);
+            set_mesh_properties();
+        }
+    }
 }
 
 void Viewer::set_face_color(pmp::Face& face, pmp::Color color)
