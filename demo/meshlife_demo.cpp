@@ -1,4 +1,5 @@
 #include "meshlife/algorithms/mesh_gol.h"
+#include "meshlife/algorithms/mesh_lenia.h"
 #include "meshlife/visualization/viewer.h"
 
 int main(int argc, char** argv)
@@ -12,7 +13,7 @@ int main(int argc, char** argv)
         window.load_mesh("input.off");
 #endif
 
-    window.set_automaton<meshlife::MeshGOL>();
+    window.set_automaton<meshlife::MeshLenia>();
 
     return window.run();
 }

@@ -38,9 +38,9 @@ std::set<pmp::Face> get_neighbored_faces(pmp::SurfaceMesh& mesh, pmp::Face f)
             }
         }
     }
-
     return neighbored_faces;
 }
+
 
 } // namespace helpers
 
