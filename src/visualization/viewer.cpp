@@ -300,6 +300,21 @@ void Viewer::process_imgui()
         {
             automaton->init_state_random();
         }
+
+        // threshold slider
+        ImGui::Text("Thresholds");
+        ImGui::PushItemWidth(100);
+        ImGui::SliderInt("Upper", &automaton->p_upper_threshold_, automaton->p_lower_threshold_, 10);
+        ImGui::PopItemWidth();
+        ImGui::PushItemWidth(100);
+        ImGui::SliderInt("Lower", &automaton->p_lower_threshold_, 1, 10);
+        ImGui::PopItemWidth();
+
+        if (automaton->p_upper_threshold_ < automaton->p_lower_threshold_)
+        {
+            automaton->p_upper_threshold_ = automaton->p_lower_threshold_;
+        }
+
     }
 
     ImGui::Spacing();

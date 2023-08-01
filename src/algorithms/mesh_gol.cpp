@@ -49,12 +49,12 @@ void MeshGOL::update_state(int num_steps)
         }
 
         // Any live cell with two or three live neighbours survives
-        if (last_state_[f] == 1.0f && (num_alive == 2 || num_alive == 3))
+        if (last_state_[f] == 1.0f && num_alive >= p_lower_threshold_ && num_alive <= p_upper_threshold_)
         {
             state_[f] = 1.0f;
         }
         // Any dead cell with three live neighbours becomes a live cell
-        else if (last_state_[f] == 0.0f && num_alive == 3)
+        else if (last_state_[f] == 0.0f && num_alive == p_upper_threshold_)
         {
             state_[f] = 1.0f;
         }
