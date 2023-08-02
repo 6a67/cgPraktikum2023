@@ -17,7 +17,7 @@ class MeshLenia : public MeshAutomaton
     /// Update the current state by computing \p num_steps timesteps
     void update_state(int num_steps) override;
 
-    void set_state(const pmp::Face& f, float value) override;
+    void allocate_needed_properties() override;
 
     /// Returns value of exponential function at r with parameter a
     float exponential_kernel(float r, float a);
@@ -25,17 +25,32 @@ class MeshLenia : public MeshAutomaton
     ///
     float exponential_growth(float u, float mu, float sigma);
 
-    typedef std::vector<std::vector<std::pair<pmp::Face, float>>> FaceMap;
+    typedef std::pair<pmp::Face, float> Neighbor;
+    typedef std::vector<Neighbor> Neighbors;
+    typedef std::vector<Neighbors> NeighborMap;
 
     void initialize_faceMap();
 
+    float distance_neighbors(Neighbor n);
+
+    float KernelShell(float r);
+    float Potential_Distribution_U(pmp::Face n);
+
+    float KernelShell_Length(Neighbors n);
+    float KernelSkeleton(float r, std::vector<float> beta);
+    float K(Neighbor n, Neighbors neighborhood);
+    float Growth(float f, float mu, float sigma);
+
+    float p_mu = 0.581;
+    float p_sigma = 0.131;
+    float p_neighborhood_radius = 0.371;
+    int neighborCountAvg = 0;
+
   private:
-    float p_neighborhood_radius = 5;
+    float delta_x = 0;
 
-    float mu = 0.35;
-    float sigma = 0.07;
-
-    FaceMap faceMap;
+    NeighborMap neighborMap;
+    std::vector<float> beta_peaks;
 };
 
 } // namespace meshlife

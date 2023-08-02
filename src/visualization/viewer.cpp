@@ -8,6 +8,7 @@
 
 #include <imgui.h>
 
+#include "meshlife/algorithms/mesh_lenia.h"
 #include "meshlife/visualization/viewer.h"
 #include "pmp/algorithms/differential_geometry.h"
 #include "pmp/io/io.h"
@@ -21,7 +22,7 @@ namespace meshlife
 Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title, width, height)
 {
     // Load planar grid mesh by default
-    mesh_.assign(pmp::plane(128));
+    mesh_.assign(pmp::quad_sphere(3));
     pmp::BoundingBox bb = bounds(mesh_);
     set_scene((pmp::vec3)bb.center(), 0.5 * bb.size());
     set_draw_mode("Hidden Line");
@@ -140,27 +141,8 @@ void Viewer::do_processing()
         for (auto f : mesh_.faces())
         {
             auto state = automaton->state(f);
-            if (state == 0.0)
-            {
-                set_face_color(f, pmp::Color{1, 1, 1});
-            }
-            else if (state == 1.0)
-            {
-                set_face_color(f, pmp::Color{0, 0, 0});
-            }
-            else
-                set_face_color(f, pmp::Color{1, 20.0 / 255, 147.0 / 255});
-
-            // if (state >= 1.0)
-            // {
-            //     automaton->set_state(f, 0.0);
-            // }
-            // else
-            // {
-            //     // random value
-            //     float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-            //     automaton->set_state(f, state + 0.01 + r);
-            // }
+            float v = std::clamp(1 - state, 0.0f, 1.0f);
+            set_face_color(f, pmp::Color{v, v, v});
         }
     }
 
@@ -253,18 +235,21 @@ void Viewer::process_imgui()
                 std::cerr << e.what() << std::endl;
                 return;
             }
+            automaton->allocate_needed_properties();
             update_mesh();
         }
 
         if (ImGui::Button("Quad-Tri Subdivision"))
         {
             quad_tri_subdivision(mesh_);
+            automaton->allocate_needed_properties();
             update_mesh();
         }
 
         if (ImGui::Button("Catmull-Clark Subdivision"))
         {
             catmull_clark_subdivision(mesh_);
+            automaton->allocate_needed_properties();
             update_mesh();
         }
     }
@@ -320,7 +305,7 @@ void Viewer::process_imgui()
     {
         ImGui::Text("Game of Life Toggle");
         ImGui::SameLine();
-        ImGui::Checkbox("", &a_gol);
+        ImGui::Checkbox("##", &a_gol);
 
         ImGui::Text("Gome of Life Step");
         ImGui::SameLine();
@@ -349,7 +334,6 @@ void Viewer::process_imgui()
         {
             automaton->p_upper_threshold_ = automaton->p_lower_threshold_;
         }
-
     }
 
     ImGui::Spacing();
@@ -369,6 +353,21 @@ void Viewer::process_imgui()
     if (ImGui::Button("Load model from path"))
     {
         read_mesh_from_file(std::string(modelpath_buf));
+    }
+
+    if (auto lenia = dynamic_cast<MeshLenia*>(automaton))
+    {
+        ImGui::SliderFloat("Mu", &lenia->p_mu, 0, 1);
+        ImGui::SliderFloat("Sigma", &lenia->p_sigma, 0, 1);
+        // TODO: recalculate neighbors
+        ImGui::SliderFloat("Neighborhood Radius", &lenia->p_neighborhood_radius, 0, 1);
+        if (ImGui::Button("Recalculate Neighborhood"))
+        {
+            // TODO: move a_gol to a better place
+            a_gol = false;
+            lenia->initialize_faceMap();
+        }
+        ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighborCountAvg);
     }
 }
 

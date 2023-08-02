@@ -7,10 +7,7 @@
 namespace meshlife
 {
 
-MeshGOL::MeshGOL(pmp::SurfaceMesh& mesh) : MeshAutomaton(mesh)
-{
-    allocate_needed_properties();
-};
+MeshGOL::MeshGOL(pmp::SurfaceMesh& mesh) : MeshAutomaton(mesh){};
 
 MeshGOL::~MeshGOL(){};
 

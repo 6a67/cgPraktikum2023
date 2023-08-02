@@ -5,14 +5,16 @@ namespace meshlife
 
 MeshAutomaton::MeshAutomaton(pmp::SurfaceMesh& mesh) : mesh_(mesh)
 {
-    if (!mesh_.has_face_property("f:state")) {
-        state_ = mesh_.add_face_property<float>("f:state", 0.0f);
-        last_state_ = mesh_.add_face_property<float>("f:last_state", 0.0f);
-    }
+    allocate_needed_properties();
 }
 
 void MeshAutomaton::allocate_needed_properties()
 {
+    if (!mesh_.has_face_property("f:state"))
+    {
+        state_ = mesh_.add_face_property<float>("f:state", 0.0f);
+        last_state_ = mesh_.add_face_property<float>("f:last_state", 0.0f);
+    }
 }
 
 void MeshAutomaton::init_state_from_prop(pmp::FaceProperty<float>& prop)
