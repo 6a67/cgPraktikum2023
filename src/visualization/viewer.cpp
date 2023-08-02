@@ -368,6 +368,45 @@ void Viewer::process_imgui()
             lenia->initialize_faceMap();
         }
         ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighborCountAvg);
+
+        if (ImGui::Button("Visualize Kernel Shell"))
+        {
+            lenia->visualize_kernel_shell();
+        }
+
+        if (ImGui::Button("Visualize Kernel Skeleton"))
+        {
+            lenia->visualize_kernel_skeleton();
+        }
+
+        if (ImGui::Button("Visualize Potential"))
+        {
+            lenia->visualize_potential();
+        }
+
+        // text input for peaks
+        char* peak_string = new char[300];
+        // initialize with current peaks
+        std::string s;
+        for (auto peak : lenia->p_beta_peaks)
+        {
+            s += std::to_string(peak) + ",";
+        }
+        strcpy(peak_string, s.c_str());
+        ImGui::InputText("Peaks: ", peak_string, 300);
+        if (ImGui::Button("Update Peaks"))
+        {
+            std::cout << peak_string << std::endl;
+            lenia->p_beta_peaks.clear();
+            std::string s(peak_string);
+            std::stringstream ss(s);
+            std::string item;
+            while (std::getline(ss, item, ','))
+            {
+                lenia->p_beta_peaks.push_back(std::stof(item));
+                std::cout << std::stof(item) << std::endl;
+            }
+        }
     }
 }
 

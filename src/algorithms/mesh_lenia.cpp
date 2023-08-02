@@ -8,7 +8,7 @@ namespace meshlife
 
 MeshLenia::MeshLenia(pmp::SurfaceMesh& mesh) : MeshAutomaton(mesh)
 {
-    beta_peaks = {1, 1.0 / 3.0};
+    p_beta_peaks = {1, 1.0 / 3.0};
     allocate_needed_properties();
 }
 
@@ -123,7 +123,7 @@ float MeshLenia::KernelShell_Length(Neighbors n)
     float l = 0;
     for (auto neighbor : n)
     {
-        l += KernelSkeleton(neighbor.second, beta_peaks) * delta_x * delta_x;
+        l += KernelSkeleton(neighbor.second, p_beta_peaks) * delta_x * delta_x;
     }
     return l;
 }
@@ -131,18 +131,111 @@ float MeshLenia::KernelShell_Length(Neighbors n)
 float MeshLenia::K(Neighbor n, Neighbors neighborhood)
 {
     float d = distance_neighbors(n);
-    return KernelSkeleton(d, beta_peaks) / (KernelShell_Length(neighborhood)  * delta_x * delta_x);
+    return KernelSkeleton(d, p_beta_peaks) / (KernelShell_Length(neighborhood) * delta_x * delta_x);
 }
 
 float MeshLenia::Potential_Distribution_U(pmp::Face x)
 {
+    // TODO: does not seems to be correct
     Neighbors n = neighborMap[x.idx()];
     float sum = 0;
     for (auto neighbor : n)
     {
+        // TODO: maybe remove the delta_x * delta_x
         sum += K(neighbor, n) * last_state_[neighbor.first] * delta_x * delta_x;
     }
     return sum;
+}
+
+pmp::Face MeshLenia::find_center_face()
+{
+    pmp::Face center_face;
+    float max_dist = MAXFLOAT;
+
+    for (auto fa : mesh_.faces())
+    {
+        float dist = 0;
+        for (auto fb : mesh_.faces())
+        {
+            if (fa == fb)
+                continue;
+
+            pmp::Point pa = pmp::centroid(mesh_, fa);
+            pmp::Point pb = pmp::centroid(mesh_, fb);
+
+            float d = pmp::distance(pa, pb);
+
+            dist += d;
+        }
+        if (dist < max_dist)
+        {
+            max_dist = dist;
+            center_face = fa;
+        }
+    }
+    return center_face;
+}
+
+void MeshLenia::visualize_kernel_shell()
+{
+    pmp::Face furthest_face = find_center_face();
+
+    for (auto f : mesh_.faces())
+    {
+        state_[f] = 0;
+        last_state_[f] = 1;
+    }
+
+    // give every face a value according to the kernel shell
+    for (auto f : mesh_.faces())
+    {
+        pmp::Point pa = pmp::centroid(mesh_, furthest_face);
+        pmp::Point pb = pmp::centroid(mesh_, f);
+
+        float dist = pmp::distance(pa, pb);
+
+        state_[f] = KernelShell(dist / p_neighborhood_radius);
+        if (state_[f] > 1)
+        {
+            state_[f] = 0;
+        }
+    }
+}
+
+void MeshLenia::visualize_kernel_skeleton()
+{
+    // visualize the kernel together with the peaks
+    pmp::Face furthest_face = find_center_face();
+
+    for (auto f : mesh_.faces())
+    {
+        state_[f] = 0;
+        last_state_[f] = 1;
+    }
+
+    // give every face a value according to the kernel shell
+    for (auto f : neighborMap[furthest_face.idx()])
+    {
+        state_[f.first] = KernelSkeleton(f.second, p_beta_peaks);
+    }
+}
+
+void MeshLenia::visualize_potential()
+{
+    // visualize the potential distribution
+    pmp::Face furthest_face = find_center_face();
+
+    for (auto f : mesh_.faces())
+    {
+        state_[f] = 1;
+        last_state_[f] = 1;
+    }
+
+    // give every face a value according to the kernel shell
+    for (auto f : mesh_.faces())
+    {
+        state_[f] = Potential_Distribution_U(f);
+    }
 }
 
 } // namespace meshlife

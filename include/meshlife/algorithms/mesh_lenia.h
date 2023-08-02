@@ -19,6 +19,12 @@ class MeshLenia : public MeshAutomaton
 
     void allocate_needed_properties() override;
 
+    void visualize_kernel_shell();
+
+    void visualize_kernel_skeleton();
+
+    void visualize_potential();
+
     /// Returns value of exponential function at r with parameter a
     float exponential_kernel(float r, float a);
 
@@ -46,11 +52,15 @@ class MeshLenia : public MeshAutomaton
     float p_neighborhood_radius = 0.371;
     int neighborCountAvg = 0;
 
+    std::vector<float> p_beta_peaks;
+
   private:
-    float delta_x = 0;
+    float delta_x = 1 / p_neighborhood_radius;
 
     NeighborMap neighborMap;
-    std::vector<float> beta_peaks;
+
+    /// Find face with lowest distance to all other faces
+    pmp::Face find_center_face();
 };
 
 } // namespace meshlife
