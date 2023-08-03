@@ -22,6 +22,7 @@ void MeshLenia::initialize_faceMap()
 {
     neighborMap.clear();
     neighborMap.reserve(mesh_.faces_size());
+    
     for (auto fa : mesh_.faces())
     {
         std::vector<std::pair<pmp::Face, float>> neighbors;

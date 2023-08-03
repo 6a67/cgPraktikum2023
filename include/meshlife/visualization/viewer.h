@@ -59,6 +59,8 @@ class Viewer : public pmp::MeshViewer
     bool a_gol = false;
     char* modelpath_buf;
     char* peak_string;
+
+    pmp::Color hsv_to_rgb(float h, float s, float v);
 };
 
 } // namespace meshlife
