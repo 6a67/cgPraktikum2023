@@ -39,6 +39,8 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
 
     std::string("./../assets/monkey.obj").copy(modelpath_buf, 299);
     modelpath_buf[299] = '\0';
+
+    peak_string = new char[300];
 }
 
 Viewer::~Viewer()
@@ -379,20 +381,7 @@ void Viewer::process_imgui()
             lenia->visualize_kernel_skeleton();
         }
 
-        if (ImGui::Button("Visualize Potential"))
-        {
-            lenia->visualize_potential();
-        }
 
-        // text input for peaks
-        char* peak_string = new char[300];
-        // initialize with current peaks
-        std::string s;
-        for (auto peak : lenia->p_beta_peaks)
-        {
-            s += std::to_string(peak) + ",";
-        }
-        strcpy(peak_string, s.c_str());
         ImGui::InputText("Peaks: ", peak_string, 300);
         if (ImGui::Button("Update Peaks"))
         {
@@ -406,6 +395,13 @@ void Viewer::process_imgui()
                 lenia->p_beta_peaks.push_back(std::stof(item));
                 std::cout << std::stof(item) << std::endl;
             }
+
+            std::string s2;
+            for (auto peak : lenia->p_beta_peaks)
+            {
+                s2 += std::to_string(peak) + ",";
+            }
+            strcpy(peak_string, s2.c_str());
         }
     }
 }

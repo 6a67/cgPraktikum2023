@@ -21,6 +21,16 @@ class Viewer : public pmp::MeshViewer
     {
         // TODO: Free in destructor
         automaton = new T(mesh_);
+
+        if (auto lenia = dynamic_cast<MeshLenia*>(automaton))
+        {
+            std::string s;
+            for (auto peak : lenia->p_beta_peaks)
+            {
+                s += std::to_string(peak) + ",";
+            }
+            strcpy(peak_string, s.c_str());
+        }
     }
 
     void set_mesh_properties();
@@ -42,12 +52,13 @@ class Viewer : public pmp::MeshViewer
     void set_face_color(pmp::Face& face, pmp::Color color);
     void set_face_gol_alive(pmp::Face& face, bool alive);
 
-	void read_mesh_from_file(std::string path);
+    void read_mesh_from_file(std::string path);
 
   private:
     MeshAutomaton* automaton = nullptr;
     bool a_gol = false;
     char* modelpath_buf;
+    char* peak_string;
 };
 
 } // namespace meshlife

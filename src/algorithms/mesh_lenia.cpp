@@ -220,22 +220,4 @@ void MeshLenia::visualize_kernel_skeleton()
     }
 }
 
-void MeshLenia::visualize_potential()
-{
-    // visualize the potential distribution
-    pmp::Face furthest_face = find_center_face();
-
-    for (auto f : mesh_.faces())
-    {
-        state_[f] = 1;
-        last_state_[f] = 1;
-    }
-
-    // give every face a value according to the kernel shell
-    for (auto f : mesh_.faces())
-    {
-        state_[f] = Potential_Distribution_U(f);
-    }
-}
-
 } // namespace meshlife
