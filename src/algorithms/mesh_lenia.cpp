@@ -131,7 +131,7 @@ float MeshLenia::KernelShell_Length(Neighbors n)
 float MeshLenia::K(Neighbor n, Neighbors neighborhood)
 {
     float d = distance_neighbors(n);
-    return KernelSkeleton(d, p_beta_peaks) / (KernelShell_Length(neighborhood) * delta_x * delta_x);
+    return KernelSkeleton(d, p_beta_peaks) / (KernelShell_Length(neighborhood));
 }
 
 float MeshLenia::Potential_Distribution_U(pmp::Face x)
