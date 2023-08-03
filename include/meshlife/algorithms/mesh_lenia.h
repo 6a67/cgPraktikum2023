@@ -23,7 +23,7 @@ class MeshLenia : public MeshAutomaton
 
     void visualize_kernel_skeleton();
 
-    void visualize_potential();
+    float merged_together(pmp::Face x);
 
     /// Returns value of exponential function at r with parameter a
     float exponential_kernel(float r, float a);

@@ -1,9 +1,12 @@
 #include "meshlife/algorithms/mesh_gol.h"
 #include "meshlife/algorithms/mesh_lenia.h"
 #include "meshlife/visualization/viewer.h"
+#include <omp.h>
 
 int main(int argc, char** argv)
 {
+    // omp_set_num_threads(4);
+
     meshlife::Viewer window("Viewer", 800, 600);
 
     if (argc == 2)

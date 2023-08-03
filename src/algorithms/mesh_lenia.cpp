@@ -62,8 +62,8 @@ void MeshLenia::initialize_faceMap()
         // std::cout << "Added " << neighbors.size() << " neighbors to face: " << fa.idx() << std::endl;
 
         neighborMap[i] = neighbors;
-        // #pragma omp critical
-        //         neighborCountAvg += neighbors.size();
+#pragma omp critical
+        neighborCountAvg += neighbors.size();
     }
     neighborCountAvg /= neighborMap.size();
 
@@ -83,6 +83,7 @@ void MeshLenia::initialize_faceMap()
 void MeshLenia::update_state(int num_steps)
 {
     // TODO: include num_steps in calculation
+
     delta_x = 1 / p_neighborhood_radius;
     for (auto f : mesh_.faces())
         last_state_[f] = state_[f];
@@ -92,9 +93,13 @@ void MeshLenia::update_state(int num_steps)
 #pragma omp parallel for
     for (size_t i = 0; i < faces.size(); i++)
     {
+
         const pmp::Face f = faces[i];
         float l;
-        l = Potential_Distribution_U(f);
+        // l = Potential_Distribution_U(f);
+        // std::cout << "Potential_Distribution_U: " << l << std::endl;
+        // std::cout << "Merged togehter: " << merged_together(f) << std::endl;
+        l = merged_together(f);
         l = Growth(l, p_mu, p_sigma);
         l = last_state_[f] + l;
         l = std::clamp<float>(l, 0.0, 1.0);
@@ -177,6 +182,29 @@ float MeshLenia::Potential_Distribution_U(pmp::Face x)
         // TODO: maybe remove the delta_x * delta_x
         sum += K(neighbor, n) * last_state_[neighbor.first] * delta_x * delta_x;
     }
+    return sum;
+}
+
+float MeshLenia::merged_together(pmp::Face x)
+{
+    Neighbors n = neighborMap[x.idx()];
+    float sum = 0;
+
+    float kernelShellLength = 0;
+
+    for (auto neighbor : n)
+    {
+        float d = distance_neighbors(neighbor);
+        sum += KernelSkeleton(d, p_beta_peaks) * last_state_[neighbor.first];
+
+        kernelShellLength += KernelSkeleton(neighbor.second, p_beta_peaks);
+    }
+
+    // kernelShellLength = kernelShellLength * delta_x * delta_x;
+
+    sum = sum / kernelShellLength;
+
+    // return sum * delta_x * delta_x;
     return sum;
 }
 
