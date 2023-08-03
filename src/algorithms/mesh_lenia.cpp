@@ -1,5 +1,3 @@
-#include <algorithm>
-#include <cmath>
 #include <meshlife/algorithms/mesh_lenia.h>
 #include <pmp/algorithms/differential_geometry.h>
 
@@ -10,6 +8,7 @@ MeshLenia::MeshLenia(pmp::SurfaceMesh& mesh) : MeshAutomaton(mesh)
 {
     p_beta_peaks = {1, 1.0 / 3.0};
     allocate_needed_properties();
+    faces = std::vector<pmp::Face>();
 }
 
 void MeshLenia::allocate_needed_properties()
@@ -20,35 +19,65 @@ void MeshLenia::allocate_needed_properties()
 
 void MeshLenia::initialize_faceMap()
 {
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << "Started initializing " << std::endl;
     neighborMap.clear();
-    neighborMap.reserve(mesh_.faces_size());
-    
-    for (auto fa : mesh_.faces())
-    {
-        std::vector<std::pair<pmp::Face, float>> neighbors;
-        for (auto fb : mesh_.faces())
-        {
-            if (fa == fb)
-                continue;
-            pmp::Point pa = pmp::centroid(mesh_, fa);
-            pmp::Point pb = pmp::centroid(mesh_, fb);
+    neighborMap.resize(mesh_.faces_size());
 
-            float dist = pmp::distance(pa, pb);
+    faces.clear();
+    faces.reserve(mesh_.faces_size());
+    for (const pmp::Face face : mesh_.faces())
+    {
+        faces.push_back(face);
+    }
+
+#pragma omp parallel for
+    for (size_t i = 0; i < faces.size(); i++)
+    {
+        // std::cout << i << std::endl;
+        const pmp::Face fa = faces[i];
+        std::vector<std::pair<pmp::Face, float>> neighbors;
+        neighbors.reserve(50);
+
+        // #pragma omp parallel for
+        for (size_t j = 0; j < faces.size(); j++)
+        {
+            if (i == j)
+                continue;
+
+            const pmp::Face fb = faces[j];
+            const pmp::Point pa = pmp::centroid(mesh_, fa);
+            const pmp::Point pb = pmp::centroid(mesh_, fb);
+            const float dist = pmp::distance(pa, pb);
 
             if (dist <= p_neighborhood_radius)
             {
-                float d = dist / p_neighborhood_radius;
+                const float d = dist / p_neighborhood_radius;
                 // std::cout << "Normalized Distance: " << d << std::endl;
 
+                // #pragma omp critical
                 neighbors.push_back(std::make_pair(fb, d));
             }
         }
         // std::cout << "Added " << neighbors.size() << " neighbors to face: " << fa.idx() << std::endl;
 
-        neighborMap.push_back(neighbors);
-        neighborCountAvg += neighbors.size();
+        neighborMap[i] = neighbors;
+        // #pragma omp critical
+        //         neighborCountAvg += neighbors.size();
     }
     neighborCountAvg /= neighborMap.size();
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    /* Getting number of milliseconds as an integer. */
+    auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+
+    /* Getting number of milliseconds as a double. */
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << "Done initializing. Time:" << std::endl;
+    std::cout << ms_int.count() << "ms\n";
+    std::cout << ms_double.count() << "ms\n";
 }
 
 void MeshLenia::update_state(int num_steps)
@@ -57,10 +86,13 @@ void MeshLenia::update_state(int num_steps)
     delta_x = 1 / p_neighborhood_radius;
     for (auto f : mesh_.faces())
         last_state_[f] = state_[f];
-    // kernel shell
-    // int i = 4;
-    for (auto f : mesh_.faces())
+        // kernel shell
+        // int i = 4;
+
+#pragma omp parallel for
+    for (size_t i = 0; i < faces.size(); i++)
     {
+        const pmp::Face f = faces[i];
         float l;
         l = Potential_Distribution_U(f);
         l = Growth(l, p_mu, p_sigma);

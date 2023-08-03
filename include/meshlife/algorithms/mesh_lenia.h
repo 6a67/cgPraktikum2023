@@ -61,6 +61,7 @@ class MeshLenia : public MeshAutomaton
 
     /// Find face with lowest distance to all other faces
     pmp::Face find_center_face();
+    std::vector<pmp::Face> faces;
 };
 
 } // namespace meshlife

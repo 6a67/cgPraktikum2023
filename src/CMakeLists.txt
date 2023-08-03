@@ -39,3 +39,8 @@ target_compile_options(meshlife PRIVATE "-Wall" "-Wextra" "-Wshadow" "-Wunused" 
 
 # preprocessor defines
 target_compile_definitions(meshlife PRIVATE "")
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(meshlife PUBLIC OpenMP::OpenMP_CXX)
+endif()
