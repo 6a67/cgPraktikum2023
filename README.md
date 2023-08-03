@@ -35,3 +35,15 @@ Before diving right in, you should make yourself familiar (at least to a basic e
 - the ImGui library
 
 The [quick start guide](GUIDE.md) will try to provide you with a short overview of these, highlighting aspects relevant for this practical course. Apart from that, during contact hours I (read as: your practical course instructor) will always be ready and happy to help :)
+
+# Profiling
+Tools
+- perf
+- hotspot: https://github.com/KDAB/hotspot
+
+Command:
+```bash
+perf record --call-graph=dwarf ./bin/RelWithDebInfo/meshlife_demo
+hotspot
+```
+hotspot takes the perf.data in the same directory automatically
