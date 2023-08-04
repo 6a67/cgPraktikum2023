@@ -13,7 +13,6 @@ MeshLenia::MeshLenia(pmp::SurfaceMesh& mesh) : MeshAutomaton(mesh)
 {
     p_beta_peaks = {1, 1.0 / 3.0};
     allocate_needed_properties();
-    faces = std::vector<pmp::Face>();
 }
 
 void MeshLenia::allocate_needed_properties()
