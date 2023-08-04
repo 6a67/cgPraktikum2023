@@ -44,6 +44,11 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     modelpath_buf[299] = '\0';
 
     peak_string = new char[300];
+
+    add_help_item("T", "Toggle Simulation");
+    add_help_item("R", "Load random state");
+    add_help_item("S", "Step once in simulation");
+    add_help_item("D", "Select face and retrieve debug info");
 }
 
 Viewer::~Viewer()
@@ -90,6 +95,15 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     {
     case GLFW_KEY_D:
         retrieve_debug_info_for_selected_face();
+        break;
+    case GLFW_KEY_S:
+        automaton->update_state(1);
+        break;
+    case GLFW_KEY_R:
+        automaton->init_state_random();
+        break;
+    case GLFW_KEY_T:
+        a_gol = !a_gol;
         break;
     // num keys: load simple primitive meshes
     case GLFW_KEY_0:
