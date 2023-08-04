@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include "meshlife/algorithms/mesh_lenia.h"
+#include "meshlife/stamps.h"
 #include "meshlife/visualization/viewer.h"
 #include "pmp/algorithms/differential_geometry.h"
 #include "pmp/io/io.h"
@@ -558,10 +559,39 @@ void Viewer::process_imgui()
             strcpy(peak_string, s2.c_str());
         }
 
-        if (ImGui::Button("Load Orbium"))
+        static stamps::Shapes stamp;
+        std::stringstream label;
+        label << "Stamp: " << stamps::shape_to_str(stamp);
+        if (ImGui::BeginMenu(label.str().c_str()))
+        {
+            if (ImGui::MenuItem("Orbium"))
+                stamp = stamps::s_orbium;
+            else if (ImGui::MenuItem("Smiley"))
+                stamp = stamps::s_smiley;
+            else if (ImGui::MenuItem("Debug"))
+                stamp = stamps::s_debug;
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::Button("Place Stamp (Select startface with 'D')"))
         {
             pmp::Face f;
-            lenia->load_orbium(f);
+            if (debug_data.face.is_valid())
+                f = debug_data.face;
+            switch (stamp)
+            {
+            case stamps::Shapes::s_none:
+                break;
+            case stamps::Shapes::s_orbium:
+                lenia->place_stamp(f, stamps::orbium);
+                break;
+            case stamps::Shapes::s_smiley:
+                lenia->place_stamp(f, stamps::smiley);
+                break;
+            case stamps::Shapes::s_debug:
+                lenia->place_stamp(f, stamps::debug);
+                break;
+            }
         }
     }
 }

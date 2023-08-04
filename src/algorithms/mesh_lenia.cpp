@@ -289,93 +289,83 @@ void MeshLenia::visualize_kernel_skeleton()
     }
 }
 
-// not working
-void MeshLenia::load_orbium(pmp::Face f)
+std::set<pmp::Face> get_neighbors(pmp::SurfaceMesh mesh, pmp::Face f)
 {
-    f = find_center_face();
-
-    // first right neighbor
-    // second left neighbor
-    // third top neighbor
-    // fourth bottom neighbor
-    pmp::Face neighbors[mesh_.faces_size()][4];
-
-    // find the four closest faces to f
-    // right neighbor has a positive x difference
-    // left neighbor has a negative x difference
-    // top neighbor has a positive y difference
-    // bottom neighbor has a negative y difference
-
-    for (auto fa : mesh_.faces())
+    std::set<pmp::Face> neighbors;
+    // iterate over halfedges
+    for (auto h : mesh.halfedges(f))
     {
-        // right highest x distance
-        // left highest negative x distance
-        // top highest y distance
-        // bottom highest negative y distance
-
-        std::set<pmp::Face> neighbored;
-
-        // iterate over halfedges
-        for (auto h : mesh_.halfedges(f))
-        {
-            // get the face on the other side of the halfedge
-            pmp::Face neighbor = mesh_.face(mesh_.opposite_halfedge(h));
-            neighbored.insert(neighbor);
-        }
-
-        float highest_x_dist = 0;
-        float highest_neg_x_dist = 0;
-
-        float highest_y_dist = 0;
-        float highest_neg_y_dist = 0;
-
-        pmp::Point pa = pmp::centroid(mesh_, fa);
-
-        for (auto fb : neighbored)
-        {
-
-            pmp::Point pb = pmp::centroid(mesh_, fb);
-
-            float x_dist = pa[0] - pb[0];
-            float y_dist = pa[1] - pb[1];
-
-            if (x_dist > highest_x_dist)
-            {
-                highest_x_dist = x_dist;
-                neighbors[fa.idx()][0] = fb;
-            }
-            if (x_dist < highest_neg_x_dist)
-            {
-                highest_neg_x_dist = x_dist;
-                neighbors[fa.idx()][1] = fb;
-            }
-            if (y_dist > highest_y_dist)
-            {
-                highest_y_dist = y_dist;
-                neighbors[fa.idx()][2] = fb;
-            }
-            if (y_dist < highest_neg_y_dist)
-            {
-                highest_neg_y_dist = y_dist;
-                neighbors[fa.idx()][3] = fb;
-            }
-        }
+        // get the face on the other side of the halfedge
+        pmp::Face neighbor = mesh.face(mesh.opposite_halfedge(h));
+        neighbors.insert(neighbor);
     }
+    return neighbors;
+}
 
-    pmp::Face w = f;
+enum Direction
+{
+    LEFT,
+    RIGHT
+};
 
-    for (std::vector<float> row : orbium)
+// TODO: Create Navigator construct to make this easier
+void MeshLenia::place_stamp(pmp::Face f, std::vector<std::vector<float>> stamp)
+{
+    if (!f.is_valid())
+        f = find_center_face();
+
+    pmp::Halfedge current_halfedge = mesh_.halfedge(f);
+    Direction dir = Direction::RIGHT;
+    for (size_t y = 0; y < stamp.size(); y++)
     {
-        for (float value : row)
+        for (size_t x = 0; x < stamp[y].size(); x++)
         {
-            std::cout << w << std::endl;
-            state_[w] = value;
-            w = neighbors[w.idx()][0];
-        }
-        w = neighbors[w.idx()][2];
-    }
+            float value = 0;
+            // retrieve value from array,
+            if (dir == Direction::RIGHT)
+                value = stamp[y][x];
+            else
+                value = stamp[y][stamp[y].size() - x - 1];
 
-    state_[f] = 1;
+            state_[mesh_.face(current_halfedge)] = value;
+
+            if (x != stamp[y].size() - 1)
+            {
+                // move right or left to next face
+                if (dir == Direction::RIGHT)
+                {
+                    pmp::Halfedge h = current_halfedge;
+                    h = mesh_.opposite_halfedge(h);
+                    h = mesh_.next_halfedge(h);
+                    h = mesh_.next_halfedge(h);
+                    current_halfedge = h;
+                }
+                else
+                {
+                    pmp::Halfedge h = current_halfedge;
+                    h = mesh_.next_halfedge(h);
+                    h = mesh_.next_halfedge(h);
+                    h = mesh_.opposite_halfedge(h);
+                    current_halfedge = h;
+                }
+            }
+        }
+        // move down
+        pmp::Halfedge h = current_halfedge;
+        h = mesh_.next_halfedge(h);
+        h = mesh_.next_halfedge(h);
+        h = mesh_.next_halfedge(h);
+        h = mesh_.opposite_halfedge(h);
+        h = mesh_.next_halfedge(h);
+        h = mesh_.next_halfedge(h);
+        h = mesh_.next_halfedge(h);
+        current_halfedge = h;
+
+        if (dir == Direction::RIGHT)
+            dir = Direction::LEFT;
+        else
+            dir = Direction::RIGHT;
+    }
 }
 
 } // namespace meshlife
