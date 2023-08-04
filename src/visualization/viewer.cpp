@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <filesystem>
+#include <format>
 #include <pmp/algorithms/decimation.h>
 #include <pmp/algorithms/remeshing.h>
 #include <pmp/algorithms/shapes.h>
@@ -7,6 +8,7 @@
 #include <pmp/algorithms/utilities.h>
 
 #include <imgui.h>
+#include <sstream>
 
 #include "meshlife/algorithms/mesh_lenia.h"
 #include "meshlife/visualization/viewer.h"
@@ -59,6 +61,24 @@ void Viewer::set_mesh_properties()
         automaton->allocate_needed_properties();
 }
 
+void Viewer::retrieve_debug_info_for_selected_face()
+{
+    double x, y;
+    cursor_pos(x, y);
+    pmp::Vertex v = pick_vertex(x, y);
+    if (mesh_.is_valid(v))
+    {
+        // You can do something with the picked vertex here
+        pmp::Face face;
+        find_face(x, y, face);
+        if (face.is_valid())
+        {
+            debug_data.selected_face_idx = face.idx();
+            select_debug_info_face(debug_data.selected_face_idx);
+        }
+    }
+}
+
 void Viewer::keyboard(int key, int scancode, int action, int mods)
 {
     // only process press and repeat action (no release or other)
@@ -67,6 +87,9 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
 
     switch (key)
     {
+    case GLFW_KEY_D:
+        retrieve_debug_info_for_selected_face();
+        break;
     // num keys: load simple primitive meshes
     case GLFW_KEY_0:
     case GLFW_KEY_1:
@@ -79,6 +102,7 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     case GLFW_KEY_8:
     case GLFW_KEY_9:
     {
+        select_debug_info_face(-1);
         switch (key)
         {
         case GLFW_KEY_0:
@@ -222,14 +246,95 @@ void Viewer::read_mesh_from_file(std::string path)
     // mesh_.assign(mesh);
 }
 
+void Viewer::select_debug_info_face(size_t faceIdx)
+{
+    pmp::Face selected_face = pmp::Face();
+    for (auto face : mesh_.faces())
+    {
+        if (face.idx() == faceIdx)
+        {
+            selected_face = face;
+            break;
+        }
+    }
+
+    // reset previous selected face
+    if (debug_data.face.is_valid())
+        automaton->set_state(debug_data.face, 0);
+
+    if (selected_face.is_valid())
+    {
+        // highlight selected face
+        debug_data.face = selected_face;
+        automaton->set_state(selected_face, 1);
+    }
+    else
+    {
+        debug_data.face = pmp::Face();
+    }
+}
+
 void Viewer::process_imgui()
 {
+
     // Show mesh info in GUI via parent class
     pmp::MeshViewer::process_imgui();
 
     ImGui::Spacing();
     ImGui::Spacing();
 
+    if (ImGui::CollapsingHeader("Debug Info (Press D on a face)"))
+    {
+        if (debug_data.face.is_valid())
+        {
+            ImGui::Text("Face Idx: %d", debug_data.face.idx());
+
+            auto halfedges = mesh_.halfedges(debug_data.face);
+            int count = 0;
+            // TODO: Figure out a better way to count the edges
+            for (auto h : halfedges)
+                count++;
+            std::stringstream title;
+            title << "Halfedges of face: " << count;
+
+            ImGui::Text("%s", title.str().c_str());
+            ImGui::BeginListBox("##empty", ImVec2(-FLT_MIN, count * 18.5));
+            for (pmp::Halfedge halfedge : mesh_.halfedges(debug_data.face))
+            {
+                ImGui::Text("Halfedge idx: %d (opp. HE: %d | Face: %d)",
+                            halfedge.idx(),
+                            mesh_.opposite_halfedge(halfedge).idx(),
+                            mesh_.face(mesh_.opposite_halfedge(halfedge)).idx());
+            }
+            ImGui::EndListBox();
+        }
+        else
+        {
+            ImGui::Text("No face selected. Press 'D' on a Face to get more info.");
+        }
+        ImGui::InputInt("Face Idx", &debug_data.selected_face_idx, 0);
+        if (ImGui::Button("Previous face"))
+        {
+            debug_data.selected_face_idx -= 1;
+            if (debug_data.selected_face_idx < 0)
+                debug_data.selected_face_idx = mesh_.faces_size() - 1;
+            select_debug_info_face(debug_data.selected_face_idx);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Select face"))
+        {
+            select_debug_info_face(debug_data.selected_face_idx);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Next face"))
+        {
+            debug_data.selected_face_idx += 1;
+            if ((size_t)debug_data.selected_face_idx >= mesh_.faces_size())
+                debug_data.selected_face_idx = 0;
+
+            select_debug_info_face(debug_data.selected_face_idx);
+        }
+    }
     // Some functionality from pmp::MeshProcessingViewer to edit mesh
     if (ImGui::CollapsingHeader("Decimation"))
     {
@@ -430,7 +535,6 @@ void Viewer::process_imgui()
         {
             lenia->visualize_kernel_skeleton();
         }
-
 
         ImGui::InputText("Peaks: ", peak_string, 300);
         if (ImGui::Button("Update Peaks"))

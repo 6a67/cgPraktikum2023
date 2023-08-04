@@ -2,10 +2,20 @@
 
 #include "meshlife/algorithms/mesh_automaton.h"
 #include "meshlife/algorithms/mesh_gol.h"
+#include "meshlife/algorithms/mesh_lenia.h"
 #include <pmp/visualization/mesh_viewer.h>
 
 namespace meshlife
 {
+
+struct DebugData
+{
+    // used to select a face does not always match with the index of face, use face.idx() instead
+    int selected_face_idx = 0;
+
+    // the currently selected face (may be invalid use face.is_valid())
+    pmp::Face face;
+};
 
 /// pmp::MeshViewer extension to handle visualization of implemented algorithms
 class Viewer : public pmp::MeshViewer
@@ -60,7 +70,13 @@ class Viewer : public pmp::MeshViewer
     char* modelpath_buf;
     char* peak_string;
 
+    // Debug data
+    DebugData debug_data;
+
     pmp::Color hsv_to_rgb(float h, float s, float v);
+
+    void retrieve_debug_info_for_selected_face();
+    void select_debug_info_face(size_t faceIdx);
 };
 
 } // namespace meshlife
