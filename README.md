@@ -47,3 +47,18 @@ perf record --call-graph=dwarf ./bin/RelWithDebInfo/meshlife_demo
 hotspot
 ```
 hotspot takes the perf.data in the same directory automatically
+
+
+TODO:
+    - delta_x * delta_x durch area of face ersetzen
+        - testen, ob es auf 1 normiert wird
+        - kürzt sich weg?
+    - geodesics
+        - geodesics()
+            - mesh: bekommt property
+            - seeds: start vertex, ggf. dann duales netz nutzen
+            - maxdist: radius
+            - maxnum: number of neighbors
+            - neighbors: output vector
+    - load examples: orbium etc.
+    - K(n) kann precomputed werden

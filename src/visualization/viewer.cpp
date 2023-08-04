@@ -410,7 +410,9 @@ void Viewer::process_imgui()
         ImGui::SliderFloat("Mu", &lenia->p_mu, 0, 1);
         ImGui::SliderFloat("Sigma", &lenia->p_sigma, 0, 1);
         // TODO: recalculate neighbors
-        ImGui::SliderFloat("Neighborhood Radius", &lenia->p_neighborhood_radius, 0, 1);
+        float neighborhood_radius = lenia->p_neighborhood_radius * lenia->averageEdgeLength;
+        ImGui::SliderFloat("Neighborhood Radius", &neighborhood_radius, 0, 5);
+        lenia->p_neighborhood_radius = neighborhood_radius / lenia->averageEdgeLength;
         if (ImGui::Button("Recalculate Neighborhood"))
         {
             // TODO: move a_gol to a better place
@@ -450,6 +452,12 @@ void Viewer::process_imgui()
                 s2 += std::to_string(peak) + ",";
             }
             strcpy(peak_string, s2.c_str());
+        }
+
+        if (ImGui::Button("Load Orbium"))
+        {
+            pmp::Face f;
+            lenia->load_orbium(f);
         }
     }
 }

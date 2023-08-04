@@ -1,5 +1,8 @@
+#include <meshlife/algorithms/helpers.h>
 #include <meshlife/algorithms/mesh_lenia.h>
 #include <pmp/algorithms/differential_geometry.h>
+#include <pmp/algorithms/utilities.h>
+#include <set>
 
 namespace meshlife
 {
@@ -39,6 +42,8 @@ void MeshLenia::initialize_faceMap()
         std::vector<std::pair<pmp::Face, float>> neighbors;
         neighbors.reserve(50);
 
+        const pmp::Point pa = pmp::centroid(mesh_, fa);
+
         // #pragma omp parallel for
         for (size_t j = 0; j < faces.size(); j++)
         {
@@ -46,7 +51,6 @@ void MeshLenia::initialize_faceMap()
                 continue;
 
             const pmp::Face fb = faces[j];
-            const pmp::Point pa = pmp::centroid(mesh_, fa);
             const pmp::Point pb = pmp::centroid(mesh_, fb);
             const float dist = pmp::distance(pa, pb);
 
@@ -63,7 +67,9 @@ void MeshLenia::initialize_faceMap()
 
         neighborMap[i] = neighbors;
 #pragma omp critical
-        neighborCountAvg += neighbors.size();
+        {
+            neighborCountAvg += neighbors.size();
+        }
     }
     neighborCountAvg /= neighborMap.size();
 
@@ -78,6 +84,8 @@ void MeshLenia::initialize_faceMap()
     std::cout << "Done initializing. Time:" << std::endl;
     std::cout << ms_int.count() << "ms\n";
     std::cout << ms_double.count() << "ms\n";
+
+    averageEdgeLength = pmp::mean_edge_length(mesh_);
 }
 
 void MeshLenia::update_state(int num_steps)
@@ -279,6 +287,95 @@ void MeshLenia::visualize_kernel_skeleton()
     {
         state_[f.first] = KernelSkeleton(f.second, p_beta_peaks);
     }
+}
+
+// not working
+void MeshLenia::load_orbium(pmp::Face f)
+{
+    f = find_center_face();
+
+    // first right neighbor
+    // second left neighbor
+    // third top neighbor
+    // fourth bottom neighbor
+    pmp::Face neighbors[mesh_.faces_size()][4];
+
+    // find the four closest faces to f
+    // right neighbor has a positive x difference
+    // left neighbor has a negative x difference
+    // top neighbor has a positive y difference
+    // bottom neighbor has a negative y difference
+
+    for (auto fa : mesh_.faces())
+    {
+        // right highest x distance
+        // left highest negative x distance
+        // top highest y distance
+        // bottom highest negative y distance
+
+        std::set<pmp::Face> neighbored;
+
+        // iterate over halfedges
+        for (auto h : mesh_.halfedges(f))
+        {
+            // get the face on the other side of the halfedge
+            pmp::Face neighbor = mesh_.face(mesh_.opposite_halfedge(h));
+            neighbored.insert(neighbor);
+        }
+
+        float highest_x_dist = 0;
+        float highest_neg_x_dist = 0;
+
+        float highest_y_dist = 0;
+        float highest_neg_y_dist = 0;
+
+        pmp::Point pa = pmp::centroid(mesh_, fa);
+
+        for (auto fb : neighbored)
+        {
+
+            pmp::Point pb = pmp::centroid(mesh_, fb);
+
+            float x_dist = pa[0] - pb[0];
+            float y_dist = pa[1] - pb[1];
+
+            if (x_dist > highest_x_dist)
+            {
+                highest_x_dist = x_dist;
+                neighbors[fa.idx()][0] = fb;
+            }
+            if (x_dist < highest_neg_x_dist)
+            {
+                highest_neg_x_dist = x_dist;
+                neighbors[fa.idx()][1] = fb;
+            }
+            if (y_dist > highest_y_dist)
+            {
+                highest_y_dist = y_dist;
+                neighbors[fa.idx()][2] = fb;
+            }
+            if (y_dist < highest_neg_y_dist)
+            {
+                highest_neg_y_dist = y_dist;
+                neighbors[fa.idx()][3] = fb;
+            }
+        }
+    }
+
+    pmp::Face w = f;
+
+    for (std::vector<float> row : orbium)
+    {
+        for (float value : row)
+        {
+            std::cout << w << std::endl;
+            state_[w] = value;
+            w = neighbors[w.idx()][0];
+        }
+        w = neighbors[w.idx()][2];
+    }
+
+    state_[f] = 1;
 }
 
 } // namespace meshlife
