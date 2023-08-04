@@ -1,3 +1,5 @@
+#include "meshlife/navigator.h"
+#include <iostream>
 #include <meshlife/algorithms/helpers.h>
 #include <meshlife/algorithms/mesh_lenia.h>
 #include <pmp/algorithms/differential_geometry.h>
@@ -302,69 +304,40 @@ std::set<pmp::Face> get_neighbors(pmp::SurfaceMesh mesh, pmp::Face f)
     return neighbors;
 }
 
-enum Direction
-{
-    LEFT,
-    RIGHT
-};
-
-// TODO: Create Navigator construct to make this easier
 void MeshLenia::place_stamp(pmp::Face f, std::vector<std::vector<float>> stamp)
 {
+    bool placement_error = false;
     if (!f.is_valid())
         f = find_center_face();
 
-    pmp::Halfedge current_halfedge = mesh_.halfedge(f);
-    Direction dir = Direction::RIGHT;
+    QuadMeshNavigator navigator{mesh_};
+    if (!navigator.move_to_face(f))
+    {
+        std::cerr << "Error: Could not navigate to starting face for stamp. Invalid face given." << std::endl;
+    }
+
     for (size_t y = 0; y < stamp.size(); y++)
     {
+        navigator.push_position();
         for (size_t x = 0; x < stamp[y].size(); x++)
         {
-            float value = 0;
             // retrieve value from array,
-            if (dir == Direction::RIGHT)
-                value = stamp[y][x];
-            else
-                value = stamp[y][stamp[y].size() - x - 1];
-
-            state_[mesh_.face(current_halfedge)] = value;
-
-            if (x != stamp[y].size() - 1)
+            float value = stamp[y][x];
+            state_[navigator.current_face()] = value;
+            if (!navigator.move_clockwise())
             {
-                // move right or left to next face
-                if (dir == Direction::RIGHT)
-                {
-                    pmp::Halfedge h = current_halfedge;
-                    h = mesh_.opposite_halfedge(h);
-                    h = mesh_.next_halfedge(h);
-                    h = mesh_.next_halfedge(h);
-                    current_halfedge = h;
-                }
-                else
-                {
-                    pmp::Halfedge h = current_halfedge;
-                    h = mesh_.next_halfedge(h);
-                    h = mesh_.next_halfedge(h);
-                    h = mesh_.opposite_halfedge(h);
-                    current_halfedge = h;
-                }
-            }
+                placement_error = true;
+            };
         }
         // move down
-        pmp::Halfedge h = current_halfedge;
-        h = mesh_.next_halfedge(h);
-        h = mesh_.next_halfedge(h);
-        h = mesh_.next_halfedge(h);
-        h = mesh_.opposite_halfedge(h);
-        h = mesh_.next_halfedge(h);
-        h = mesh_.next_halfedge(h);
-        h = mesh_.next_halfedge(h);
-        current_halfedge = h;
+        navigator.pop_position();
+        if (!navigator.move_backward())
+            placement_error = true;
+    }
 
-        if (dir == Direction::RIGHT)
-            dir = Direction::LEFT;
-        else
-            dir = Direction::RIGHT;
+    if (placement_error)
+    {
+        std::cerr << "Error: Could not place stamp correctly, run into boundary" << std::endl;
     }
 }
 
