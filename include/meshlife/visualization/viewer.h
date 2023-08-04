@@ -3,7 +3,11 @@
 #include "meshlife/algorithms/mesh_automaton.h"
 #include "meshlife/algorithms/mesh_gol.h"
 #include "meshlife/algorithms/mesh_lenia.h"
+#include <chrono>
+#include <ctime>
+#include <pmp/stop_watch.h>
 #include <pmp/visualization/mesh_viewer.h>
+#include <thread>
 
 namespace meshlife
 {
@@ -66,17 +70,32 @@ class Viewer : public pmp::MeshViewer
 
   private:
     MeshAutomaton* automaton = nullptr;
-    bool a_gol = false;
+    bool simulation_running = false;
     char* modelpath_buf;
     char* peak_string;
+    std::chrono::time_point<std::chrono::high_resolution_clock> c_last;
+
+    // Updates per second
+    int UPS = 30;
+    bool unlimited_limit_UPS = false;
+
+    double current_UPS;
 
     // Debug data
     DebugData debug_data;
+
+    std::thread simulation_thread;
+    void simulation_thread_func();
+    bool ready_for_display = false;
+    bool uncomplete_updates = false;
 
     pmp::Color hsv_to_rgb(float h, float s, float v);
 
     void retrieve_debug_info_for_selected_face();
     void select_debug_info_face(size_t faceIdx);
+
+    void start_simulation(bool single_step = false);
+    void stop_simulation();
 };
 
 } // namespace meshlife

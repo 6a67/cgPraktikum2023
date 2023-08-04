@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <format>
 #include <pmp/algorithms/decimation.h>
@@ -50,11 +52,57 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     add_help_item("R", "Load random state");
     add_help_item("S", "Step once in simulation");
     add_help_item("D", "Select face and retrieve debug info");
+
+    c_last = std::chrono::high_resolution_clock::now();
 }
 
 Viewer::~Viewer()
 {
     delete modelpath_buf;
+}
+
+void Viewer::start_simulation(bool single_step)
+{
+    if (simulation_running)
+    {
+        return;
+    }
+    simulation_running = true;
+
+    if (single_step)
+    {
+        automaton->update_state(1);
+        simulation_running = false;
+    }
+    else
+        simulation_thread = std::thread(&Viewer::simulation_thread_func, this);
+}
+
+void Viewer::simulation_thread_func()
+{
+    while (simulation_running)
+    {
+        auto c_now = std::chrono::high_resolution_clock::now();
+        auto deltaClockCycles = c_now - c_last;
+        auto deltaMs = (deltaClockCycles / CLOCKS_PER_SEC).count();
+        // only start updating the state after it has been rendered, otherwise we start rendering and redraw mid frame
+        // TODO: fix race conditions with ready_for_display
+        if (!ready_for_display && (unlimited_limit_UPS || (deltaMs >= (1000.0 / (double)UPS))))
+        {
+            // std::cout << "Update state" << std::endl;
+            c_last = std::chrono::high_resolution_clock::now();
+            automaton->update_state(1);
+            current_UPS = 1000.0 / deltaMs;
+            ready_for_display = true;
+        }
+    }
+}
+
+void Viewer::stop_simulation()
+{
+    simulation_running = false;
+    if (simulation_thread.joinable())
+        simulation_thread.join();
 }
 
 void Viewer::set_mesh_properties()
@@ -96,15 +144,21 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     {
     case GLFW_KEY_D:
         retrieve_debug_info_for_selected_face();
+        ready_for_display = true;
         break;
     case GLFW_KEY_S:
-        automaton->update_state(1);
+        start_simulation(true);
+        ready_for_display = true;
         break;
     case GLFW_KEY_R:
         automaton->init_state_random();
+        ready_for_display = true;
         break;
     case GLFW_KEY_T:
-        a_gol = !a_gol;
+        if (simulation_running)
+            stop_simulation();
+        else
+            start_simulation();
         break;
     // num keys: load simple primitive meshes
     case GLFW_KEY_0:
@@ -189,12 +243,16 @@ void Viewer::do_processing()
         }
     }
 
-    if (automaton && a_gol)
+    // do_processing gets called every draw frame (most likely 60fps) so this limits the update rate
+    // ready_for_display gets set to true every time the sumulation thread finishes one update, so we limit redraw calls
+    // to the sync with the simulation delay uncomplete_updates is used to circumvent this sync behaviour and allows to
+    // redraw the state[] array while it still gets updated in the simulation thread
+    // TODO: fix race conditions with ready_for_display
+    if (uncomplete_updates || ready_for_display)
     {
-        automaton->update_state(1);
+        ready_for_display = false;
+        renderer_.update_opengl_buffers();
     }
-
-    renderer_.update_opengl_buffers();
 }
 
 pmp::Color Viewer::hsv_to_rgb(float h, float s, float v)
@@ -297,6 +355,29 @@ void Viewer::process_imgui()
     pmp::MeshViewer::process_imgui();
 
     ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("Current UPS: %.0f", current_UPS);
+    {
+        std::stringstream label;
+        label << "Unrestricted render updates (allows visual  update mid-calculation): "
+              << (uncomplete_updates ? "ON" : "OFF") << ")";
+        if (ImGui::Button(label.str().c_str()))
+        {
+            uncomplete_updates = !uncomplete_updates;
+        }
+    }
+    {
+
+        std::stringstream limit_ups_text;
+        limit_ups_text << "Unlimited UPS (Current: " << (unlimited_limit_UPS ? "ON" : "OFF") << ")";
+        if (ImGui::Button(limit_ups_text.str().c_str()))
+        {
+            unlimited_limit_UPS = !unlimited_limit_UPS;
+        }
+
+        ImGui::SliderInt("UPS", &UPS, 1, 1000);
+    }
     ImGui::Spacing();
 
     if (ImGui::CollapsingHeader("Debug Info (Press D on a face)"))
@@ -494,7 +575,17 @@ void Viewer::process_imgui()
     {
         ImGui::Text("Game of Life Toggle");
         ImGui::SameLine();
-        ImGui::Checkbox("##", &a_gol);
+        {
+            std::stringstream label;
+            label << "Toggle Simulation (" << (simulation_running ? "RUNNING" : "OFFLINE") << ")";
+            if (ImGui::Button(label.str().c_str()))
+            {
+                if (simulation_running)
+                    stop_simulation();
+                else
+                    start_simulation();
+            }
+        }
 
         ImGui::Text("Gome of Life Step");
         ImGui::SameLine();
@@ -557,7 +648,7 @@ void Viewer::process_imgui()
         if (ImGui::Button("Recalculate Neighborhood"))
         {
             // TODO: move a_gol to a better place
-            a_gol = false;
+            stop_simulation();
             lenia->initialize_faceMap();
         }
         ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighborCountAvg);
