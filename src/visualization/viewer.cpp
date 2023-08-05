@@ -529,10 +529,12 @@ void Viewer::process_imgui()
     {
         ImGui::SliderFloat("Mu", &lenia->p_mu, 0, 1);
         ImGui::SliderFloat("Sigma", &lenia->p_sigma, 0, 1);
+        ImGui::SliderInt("T", &lenia->p_T, 1, 50);
+
         // TODO: recalculate neighbors
-        float neighborhood_radius = lenia->p_neighborhood_radius * lenia->averageEdgeLength;
-        ImGui::SliderFloat("Neighborhood Radius", &neighborhood_radius, 0, 5);
-        lenia->p_neighborhood_radius = neighborhood_radius / lenia->averageEdgeLength;
+        float neighborhood_radius = lenia->p_neighborhood_radius / lenia->averageEdgeLength;
+        ImGui::SliderFloat("Neighborhood Radius", &neighborhood_radius, 0, 20);
+        lenia->p_neighborhood_radius = neighborhood_radius * lenia->averageEdgeLength;
         if (ImGui::Button("Recalculate Neighborhood"))
         {
             // TODO: move a_gol to a better place
@@ -607,7 +609,48 @@ void Viewer::process_imgui()
                 break;
             }
         }
+
+        if (ImGui::Button("Check if normalised"))
+        {
+            std::cout << lenia->norm_check() << std::endl;
+        }
+
+        // list from where presets can be selected
+        static const char* items[] = {"Glider Settings"};
+        static int item_current = 1;
+        if (ImGui::BeginCombo("Presets", items[item_current]))
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+            {
+                bool is_selected = (item_current == n);
+                if (ImGui::Selectable(items[n], is_selected))
+                    item_current = n;
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        if (ImGui::Button("Load preset"))
+        {
+            switch (item_current)
+            {
+            case 0:
+                lenia->p_mu = 0.15;
+                lenia->p_sigma = 0.017;
+                lenia->p_beta_peaks = {1};
+                lenia->p_neighborhood_radius = 13 * lenia->averageEdgeLength;
+                break;
+            }
+
+            lenia->initialize_faceMap();
+        }
     }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 }
 
 void Viewer::set_face_color(pmp::Face& face, pmp::Color color)

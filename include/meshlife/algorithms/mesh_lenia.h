@@ -31,6 +31,8 @@ class MeshLenia : public MeshAutomaton
     ///
     float exponential_growth(float u, float mu, float sigma);
 
+    float norm_check();
+
     void place_stamp(pmp::Face f, std::vector<std::vector<float>> stamp);
 
     typedef std::pair<pmp::Face, float> Neighbor;
@@ -57,6 +59,8 @@ class MeshLenia : public MeshAutomaton
     std::vector<float> p_beta_peaks;
 
     float averageEdgeLength = 0;
+
+    int p_T = 10;
 
   private:
     float delta_x = 1 / p_neighborhood_radius;

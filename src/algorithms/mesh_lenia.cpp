@@ -110,7 +110,7 @@ void MeshLenia::update_state(int num_steps)
         // std::cout << "Merged togehter: " << merged_together(f) << std::endl;
         l = merged_together(f);
         l = Growth(l, p_mu, p_sigma);
-        l = last_state_[f] + l;
+        l = last_state_[f] + (1.0/p_T) * l;
         l = std::clamp<float>(l, 0.0, 1.0);
         state_[f] = l;
     }
@@ -204,9 +204,9 @@ float MeshLenia::merged_together(pmp::Face x)
     for (auto neighbor : n)
     {
         float d = distance_neighbors(neighbor);
-        sum += KernelSkeleton(d, p_beta_peaks) * last_state_[neighbor.first];
+        sum += KernelSkeleton(d, p_beta_peaks) * last_state_[neighbor.first] * pmp::face_area(mesh_, neighbor.first);
 
-        kernelShellLength += KernelSkeleton(neighbor.second, p_beta_peaks);
+        kernelShellLength += KernelSkeleton(neighbor.second, p_beta_peaks) * pmp::face_area(mesh_, neighbor.first);
     }
 
     // kernelShellLength = kernelShellLength * delta_x * delta_x;
@@ -340,4 +340,35 @@ void MeshLenia::place_stamp(pmp::Face f, std::vector<std::vector<float>> stamp)
     }
 }
 
+float MeshLenia::norm_check()
+{
+    // checks if the kernel returns 1 if all neighboring faces have a value of 1
+
+    pmp::Face center_face = find_center_face();
+
+    // backup the current state
+    std::vector<float> backup_state;
+    for (auto f : mesh_.faces())
+    {
+        backup_state.push_back(state_[f]);
+    }
+
+    // set all faces to 1
+    for (auto f : mesh_.faces())
+    {
+        state_[f] = 0.5;
+        last_state_[f] = 0.5;
+    }
+
+    float result = Potential_Distribution_U(center_face);
+
+    // restore the state
+    for (auto f : mesh_.faces())
+    {
+        state_[f] = backup_state[f.idx()];
+        last_state_[f] = backup_state[f.idx()];
+    }
+
+    return result;
+}
 } // namespace meshlife
