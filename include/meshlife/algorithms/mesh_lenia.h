@@ -39,6 +39,8 @@ class MeshLenia : public MeshAutomaton
     typedef std::vector<Neighbor> Neighbors;
     typedef std::vector<Neighbors> NeighborMap;
 
+    std::vector<float> kernel_shell_length;
+
     void initialize_faceMap();
 
     float distance_neighbors(const Neighbor& n);

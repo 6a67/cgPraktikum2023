@@ -5,6 +5,7 @@
 #include <pmp/algorithms/differential_geometry.h>
 #include <pmp/algorithms/utilities.h>
 #include <set>
+#include <pmp/surface_mesh.h>
 
 namespace meshlife
 {
@@ -25,6 +26,9 @@ void MeshLenia::initialize_faceMap()
 {
     auto t1 = std::chrono::high_resolution_clock::now();
     std::cout << "Started initializing " << std::endl;
+
+    mesh_.garbage_collection();
+
     neighborMap.clear();
     neighborMap.resize(mesh_.faces_size());
 
@@ -67,13 +71,25 @@ void MeshLenia::initialize_faceMap()
     }
     neighborCountAvg /= neighborMap.size();
 
-    // #pragma omp parallel for
+    // ----- Kernel Precomputation -----
+
+    kernel_shell_length.clear();
+    kernel_shell_length.reserve(mesh_.faces_size());
+
+#pragma omp parallel for
     for (size_t i = 0; i < neighborMap.size(); i++)
     {
+        float ksl = 0;
+
         for (size_t j = 0; j < neighborMap[i].size(); j++)
         {
-            std::get<2>(neighborMap[i][j]) = K(neighborMap[i][j], neighborMap[i]);
+            float K_n = 0;
+            K_n = KernelSkeleton(std::get<1>(neighborMap[i][j]), p_beta_peaks)
+                  * pmp::face_area(mesh_, std::get<0>(neighborMap[i][j]));
+            std::get<2>(neighborMap[i][j]) = K_n;
+            ksl += K_n;
         }
+        kernel_shell_length.push_back(ksl);
     }
     auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -100,7 +116,7 @@ void MeshLenia::update_state(int num_steps)
         // kernel shell
         // int i = 4;
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (size_t i = 0; i < mesh_.faces_size(); i++)
     {
 
@@ -171,8 +187,7 @@ float MeshLenia::KernelShell_Length(const Neighbors& n)
     float l = 0;
     for (auto neighbor : n)
     {
-        l += KernelSkeleton(std::get<1>(neighbor), p_beta_peaks) * pmp::face_area(mesh_, std::get<0>(neighbor))
-             * pmp::face_area(mesh_, std::get<0>(neighbor));
+        l += KernelSkeleton(std::get<1>(neighbor), p_beta_peaks) * pmp::face_area(mesh_, std::get<0>(neighbor));
     }
     return l;
 }
@@ -191,8 +206,7 @@ float MeshLenia::Potential_Distribution_U(const pmp::Face& x)
     for (auto neighbor : n)
     {
         // TODO: maybe remove the delta_x * delta_x
-        sum += K(neighbor, n) * last_state_[std::get<0>(neighbor)] * pmp::face_area(mesh_, std::get<0>(neighbor))
-               * pmp::face_area(mesh_, std::get<0>(neighbor));
+        sum += K(neighbor, n) * last_state_[std::get<0>(neighbor)] * pmp::face_area(mesh_, std::get<0>(neighbor));
     }
     return sum;
 }
@@ -200,6 +214,9 @@ float MeshLenia::Potential_Distribution_U(const pmp::Face& x)
 float MeshLenia::merged_together(const pmp::Face& x)
 {
     Neighbors n = neighborMap[x.idx()];
+
+    // float sum_old = 0;
+
     float sum = 0;
 
     float kernelShellLength = 0;
@@ -207,11 +224,11 @@ float MeshLenia::merged_together(const pmp::Face& x)
     for (auto neighbor : n)
     {
         // float d = distance_neighbors(neighbor);
-        // sum += KernelSkeleton(d, p_beta_peaks) * last_state_[std::get<0>(neighbor)]
+        // sum_old += KernelSkeleton(d, p_beta_peaks) * last_state_[std::get<0>(neighbor)]
         //        * pmp::face_area(mesh_, std::get<0>(neighbor));
 
-        // kernelShellLength
-        //     += KernelSkeleton(std::get<1>(neighbor), p_beta_peaks) * pmp::face_area(mesh_, std::get<0>(neighbor));
+        kernelShellLength
+            += KernelSkeleton(std::get<1>(neighbor), p_beta_peaks) * pmp::face_area(mesh_, std::get<0>(neighbor));
 
         // Load from cache
         float k = std::get<2>(neighbor);
@@ -220,7 +237,17 @@ float MeshLenia::merged_together(const pmp::Face& x)
 
     // kernelShellLength = kernelShellLength * delta_x * delta_x;
 
-    // sum = sum / kernelShellLength;
+    // TODO: Shell is not correct
+    std::cout << "kernelShellLength1: " << kernelShellLength << std::endl;
+    kernelShellLength = kernel_shell_length[x.idx()];
+    std::cout << "kernelShellLength2: " << kernelShellLength << std::endl;
+
+    // sum_old = sum_old / kernelShellLength;
+    sum = sum / kernelShellLength;
+
+    // std::cout << "sum: " << sum << std::endl;
+    // std::cout << "sum_old: " << sum_old << std::endl;
+    // std::cout << "U: " << Potential_Distribution_U(x) << std::endl;
 
     // return sum * delta_x * delta_x;
     return sum;
