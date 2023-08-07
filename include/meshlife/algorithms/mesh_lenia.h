@@ -35,7 +35,7 @@ class MeshLenia : public MeshAutomaton
 
     void place_stamp(pmp::Face f, const std::vector<std::vector<float>>& stamp);
 
-    typedef std::pair<pmp::Face, float> Neighbor;
+    typedef std::tuple<pmp::Face, float, float> Neighbor;
     typedef std::vector<Neighbor> Neighbors;
     typedef std::vector<Neighbors> NeighborMap;
 
@@ -69,7 +69,6 @@ class MeshLenia : public MeshAutomaton
 
     /// Find face with lowest distance to all other facestamp
     pmp::Face find_center_face();
-    std::vector<pmp::Face> faces;
 };
 
 } // namespace meshlife

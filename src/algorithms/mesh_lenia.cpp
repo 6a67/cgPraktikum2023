@@ -28,30 +28,23 @@ void MeshLenia::initialize_faceMap()
     neighborMap.clear();
     neighborMap.resize(mesh_.faces_size());
 
-    faces.clear();
-    faces.reserve(mesh_.faces_size());
-    for (const pmp::Face face : mesh_.faces())
-    {
-        faces.push_back(face);
-    }
-
 #pragma omp parallel for
-    for (size_t i = 0; i < faces.size(); i++)
+    for (size_t i = 0; i < mesh_.faces_size(); i++)
     {
         // std::cout << i << std::endl;
-        const pmp::Face fa = faces[i];
-        std::vector<std::pair<pmp::Face, float>> neighbors;
+        const pmp::Face fa = pmp::Face(i);
+        std::vector<Neighbor> neighbors;
         neighbors.reserve(50);
 
         const pmp::Point pa = pmp::centroid(mesh_, fa);
 
         // #pragma omp parallel for
-        for (size_t j = 0; j < faces.size(); j++)
+        for (size_t j = 0; j < mesh_.faces_size(); j++)
         {
             if (i == j)
                 continue;
 
-            const pmp::Face fb = faces[j];
+            const pmp::Face fb = pmp::Face(j);
             const pmp::Point pb = pmp::centroid(mesh_, fb);
             const float dist = pmp::distance(pa, pb);
 
@@ -61,7 +54,7 @@ void MeshLenia::initialize_faceMap()
                 // std::cout << "Normalized Distance: " << d << std::endl;
 
                 // #pragma omp critical
-                neighbors.push_back(std::make_pair(fb, d));
+                neighbors.push_back(std::make_tuple(fb, d, 0));
             }
         }
         // std::cout << "Added " << neighbors.size() << " neighbors to face: " << fa.idx() << std::endl;
@@ -74,6 +67,14 @@ void MeshLenia::initialize_faceMap()
     }
     neighborCountAvg /= neighborMap.size();
 
+    // #pragma omp parallel for
+    for (size_t i = 0; i < neighborMap.size(); i++)
+    {
+        for (size_t j = 0; j < neighborMap[i].size(); j++)
+        {
+            std::get<2>(neighborMap[i][j]) = K(neighborMap[i][j], neighborMap[i]);
+        }
+    }
     auto t2 = std::chrono::high_resolution_clock::now();
 
     /* Getting number of milliseconds as an integer. */
@@ -100,10 +101,10 @@ void MeshLenia::update_state(int num_steps)
         // int i = 4;
 
 #pragma omp parallel for
-    for (size_t i = 0; i < faces.size(); i++)
+    for (size_t i = 0; i < mesh_.faces_size(); i++)
     {
 
-        const pmp::Face f = faces[i];
+        const pmp::Face f = pmp::Face(i);
         float l;
         // l = Potential_Distribution_U(f);
         // std::cout << "Potential_Distribution_U: " << l << std::endl;
@@ -150,7 +151,7 @@ float MeshLenia::KernelShell(float r)
 float MeshLenia::KernelSkeleton(float r, const std::vector<float>& beta)
 {
     size_t idx = std::floor(r * beta.size());
-
+    // std::cout << idx << std::endl;
     if (idx > beta.size())
     {
         throw std::out_of_range("MeshLenia::KernelSkeleton - Index for beta out of range");
@@ -161,7 +162,7 @@ float MeshLenia::KernelSkeleton(float r, const std::vector<float>& beta)
 
 float MeshLenia::distance_neighbors(const Neighbor& n)
 {
-    return n.second;
+    return std::get<1>(n);
 }
 
 float MeshLenia::KernelShell_Length(const Neighbors& n)
@@ -170,7 +171,8 @@ float MeshLenia::KernelShell_Length(const Neighbors& n)
     float l = 0;
     for (auto neighbor : n)
     {
-        l += KernelSkeleton(neighbor.second, p_beta_peaks) * delta_x * delta_x;
+        l += KernelSkeleton(std::get<1>(neighbor), p_beta_peaks) * pmp::face_area(mesh_, std::get<0>(neighbor))
+             * pmp::face_area(mesh_, std::get<0>(neighbor));
     }
     return l;
 }
@@ -189,7 +191,8 @@ float MeshLenia::Potential_Distribution_U(const pmp::Face& x)
     for (auto neighbor : n)
     {
         // TODO: maybe remove the delta_x * delta_x
-        sum += K(neighbor, n) * last_state_[neighbor.first] * delta_x * delta_x;
+        sum += K(neighbor, n) * last_state_[std::get<0>(neighbor)] * pmp::face_area(mesh_, std::get<0>(neighbor))
+               * pmp::face_area(mesh_, std::get<0>(neighbor));
     }
     return sum;
 }
@@ -203,15 +206,21 @@ float MeshLenia::merged_together(const pmp::Face& x)
 
     for (auto neighbor : n)
     {
-        float d = distance_neighbors(neighbor);
-        sum += KernelSkeleton(d, p_beta_peaks) * last_state_[neighbor.first] * pmp::face_area(mesh_, neighbor.first);
+        // float d = distance_neighbors(neighbor);
+        // sum += KernelSkeleton(d, p_beta_peaks) * last_state_[std::get<0>(neighbor)]
+        //        * pmp::face_area(mesh_, std::get<0>(neighbor));
 
-        kernelShellLength += KernelSkeleton(neighbor.second, p_beta_peaks) * pmp::face_area(mesh_, neighbor.first);
+        // kernelShellLength
+        //     += KernelSkeleton(std::get<1>(neighbor), p_beta_peaks) * pmp::face_area(mesh_, std::get<0>(neighbor));
+
+        // Load from cache
+        float k = std::get<2>(neighbor);
+        sum += k * last_state_[std::get<0>(neighbor)];
     }
 
     // kernelShellLength = kernelShellLength * delta_x * delta_x;
 
-    sum = sum / kernelShellLength;
+    // sum = sum / kernelShellLength;
 
     // return sum * delta_x * delta_x;
     return sum;
@@ -286,7 +295,7 @@ void MeshLenia::visualize_kernel_skeleton()
     // give every face a value according to the kernel shell
     for (auto f : neighborMap[furthest_face.idx()])
     {
-        state_[f.first] = KernelSkeleton(f.second, p_beta_peaks);
+        state_[std::get<0>(f)] = KernelSkeleton(std::get<1>(f), p_beta_peaks);
     }
 }
 
