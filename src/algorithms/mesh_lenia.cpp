@@ -110,7 +110,7 @@ void MeshLenia::update_state(int num_steps)
         // std::cout << "Merged togehter: " << merged_together(f) << std::endl;
         l = merged_together(f);
         l = Growth(l, p_mu, p_sigma);
-        l = last_state_[f] + (1.0/p_T) * l;
+        l = last_state_[f] + (1.0 / p_T) * l;
         l = std::clamp<float>(l, 0.0, 1.0);
         state_[f] = l;
     }
@@ -147,7 +147,7 @@ float MeshLenia::KernelShell(float r)
     return exponential_kernel(r, 4);
 }
 
-float MeshLenia::KernelSkeleton(float r, std::vector<float> beta)
+float MeshLenia::KernelSkeleton(float r, const std::vector<float>& beta)
 {
     size_t idx = std::floor(r * beta.size());
 
@@ -159,12 +159,12 @@ float MeshLenia::KernelSkeleton(float r, std::vector<float> beta)
     return beta[idx] * KernelShell(std::modf(beta.size() * r, &f));
 }
 
-float MeshLenia::distance_neighbors(Neighbor n)
+float MeshLenia::distance_neighbors(const Neighbor& n)
 {
     return n.second;
 }
 
-float MeshLenia::KernelShell_Length(Neighbors n)
+float MeshLenia::KernelShell_Length(const Neighbors& n)
 {
     // TODO: return the correct value here
     float l = 0;
@@ -175,13 +175,13 @@ float MeshLenia::KernelShell_Length(Neighbors n)
     return l;
 }
 
-float MeshLenia::K(Neighbor n, Neighbors neighborhood)
+float MeshLenia::K(const Neighbor& n, const Neighbors& neighborhood)
 {
     float d = distance_neighbors(n);
     return KernelSkeleton(d, p_beta_peaks) / (KernelShell_Length(neighborhood));
 }
 
-float MeshLenia::Potential_Distribution_U(pmp::Face x)
+float MeshLenia::Potential_Distribution_U(const pmp::Face& x)
 {
     // TODO: does not seems to be correct
     Neighbors n = neighborMap[x.idx()];
@@ -194,7 +194,7 @@ float MeshLenia::Potential_Distribution_U(pmp::Face x)
     return sum;
 }
 
-float MeshLenia::merged_together(pmp::Face x)
+float MeshLenia::merged_together(const pmp::Face& x)
 {
     Neighbors n = neighborMap[x.idx()];
     float sum = 0;
@@ -290,7 +290,7 @@ void MeshLenia::visualize_kernel_skeleton()
     }
 }
 
-std::set<pmp::Face> get_neighbors(pmp::SurfaceMesh mesh, pmp::Face f)
+std::set<pmp::Face> get_neighbors(const pmp::SurfaceMesh& mesh, const pmp::Face& f)
 {
     std::set<pmp::Face> neighbors;
     // iterate over halfedges
@@ -303,7 +303,7 @@ std::set<pmp::Face> get_neighbors(pmp::SurfaceMesh mesh, pmp::Face f)
     return neighbors;
 }
 
-void MeshLenia::place_stamp(pmp::Face f, std::vector<std::vector<float>> stamp)
+void MeshLenia::place_stamp(pmp::Face f, const std::vector<std::vector<float>>& stamp)
 {
     bool placement_error = false;
     if (!f.is_valid())

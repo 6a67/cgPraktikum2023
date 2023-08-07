@@ -23,7 +23,7 @@ class MeshLenia : public MeshAutomaton
 
     void visualize_kernel_skeleton();
 
-    float merged_together(pmp::Face x);
+    float merged_together(const pmp::Face& x);
 
     /// Returns value of exponential function at r with parameter a
     float exponential_kernel(float r, float a);
@@ -33,7 +33,7 @@ class MeshLenia : public MeshAutomaton
 
     float norm_check();
 
-    void place_stamp(pmp::Face f, std::vector<std::vector<float>> stamp);
+    void place_stamp(pmp::Face f, const std::vector<std::vector<float>>& stamp);
 
     typedef std::pair<pmp::Face, float> Neighbor;
     typedef std::vector<Neighbor> Neighbors;
@@ -41,14 +41,14 @@ class MeshLenia : public MeshAutomaton
 
     void initialize_faceMap();
 
-    float distance_neighbors(Neighbor n);
+    float distance_neighbors(const Neighbor& n);
 
     float KernelShell(float r);
-    float Potential_Distribution_U(pmp::Face n);
+    float Potential_Distribution_U(const pmp::Face& n);
 
-    float KernelShell_Length(Neighbors n);
-    float KernelSkeleton(float r, std::vector<float> beta);
-    float K(Neighbor n, Neighbors neighborhood);
+    float KernelShell_Length(const Neighbors& n);
+    float KernelSkeleton(float r, const std::vector<float>& beta);
+    float K(const Neighbor& n, const Neighbors& neighborhood);
     float Growth(float f, float mu, float sigma);
 
     float p_mu = 0.581;
