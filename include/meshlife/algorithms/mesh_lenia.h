@@ -47,6 +47,8 @@ class MeshLenia : public MeshAutomaton
 
     bool is_closed_mesh();
 
+    void kernel_precompute();
+
     float distance_neighbors(const Neighbor& n);
 
     float KernelShell(float r);
