@@ -231,26 +231,30 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
 
 void Viewer::do_processing()
 {
-    if (automaton)
-    {
-        // automaton->update_state(1);
-        for (auto f : mesh_.faces())
-        {
-            auto state = automaton->state(f);
-            float v = std::clamp(state, 0.0f, 1.0f);
-            // make hsv rainbow color
-            set_face_color(f, hsv_to_rgb((int)(v * 360 + 270) % 360, state, 1));
-        }
-    }
 
     // do_processing gets called every draw frame (most likely 60fps) so this limits the update rate
-    // ready_for_display gets set to true every time the sumulation thread finishes one update, so we limit redraw calls
-    // to the sync with the simulation delay uncomplete_updates is used to circumvent this sync behaviour and allows to
-    // redraw the state[] array while it still gets updated in the simulation thread
+    // ready_for_display gets set to true every time the simulation thread finishes one update, so we limit redraw calls
+    // to be in sync with the simulation delay. uncomplete_updates is used to circumvent this sync behaviour and allows
+    // to redraw the state[] array while it still gets updated in the simulation thread
     // TODO: fix race conditions with ready_for_display
     if (uncomplete_updates || ready_for_display)
     {
+        // reset update flag
         ready_for_display = false;
+
+        // calculate raninbow colors for each face
+        if (automaton)
+        {
+            for (auto f : mesh_.faces())
+            {
+                auto state = automaton->state(f);
+                float v = std::clamp(state, 0.0f, 1.0f);
+                // make hsv rainbow color
+                set_face_color(f, hsv_to_rgb((int)(v * 360 + 270) % 360, state, 1));
+            }
+        }
+
+        // redraw new state
         renderer_.update_opengl_buffers();
     }
 }
@@ -718,6 +722,8 @@ void Viewer::process_imgui()
                 lenia->place_stamp(f, stamps::debug);
                 break;
             }
+            // cause the render to redraw the next draw frame
+            ready_for_display = true;
         }
 
         if (ImGui::Button("Check if normalised"))

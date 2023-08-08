@@ -86,7 +86,7 @@ class Viewer : public pmp::MeshViewer
 
     std::thread simulation_thread;
     void simulation_thread_func();
-    bool ready_for_display = false;
+    std::atomic<bool> ready_for_display = false;
     bool uncomplete_updates = false;
 
     pmp::Color hsv_to_rgb(float h, float s, float v);
