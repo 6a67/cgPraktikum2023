@@ -653,7 +653,7 @@ void Viewer::process_imgui()
         {
             // TODO: move a_gol to a better place
             stop_simulation();
-            lenia->initialize_faceMap();
+            lenia->allocate_needed_properties();
         }
         ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighborCountAvg);
 
@@ -755,11 +755,12 @@ void Viewer::process_imgui()
                 lenia->p_mu = 0.15;
                 lenia->p_sigma = 0.017;
                 lenia->p_beta_peaks = {1};
+                lenia->p_T = 10;
                 lenia->p_neighborhood_radius = 13 * lenia->averageEdgeLength;
                 break;
             }
 
-            lenia->initialize_faceMap();
+            lenia->allocate_needed_properties();
         }
     }
 

@@ -20,10 +20,117 @@ MeshLenia::MeshLenia(pmp::SurfaceMesh& mesh) : MeshAutomaton(mesh)
 void MeshLenia::allocate_needed_properties()
 {
     MeshAutomaton::allocate_needed_properties();
-    initialize_faceMap();
+    if (is_closed_mesh())
+    {
+        std::cout << "Closed mesh" << std::endl;
+        initialize_faceMap_geodesic();
+    }
+    else
+    {
+        std::cout << "Open mesh" << std::endl;
+        initialize_faceMap();
+    }
+}
+
+bool MeshLenia::is_closed_mesh()
+{
+
+    for (auto h : mesh_.halfedges())
+    {
+        if (!mesh_.is_boundary(h))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void MeshLenia::initialize_faceMap()
+{
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << "Started initializing " << std::endl;
+
+    mesh_.garbage_collection();
+
+    neighborMap.clear();
+    neighborMap.resize(mesh_.faces_size());
+
+    pmp::SurfaceMesh dual_mesh(mesh_);
+    pmp::dual(dual_mesh);
+    std::cout << p_neighborhood_radius << std::endl;
+#pragma omp parallel for
+    for (size_t i = 0; i < mesh_.faces_size(); i++)
+    {
+        pmp::SurfaceMesh m(dual_mesh);
+        pmp::Vertex v(i);
+
+        std::vector<pmp::Vertex> startVertices;
+        startVertices.push_back(v);
+        std::vector<pmp::Vertex> neighbors;
+        pmp::geodesics(m, startVertices, p_neighborhood_radius, std::numeric_limits<int>::max(), &neighbors);
+
+        Neighbors finalNeighbors;
+
+        pmp::VertexProperty<float> distances = m.get_vertex_property<float>("geodesic:distance");
+        for (auto n : neighbors)
+        {
+            // std::cout << "Distance: " << distances[n] << std::endl;
+            auto d = distances[n] / p_neighborhood_radius;
+            if (d > 1)
+            {
+                continue;
+            }
+
+            finalNeighbors.push_back(std::make_tuple(pmp::Face(n.idx()), d, 0));
+        }
+
+        neighborMap[i] = finalNeighbors;
+#pragma omp critical
+        {
+            neighborCountAvg += neighbors.size();
+        }
+    }
+    neighborCountAvg /= neighborMap.size();
+
+    // ----- Kernel Precomputation -----
+
+    kernel_shell_length.clear();
+    kernel_shell_length.resize(mesh_.faces_size());
+
+    // #pragma omp parallel for
+    for (size_t i = 0; i < neighborMap.size(); i++)
+    {
+        float ksl = 0;
+
+        // std::cout << "Face: " << i << std::endl;
+        for (size_t j = 0; j < neighborMap[i].size(); j++)
+        {
+            float K_n = 0;
+            K_n = KernelSkeleton(std::get<1>(neighborMap[i][j]), p_beta_peaks)
+                  * pmp::face_area(mesh_, std::get<0>(neighborMap[i][j]));
+            std::get<2>(neighborMap[i][j]) = K_n;
+            // std::cout << "K_n: " << K_n << std::endl;
+            ksl += K_n;
+        }
+        kernel_shell_length[i] = ksl;
+    }
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    /* Getting number of milliseconds as an integer. */
+    auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+
+    /* Getting number of milliseconds as a double. */
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << "Done initializing. Time:" << std::endl;
+    std::cout << ms_int.count() << "ms\n";
+    std::cout << ms_double.count() << "ms\n";
+
+    averageEdgeLength = pmp::mean_edge_length(mesh_);
+}
+
+void MeshLenia::initialize_faceMap_geodesic()
 {
     auto t1 = std::chrono::high_resolution_clock::now();
     std::cout << "Started initializing " << std::endl;
@@ -356,15 +463,15 @@ void MeshLenia::place_stamp(pmp::Face f, const std::vector<std::vector<float>>& 
         std::cerr << "Error: Could not navigate to starting face for stamp. Invalid face given." << std::endl;
     }
 
-	auto north_edge = navigator.get_north_halfedge();
-	if (north_edge.is_valid())
-	{
-	  while (navigator.current_halfedge() != north_edge)
-	  {
-		navigator.rotate_counterclockwise();
-	  }
-	}
-	else
+    auto north_edge = navigator.get_north_halfedge();
+    if (north_edge.is_valid())
+    {
+        while (navigator.current_halfedge() != north_edge)
+        {
+            navigator.rotate_counterclockwise();
+        }
+    }
+    else
         std::cerr << "Error: Could not orientate towards north." << std::endl;
 
     for (size_t y = 0; y < stamp.size(); y++)
@@ -432,6 +539,5 @@ void MeshLenia::highlight_neighbors(pmp::Face& f)
     {
         state_[std::get<0>(n)] = std::get<1>(n);
     }
-
 }
 } // namespace meshlife

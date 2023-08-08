@@ -43,6 +43,10 @@ class MeshLenia : public MeshAutomaton
 
     void initialize_faceMap();
 
+    void initialize_faceMap_geodesic();
+
+    bool is_closed_mesh();
+
     float distance_neighbors(const Neighbor& n);
 
     float KernelShell(float r);
