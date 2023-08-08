@@ -74,22 +74,24 @@ void MeshLenia::initialize_faceMap()
     // ----- Kernel Precomputation -----
 
     kernel_shell_length.clear();
-    kernel_shell_length.reserve(mesh_.faces_size());
+    kernel_shell_length.resize(mesh_.faces_size());
 
 #pragma omp parallel for
     for (size_t i = 0; i < neighborMap.size(); i++)
     {
         float ksl = 0;
 
+        // std::cout << "Face: " << i s<< std::endl;
         for (size_t j = 0; j < neighborMap[i].size(); j++)
         {
             float K_n = 0;
             K_n = KernelSkeleton(std::get<1>(neighborMap[i][j]), p_beta_peaks)
                   * pmp::face_area(mesh_, std::get<0>(neighborMap[i][j]));
             std::get<2>(neighborMap[i][j]) = K_n;
+            // std::cout << "K_n: " << K_n << std::endl;
             ksl += K_n;
         }
-        kernel_shell_length.push_back(ksl);
+        kernel_shell_length[i] = ksl;
     }
     auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -221,14 +223,17 @@ float MeshLenia::merged_together(const pmp::Face& x)
 
     float kernelShellLength = 0;
 
+    // std::cout << "x: " << x.idx() << std::endl;
+
     for (auto neighbor : n)
     {
         // float d = distance_neighbors(neighbor);
         // sum_old += KernelSkeleton(d, p_beta_peaks) * last_state_[std::get<0>(neighbor)]
         //        * pmp::face_area(mesh_, std::get<0>(neighbor));
 
-        kernelShellLength
-            += KernelSkeleton(std::get<1>(neighbor), p_beta_peaks) * pmp::face_area(mesh_, std::get<0>(neighbor));
+        // kernelShellLength
+        //     += KernelSkeleton(std::get<1>(neighbor), p_beta_peaks) * pmp::face_area(mesh_, std::get<0>(neighbor));
+
 
         // Load from cache
         float k = std::get<2>(neighbor);
@@ -238,9 +243,9 @@ float MeshLenia::merged_together(const pmp::Face& x)
     // kernelShellLength = kernelShellLength * delta_x * delta_x;
 
     // TODO: Shell is not correct
-    std::cout << "kernelShellLength1: " << kernelShellLength << std::endl;
+    // std::cout << "kernelShellLength1: " << kernelShellLength << std::endl;
     kernelShellLength = kernel_shell_length[x.idx()];
-    std::cout << "kernelShellLength2: " << kernelShellLength << std::endl;
+    // std::cout << "kernelShellLength2: " << kernelShellLength << std::endl;
 
     // sum_old = sum_old / kernelShellLength;
     sum = sum / kernelShellLength;
