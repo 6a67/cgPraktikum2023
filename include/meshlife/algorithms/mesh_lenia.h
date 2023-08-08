@@ -48,6 +48,8 @@ class MeshLenia : public MeshAutomaton
     float KernelShell(float r);
     float Potential_Distribution_U(const pmp::Face& n);
 
+    void highlight_neighbors(pmp::Face& f);
+
     float KernelShell_Length(const Neighbors& n);
     float KernelSkeleton(float r, const std::vector<float>& beta);
     float K(const Neighbor& n, const Neighbors& neighborhood);

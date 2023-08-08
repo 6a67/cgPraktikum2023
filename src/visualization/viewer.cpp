@@ -790,6 +790,11 @@ void Viewer::mouse(int button, int action, int mods)
             find_face(x, y, face);
             // TODO: maybe convert to method
             automaton->set_state(face, 1.0);
+            if (auto lenia = dynamic_cast<MeshLenia*>(automaton))
+            {
+                lenia->highlight_neighbors(face);
+                std::cout << "highlighted neighbors" << std::endl;
+            }
         }
     }
     else

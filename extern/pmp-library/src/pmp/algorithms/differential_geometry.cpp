@@ -190,6 +190,8 @@ void dual(SurfaceMesh& mesh)
     // add new face for each vertex
     for (auto v : mesh.vertices())
     {
+        if (mesh.is_boundary(v))
+            continue;
         std::vector<Vertex> vertices;
         for (auto f : mesh.faces(v))
             vertices.push_back(fvertex[f]);

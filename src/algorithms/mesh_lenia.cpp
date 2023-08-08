@@ -3,9 +3,10 @@
 #include <meshlife/algorithms/helpers.h>
 #include <meshlife/algorithms/mesh_lenia.h>
 #include <pmp/algorithms/differential_geometry.h>
+#include <pmp/algorithms/geodesics.h>
 #include <pmp/algorithms/utilities.h>
-#include <set>
 #include <pmp/surface_mesh.h>
+#include <set>
 
 namespace meshlife
 {
@@ -32,38 +33,36 @@ void MeshLenia::initialize_faceMap()
     neighborMap.clear();
     neighborMap.resize(mesh_.faces_size());
 
+    pmp::SurfaceMesh dual_mesh(mesh_);
+    pmp::dual(dual_mesh);
+    std::cout << p_neighborhood_radius << std::endl;
 #pragma omp parallel for
     for (size_t i = 0; i < mesh_.faces_size(); i++)
     {
-        // std::cout << i << std::endl;
-        const pmp::Face fa = pmp::Face(i);
-        std::vector<Neighbor> neighbors;
-        neighbors.reserve(50);
+        pmp::SurfaceMesh m(dual_mesh);
+        pmp::Vertex v(i);
 
-        const pmp::Point pa = pmp::centroid(mesh_, fa);
+        std::vector<pmp::Vertex> startVertices;
+        startVertices.push_back(v);
+        std::vector<pmp::Vertex> neighbors;
+        pmp::geodesics(m, startVertices, p_neighborhood_radius, std::numeric_limits<int>::max(), &neighbors);
 
-        // #pragma omp parallel for
-        for (size_t j = 0; j < mesh_.faces_size(); j++)
+        Neighbors finalNeighbors;
+
+        pmp::VertexProperty<float> distances = m.get_vertex_property<float>("geodesic:distance");
+        for (auto n : neighbors)
         {
-            if (i == j)
-                continue;
-
-            const pmp::Face fb = pmp::Face(j);
-            const pmp::Point pb = pmp::centroid(mesh_, fb);
-            const float dist = pmp::distance(pa, pb);
-
-            if (dist <= p_neighborhood_radius)
+            // std::cout << "Distance: " << distances[n] << std::endl;
+            auto d = distances[n] / p_neighborhood_radius;
+            if (d > 1)
             {
-                const float d = dist / p_neighborhood_radius;
-                // std::cout << "Normalized Distance: " << d << std::endl;
-
-                // #pragma omp critical
-                neighbors.push_back(std::make_tuple(fb, d, 0));
+                continue;
             }
-        }
-        // std::cout << "Added " << neighbors.size() << " neighbors to face: " << fa.idx() << std::endl;
 
-        neighborMap[i] = neighbors;
+            finalNeighbors.push_back(std::make_tuple(pmp::Face(n.idx()), d, 0));
+        }
+
+        neighborMap[i] = finalNeighbors;
 #pragma omp critical
         {
             neighborCountAvg += neighbors.size();
@@ -76,12 +75,12 @@ void MeshLenia::initialize_faceMap()
     kernel_shell_length.clear();
     kernel_shell_length.resize(mesh_.faces_size());
 
-#pragma omp parallel for
+    // #pragma omp parallel for
     for (size_t i = 0; i < neighborMap.size(); i++)
     {
         float ksl = 0;
 
-        // std::cout << "Face: " << i s<< std::endl;
+        // std::cout << "Face: " << i << std::endl;
         for (size_t j = 0; j < neighborMap[i].size(); j++)
         {
             float K_n = 0;
@@ -115,10 +114,10 @@ void MeshLenia::update_state(int num_steps)
     delta_x = 1 / p_neighborhood_radius;
     for (auto f : mesh_.faces())
         last_state_[f] = state_[f];
-        // kernel shell
-        // int i = 4;
+    // kernel shell
+    // int i = 4;
 
-// #pragma omp parallel for
+    // #pragma omp parallel for
     for (size_t i = 0; i < mesh_.faces_size(); i++)
     {
 
@@ -168,6 +167,8 @@ float MeshLenia::KernelShell(float r)
 
 float MeshLenia::KernelSkeleton(float r, const std::vector<float>& beta)
 {
+    return 0;
+
     size_t idx = std::floor(r * beta.size());
     // std::cout << idx << std::endl;
     if (idx > beta.size())
@@ -233,7 +234,6 @@ float MeshLenia::merged_together(const pmp::Face& x)
 
         // kernelShellLength
         //     += KernelSkeleton(std::get<1>(neighbor), p_beta_peaks) * pmp::face_area(mesh_, std::get<0>(neighbor));
-
 
         // Load from cache
         float k = std::get<2>(neighbor);
@@ -422,5 +422,16 @@ float MeshLenia::norm_check()
     }
 
     return result;
+}
+
+void MeshLenia::highlight_neighbors(pmp::Face& f)
+{
+    auto neighbors = neighborMap[f.idx()];
+
+    for (auto n : neighbors)
+    {
+        state_[std::get<0>(n)] = std::get<1>(n);
+    }
+
 }
 } // namespace meshlife
