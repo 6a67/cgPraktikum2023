@@ -356,6 +356,17 @@ void MeshLenia::place_stamp(pmp::Face f, const std::vector<std::vector<float>>& 
         std::cerr << "Error: Could not navigate to starting face for stamp. Invalid face given." << std::endl;
     }
 
+	auto north_edge = navigator.get_north_halfedge();
+	if (north_edge.is_valid())
+	{
+	  while (navigator.current_halfedge() != north_edge)
+	  {
+		navigator.rotate_counterclockwise();
+	  }
+	}
+	else
+        std::cerr << "Error: Could not orientate towards north." << std::endl;
+
     for (size_t y = 0; y < stamp.size(); y++)
     {
         navigator.push_position();

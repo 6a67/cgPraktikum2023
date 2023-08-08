@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include "meshlife/algorithms/mesh_lenia.h"
+#include "meshlife/navigator.h"
 #include "meshlife/stamps.h"
 #include "meshlife/visualization/viewer.h"
 #include "pmp/algorithms/differential_geometry.h"
@@ -304,24 +305,42 @@ void Viewer::process_imgui()
         {
             ImGui::Text("Face Idx: %d", debug_data.face.idx());
 
-            auto halfedges = mesh_.halfedges(debug_data.face);
-            int count = 0;
-            // TODO: Figure out a better way to count the edges
-            for (auto h : halfedges)
-                count++;
-            std::stringstream title;
-            title << "Halfedges of face: " << count;
-
-            ImGui::Text("%s", title.str().c_str());
-            ImGui::BeginListBox("##empty", ImVec2(-FLT_MIN, count * 18.5));
-            for (pmp::Halfedge halfedge : mesh_.halfedges(debug_data.face))
             {
-                ImGui::Text("Halfedge idx: %d (opp. HE: %d | Face: %d)",
-                            halfedge.idx(),
-                            mesh_.opposite_halfedge(halfedge).idx(),
-                            mesh_.face(mesh_.opposite_halfedge(halfedge)).idx());
+                auto halfedges = mesh_.halfedges(debug_data.face);
+                int count = 0;
+                // TODO: Figure out a better way to count the edges
+                for (auto h : halfedges)
+                    count++;
+                std::stringstream title;
+                title << "Halfedges of face: " << count;
+
+                ImGui::Text("%s", title.str().c_str());
+                ImGui::BeginListBox("##halfedges", ImVec2(-FLT_MIN, count * 18.5));
+                for (pmp::Halfedge halfedge : mesh_.halfedges(debug_data.face))
+                {
+                    ImGui::Text("Halfedge idx: %d (opp. HE: %d | Face: %d) (Start: %d | End: %d)",
+                                halfedge.idx(),
+                                mesh_.opposite_halfedge(halfedge).idx(),
+                                mesh_.face(mesh_.opposite_halfedge(halfedge)).idx(),
+                                mesh_.from_vertex(halfedge).idx(),
+                                mesh_.to_vertex(halfedge).idx());
+                }
+                ImGui::EndListBox();
             }
-            ImGui::EndListBox();
+
+            {
+                int vertex_count = mesh_.valence(debug_data.face);
+                std::stringstream label;
+                label << "Vertices of face: " << vertex_count;
+                ImGui::Text("%s", label.str().c_str());
+                ImGui::BeginListBox("##vertices", ImVec2(400, vertex_count * 18.5));
+                for (pmp::Vertex vertex : mesh_.vertices(debug_data.face))
+                {
+                    auto pos = mesh_.position(vertex);
+                    ImGui::Text("Vertex idx: %d XYZ: (%.02f, %.02f, %.02f)", vertex.idx(), pos[0], pos[1], pos[2]);
+                }
+                ImGui::EndListBox();
+            }
         }
         else
         {

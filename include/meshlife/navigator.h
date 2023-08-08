@@ -22,12 +22,15 @@ class QuadMeshNavigator
     void rotate_clockwise();
     void rotate_counterclockwise();
 
+    pmp::Halfedge get_north_halfedge();
+
     void push_position();
     void pop_position();
 
     bool move_to_face(pmp::Face face);
 
     pmp::Face current_face() const;
+    pmp::Halfedge current_halfedge() const;
 
     void set_on_enter_face_callback(OnEnterFace on_enter_face_callback);
 

@@ -1,5 +1,8 @@
 #include "meshlife/navigator.h"
+#include "pmp/mat_vec.h"
 #include <stdexcept>
+
+#include <pmp/surface_mesh.h>
 
 namespace meshlife
 {
@@ -111,9 +114,43 @@ pmp::Face QuadMeshNavigator::current_face() const
     return current_face_;
 }
 
+pmp::Halfedge QuadMeshNavigator::current_halfedge() const
+{
+    return current_halfedge_;
+}
+
 void QuadMeshNavigator::set_on_enter_face_callback(OnEnterFace on_enter_face_callback)
 {
     on_enter_face_callback_ = on_enter_face_callback;
+}
+
+pmp::Halfedge QuadMeshNavigator::get_north_halfedge()
+{
+    float last_x = std::numeric_limits<float>::min();
+    float last_y = std::numeric_limits<float>::min();
+    pmp::Halfedge north_halfedge;
+    float current_dot = 0;
+    for (auto halfedge : mesh_.halfedges(current_face_))
+    {
+        auto start = mesh_.from_vertex(halfedge);
+        auto end = mesh_.to_vertex(halfedge);
+        auto start_pos = mesh_.position(start);
+        auto end_pos = mesh_.position(end);
+
+        auto dir = end_pos - start_pos;
+        auto left = pmp::Vector<pmp::Scalar, 3>(-1, 0, 0);
+
+        // search halfedge that mostly points to the left (should be the north halfedge)
+        float dot = pmp::dot(dir, left);
+        // dot is 1 if the vectors are pointing in the same direction, -1 if they are pointing in opposite directions
+        // and 0 if perpendicular
+        if (dot > current_dot && dot > 0)
+        {
+            north_halfedge = halfedge;
+            current_dot = dot;
+        }
+    }
+    return north_halfedge;
 }
 
 } // namespace meshlife
