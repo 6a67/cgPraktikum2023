@@ -182,7 +182,7 @@ void MeshLenia::kernel_precompute()
     kernel_shell_length.clear();
     kernel_shell_length.resize(mesh_.faces_size());
 
-    // #pragma omp parallel for
+    #pragma omp parallel for
     for (size_t i = 0; i < neighborMap.size(); i++)
     {
         float ksl = 0;
@@ -210,7 +210,7 @@ void MeshLenia::update_state(int num_steps)
     // kernel shell
     // int i = 4;
 
-    // #pragma omp parallel for
+    #pragma omp parallel for
     for (size_t i = 0; i < mesh_.faces_size(); i++)
     {
 
