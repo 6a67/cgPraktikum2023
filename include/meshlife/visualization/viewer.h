@@ -1,7 +1,6 @@
 #pragma once
 
 #include "meshlife/algorithms/mesh_automaton.h"
-#include "meshlife/algorithms/mesh_gol.h"
 #include "meshlife/algorithms/mesh_lenia.h"
 #include <chrono>
 #include <ctime>
@@ -36,7 +35,7 @@ class Viewer : public pmp::MeshViewer
         // TODO: Free in destructor
         automaton = new T(mesh_);
 
-        if (auto lenia = dynamic_cast<MeshLenia*>(automaton))
+        if (auto* lenia = dynamic_cast<MeshLenia*>(automaton))
         {
             std::string s;
             for (auto peak : lenia->p_beta_peaks)
@@ -76,10 +75,10 @@ class Viewer : public pmp::MeshViewer
     std::chrono::time_point<std::chrono::high_resolution_clock> clock_last;
 
     // Updates per second
-    int UPS = 30;
-    bool unlimited_limit_UPS = false;
+    int UPS_ = 30;
+    bool unlimited_limit_UPS_ = false;
 
-    double current_UPS;
+    double current_UPS_;
 
     // Debug data
     DebugData debug_data;
@@ -92,7 +91,7 @@ class Viewer : public pmp::MeshViewer
     pmp::Color hsv_to_rgb(float h, float s, float v);
 
     void retrieve_debug_info_for_selected_face();
-    void select_debug_info_face(size_t faceIdx);
+    void select_debug_info_face(size_t face_idx);
 
     void start_simulation(bool single_step = false);
     void stop_simulation();

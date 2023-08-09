@@ -13,7 +13,6 @@
 #include <sstream>
 
 #include "meshlife/algorithms/mesh_lenia.h"
-#include "meshlife/navigator.h"
 #include "meshlife/stamps.h"
 #include "meshlife/visualization/viewer.h"
 #include "pmp/algorithms/differential_geometry.h"
@@ -86,12 +85,12 @@ void Viewer::simulation_thread_func()
         auto delta_clock_cycles = c_now - clock_last;
         auto delta_ms = (delta_clock_cycles / CLOCKS_PER_SEC).count();
         // only start updating the state after it has been rendered, otherwise we start rendering and redraw mid frame
-        if (!ready_for_display && (unlimited_limit_UPS || (delta_ms >= (1000.0 / (double)UPS))))
+        if (!ready_for_display && (unlimited_limit_UPS_ || (delta_ms >= (1000.0 / (double)UPS_))))
         {
             // std::cout << "Update state" << std::endl;
             clock_last = std::chrono::high_resolution_clock::now();
             automaton->update_state(1);
-            current_UPS = 1000.0 / delta_ms;
+            current_UPS_ = 1000.0 / delta_ms;
             ready_for_display = true;
         }
     }
@@ -358,7 +357,7 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
-    ImGui::Text("Current UPS: %.0f", current_UPS);
+    ImGui::Text("Current UPS: %.0f", current_UPS_);
     {
         std::stringstream label;
         label << "Unrestricted render updates (allows visual  update mid-calculation): "
@@ -371,13 +370,13 @@ void Viewer::process_imgui()
     {
 
         std::stringstream limit_ups_text;
-        limit_ups_text << "Unlimited UPS (Current: " << (unlimited_limit_UPS ? "ON" : "OFF") << ")";
+        limit_ups_text << "Unlimited UPS (Current: " << (unlimited_limit_UPS_ ? "ON" : "OFF") << ")";
         if (ImGui::Button(limit_ups_text.str().c_str()))
         {
-            unlimited_limit_UPS = !unlimited_limit_UPS;
+            unlimited_limit_UPS_ = !unlimited_limit_UPS_;
         }
 
-        ImGui::SliderInt("UPS", &UPS, 1, 1000);
+        ImGui::SliderInt("UPS", &UPS_, 1, 1000);
     }
     ImGui::Spacing();
 
@@ -643,16 +642,16 @@ void Viewer::process_imgui()
         ImGui::SliderInt("T", &lenia->p_T, 1, 50);
 
         // TODO: recalculate neighbors
-        float neighborhood_radius = lenia->p_neighborhood_radius / lenia->averageEdgeLength;
+        float neighborhood_radius = lenia->p_neighborhood_radius / lenia->average_edge_length;
         ImGui::SliderFloat("Neighborhood Radius", &neighborhood_radius, 0, 20);
-        lenia->p_neighborhood_radius = neighborhood_radius * lenia->averageEdgeLength;
+        lenia->p_neighborhood_radius = neighborhood_radius * lenia->average_edge_length;
         if (ImGui::Button("Recalculate Neighborhood"))
         {
             // TODO: move a_gol to a better place
             stop_simulation();
             lenia->allocate_needed_properties();
         }
-        ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighborCountAvg);
+        ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighbor_count_avg);
 
         if (ImGui::Button("Visualize Kernel Shell"))
         {
@@ -753,7 +752,7 @@ void Viewer::process_imgui()
                 lenia->p_sigma = 0.017;
                 lenia->p_beta_peaks = {1};
                 lenia->p_T = 10;
-                lenia->p_neighborhood_radius = 13 * lenia->averageEdgeLength;
+                lenia->p_neighborhood_radius = 13 * lenia->average_edge_length;
                 break;
             }
 

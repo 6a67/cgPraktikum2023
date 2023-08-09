@@ -47,38 +47,38 @@ class MeshLenia : public MeshAutomaton
 
     float distance_neighbors(const Neighbor& n);
 
-    float KernelShell(float r);
-    float Potential_Distribution_U(const pmp::Face& n);
+    float kernel_shell(float r);
+    float potential_distribution_u(const pmp::Face& n);
 
     void highlight_neighbors(pmp::Face& f);
 
-    float KernelShell_Length(const Neighbors& n);
-    float KernelSkeleton(float r, const std::vector<float>& beta);
-    float K(const Neighbor& n, const Neighbors& neighborhood);
-    float Growth(float f, float mu, float sigma);
+    float kernel_shell_length(const Neighbors& n);
+    float kernel_skeleton(float r, const std::vector<float>& beta);
+    float k(const Neighbor& n, const Neighbors& neighborhood);
+    float growth(float f, float mu, float sigma);
 
     float p_mu = 0.581;
     float p_sigma = 0.131;
     float p_neighborhood_radius = 0.371;
-    int neighborCountAvg = 0;
+    int neighbor_count_avg = 0;
 
     std::vector<float> p_beta_peaks;
 
-    float averageEdgeLength = 0;
+    float average_edge_length = 0;
 
     int p_T = 10;
 
   private:
     std::vector<float> kernel_shell_length_;
 
-    NeighborMap neighborMap;
+    NeighborMap neighbor_map;
 
     /// Find face with lowest distance to all other facestamp
     pmp::Face find_center_face();
 
-    void initialize_faceMap_euclidean();
+    void initialize_face_map_euclidean();
 
-    void initialize_faceMap_geodesic();
+    void initialize_face_map_geodesic();
 };
 
 } // namespace meshlife
