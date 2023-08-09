@@ -62,3 +62,9 @@ TODO:
             - neighbors: output vector
     - load examples: orbium etc.
     - K(n) kann precomputed werden
+
+# Fractals
+https://www.youtube.com/watch?v=svLzmFuSBhk
+https://www.youtube.com/watch?v=BNZtUB7yhX4
+https://www.youtube.com/watch?v=PGtv-dBi2wE
+https://www.youtube.com/watch?v=Cp5WWtMoeKg
