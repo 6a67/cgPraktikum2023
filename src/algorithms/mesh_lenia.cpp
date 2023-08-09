@@ -176,7 +176,6 @@ void MeshLenia::update_state(int num_steps)
 {
     for (int step = 0; step < num_steps; step++)
     {
-        delta_x = 1 / p_neighborhood_radius;
         for (auto f : mesh_.faces())
             last_state_[f] = state_[f];
 

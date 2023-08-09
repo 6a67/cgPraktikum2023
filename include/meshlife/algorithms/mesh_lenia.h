@@ -69,7 +69,6 @@ class MeshLenia : public MeshAutomaton
     int p_T = 10;
 
   private:
-    float delta_x = 1 / p_neighborhood_radius;
     std::vector<float> kernel_shell_length_;
 
     NeighborMap neighborMap;
