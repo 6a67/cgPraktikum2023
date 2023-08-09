@@ -172,7 +172,11 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     case GLFW_KEY_8:
     case GLFW_KEY_9:
     {
+        // deselect face
         select_debug_info_face(-1);
+        // stop simulation thread
+        stop_simulation();
+
         switch (key)
         {
         case GLFW_KEY_0:
