@@ -696,6 +696,8 @@ void Viewer::process_imgui()
                 stamp = stamps::s_smiley;
             else if (ImGui::MenuItem("Debug"))
                 stamp = stamps::s_debug;
+            else if (ImGui::MenuItem("Geminium"))
+                stamp = stamps::s_geminium;
             ImGui::EndMenu();
         }
 
@@ -717,6 +719,9 @@ void Viewer::process_imgui()
             case stamps::Shapes::s_debug:
                 lenia->place_stamp(f, stamps::debug);
                 break;
+            case stamps::Shapes::s_geminium:
+                lenia->place_stamp(f, stamps::geminium);
+                break;
             }
             // cause the render to redraw the next draw frame
             ready_for_display = true;
@@ -728,7 +733,7 @@ void Viewer::process_imgui()
         }
 
         // list from where presets can be selected
-        static const char* items[] = {"Glider Settings"};
+        static const char* items[] = {"Glider Settings", "Geminium Settings"};
         static int item_current = 1;
         if (ImGui::BeginCombo("Presets", items[item_current]))
         {
@@ -753,6 +758,13 @@ void Viewer::process_imgui()
                 lenia->p_beta_peaks = {1};
                 lenia->p_T = 10;
                 lenia->p_neighborhood_radius = 13 * lenia->average_edge_length;
+                break;
+            case 1:
+                lenia->p_mu = 0.26;
+                lenia->p_sigma = 0.036;
+                lenia->p_beta_peaks = {0.5, 1, 0.667};
+                lenia->p_T = 10;
+                lenia->p_neighborhood_radius = 18 * lenia->average_edge_length;
                 break;
             }
 
