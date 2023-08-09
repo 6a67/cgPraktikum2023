@@ -126,8 +126,6 @@ void QuadMeshNavigator::set_on_enter_face_callback(OnEnterFace on_enter_face_cal
 
 pmp::Halfedge QuadMeshNavigator::get_north_halfedge()
 {
-    float last_x = std::numeric_limits<float>::min();
-    float last_y = std::numeric_limits<float>::min();
     pmp::Halfedge north_halfedge;
     float current_dot = 0;
     for (auto halfedge : mesh_.halfedges(current_face_))

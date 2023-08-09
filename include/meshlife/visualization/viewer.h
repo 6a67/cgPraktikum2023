@@ -73,7 +73,7 @@ class Viewer : public pmp::MeshViewer
     bool simulation_running = false;
     char* modelpath_buf;
     char* peak_string;
-    std::chrono::time_point<std::chrono::high_resolution_clock> c_last;
+    std::chrono::time_point<std::chrono::high_resolution_clock> clock_last;
 
     // Updates per second
     int UPS = 30;

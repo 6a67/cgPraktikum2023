@@ -53,7 +53,7 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     add_help_item("S", "Step once in simulation");
     add_help_item("D", "Select face and retrieve debug info");
 
-    c_last = std::chrono::high_resolution_clock::now();
+    clock_last = std::chrono::high_resolution_clock::now();
 }
 
 Viewer::~Viewer()
@@ -83,16 +83,15 @@ void Viewer::simulation_thread_func()
     while (simulation_running)
     {
         auto c_now = std::chrono::high_resolution_clock::now();
-        auto deltaClockCycles = c_now - c_last;
-        auto deltaMs = (deltaClockCycles / CLOCKS_PER_SEC).count();
+        auto delta_clock_cycles = c_now - clock_last;
+        auto delta_ms = (delta_clock_cycles / CLOCKS_PER_SEC).count();
         // only start updating the state after it has been rendered, otherwise we start rendering and redraw mid frame
-        // TODO: fix race conditions with ready_for_display
-        if (!ready_for_display && (unlimited_limit_UPS || (deltaMs >= (1000.0 / (double)UPS))))
+        if (!ready_for_display && (unlimited_limit_UPS || (delta_ms >= (1000.0 / (double)UPS))))
         {
             // std::cout << "Update state" << std::endl;
-            c_last = std::chrono::high_resolution_clock::now();
+            clock_last = std::chrono::high_resolution_clock::now();
             automaton->update_state(1);
-            current_UPS = 1000.0 / deltaMs;
+            current_UPS = 1000.0 / delta_ms;
             ready_for_display = true;
         }
     }
@@ -120,17 +119,12 @@ void Viewer::retrieve_debug_info_for_selected_face()
 {
     double x, y;
     cursor_pos(x, y);
-    pmp::Vertex v = pick_vertex(x, y);
-    if (mesh_.is_valid(v))
+    pmp::Face face;
+    find_face(x, y, face);
+    if (face.is_valid())
     {
-        // You can do something with the picked vertex here
-        pmp::Face face;
-        find_face(x, y, face);
-        if (face.is_valid())
-        {
-            debug_data.selected_face_idx = face.idx();
-            select_debug_info_face(debug_data.selected_face_idx);
-        }
+        debug_data.selected_face_idx = face.idx();
+        select_debug_info_face(debug_data.selected_face_idx);
     }
 }
 
@@ -240,7 +234,6 @@ void Viewer::do_processing()
     // ready_for_display gets set to true every time the simulation thread finishes one update, so we limit redraw calls
     // to be in sync with the simulation delay. uncomplete_updates is used to circumvent this sync behaviour and allows
     // to redraw the state[] array while it still gets updated in the simulation thread
-    // TODO: fix race conditions with ready_for_display
     if (uncomplete_updates || ready_for_display)
     {
         // reset update flag
@@ -312,7 +305,7 @@ pmp::Color Viewer::hsv_to_rgb(float h, float s, float v)
 
 void Viewer::read_mesh_from_file(std::string path)
 {
-    std::cout << "Reading from: " << path << std::endl;
+    std::cout << "Loading mesh from: " << path << std::endl;
     std::filesystem::path file{path};
     if (std::filesystem::exists(file))
     {
@@ -322,18 +315,18 @@ void Viewer::read_mesh_from_file(std::string path)
     }
     else
     {
-        std::cout << "Filepath does not exist!" << std::endl;
+        std::cerr << "Error: Filepath does not exist!" << std::endl;
     }
 
     // mesh_.assign(mesh);
 }
 
-void Viewer::select_debug_info_face(size_t faceIdx)
+void Viewer::select_debug_info_face(size_t face_idx)
 {
     pmp::Face selected_face = pmp::Face();
     for (auto face : mesh_.faces())
     {
-        if (face.idx() == faceIdx)
+        if (face.idx() == face_idx)
         {
             selected_face = face;
             break;
@@ -643,7 +636,7 @@ void Viewer::process_imgui()
         read_mesh_from_file(std::string(modelpath_buf));
     }
 
-    if (auto lenia = dynamic_cast<MeshLenia*>(automaton))
+    if (auto* lenia = dynamic_cast<MeshLenia*>(automaton))
     {
         ImGui::SliderFloat("Mu", &lenia->p_mu, 0, 1);
         ImGui::SliderFloat("Sigma", &lenia->p_sigma, 0, 1);
@@ -776,9 +769,9 @@ void Viewer::process_imgui()
 
 void Viewer::set_face_color(pmp::Face& face, pmp::Color color)
 {
-    auto colorProperty = mesh_.get_face_property<pmp::Color>("f:color");
+    auto color_property = mesh_.get_face_property<pmp::Color>("f:color");
     // std::cout << colorProperty[face] << std::endl;
-    colorProperty[face] = color;
+    color_property[face] = color;
 }
 
 void Viewer::mouse(int button, int action, int mods)
@@ -795,7 +788,7 @@ void Viewer::mouse(int button, int action, int mods)
             find_face(x, y, face);
             // TODO: maybe convert to method
             automaton->set_state(face, 1.0);
-            if (auto lenia = dynamic_cast<MeshLenia*>(automaton))
+            if (auto* lenia = dynamic_cast<MeshLenia*>(automaton))
             {
                 lenia->highlight_neighbors(face);
                 std::cout << "highlighted neighbors" << std::endl;

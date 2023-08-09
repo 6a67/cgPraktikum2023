@@ -39,11 +39,7 @@ class MeshLenia : public MeshAutomaton
     typedef std::vector<Neighbor> Neighbors;
     typedef std::vector<Neighbors> NeighborMap;
 
-    std::vector<float> kernel_shell_length;
-
-    void initialize_faceMap();
-
-    void initialize_faceMap_geodesic();
+    void precache_face_values();
 
     bool is_closed_mesh();
 
@@ -74,11 +70,16 @@ class MeshLenia : public MeshAutomaton
 
   private:
     float delta_x = 1 / p_neighborhood_radius;
+    std::vector<float> kernel_shell_length_;
 
     NeighborMap neighborMap;
 
     /// Find face with lowest distance to all other facestamp
     pmp::Face find_center_face();
+
+    void initialize_faceMap_euclidean();
+
+    void initialize_faceMap_geodesic();
 };
 
 } // namespace meshlife
