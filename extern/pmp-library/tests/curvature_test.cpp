@@ -10,8 +10,11 @@ using namespace pmp;
 
 class CurvatureTest : public ::testing::Test
 {
-public:
-    CurvatureTest() { mesh = icosphere(5); }
+  public:
+    CurvatureTest()
+    {
+        mesh = icosphere(5);
+    }
 
     SurfaceMesh mesh;
 };

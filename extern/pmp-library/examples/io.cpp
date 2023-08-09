@@ -1,8 +1,8 @@
 // Copyright 2013-2017 the Polygon Mesh Processing Library developers.
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
-#include <pmp/surface_mesh.h>
 #include <pmp/io/io.h>
+#include <pmp/surface_mesh.h>
 
 using namespace pmp;
 

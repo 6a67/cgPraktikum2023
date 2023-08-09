@@ -5,19 +5,20 @@
 
 #include "pmp/visualization/gl.h"
 
-#include <vector>
-#include <utility>
 #include <array>
+#include <utility>
+#include <vector>
 
 #include <GLFW/glfw3.h>
 
-namespace pmp {
+namespace pmp
+{
 
 //! A window provided by GLFW
 //! \ingroup visualization
 class Window
 {
-public:
+  public:
     //! constructor
     Window(const char* title, int width, int height, bool showgui = true);
 
@@ -27,38 +28,51 @@ public:
     //! main window loop
     int run();
 
-protected:
+  protected:
     //! this function is called when the scene has to be rendered. it
     //! clears the buffers, calls the draw() method, and performs buffer swap
     virtual void display() = 0;
 
     //! this function handles keyboard events
-    virtual void keyboard(int /*key*/, int /*code*/, int /*action*/,
-                          int /*mods*/);
+    virtual void keyboard(int /*key*/, int /*code*/, int /*action*/, int /*mods*/);
 
     //! this function handles unicode character events
     virtual void character(unsigned int);
 
     //! this function handles mouse button events
-    virtual void mouse(int /*button*/, int /*action*/, int /*mods*/) {}
+    virtual void mouse(int /*button*/, int /*action*/, int /*mods*/)
+    {
+    }
 
     //! this function handles mouse motion (passive/active position)
-    virtual void motion(double /*xpos*/, double /*ypos*/) {}
+    virtual void motion(double /*xpos*/, double /*ypos*/)
+    {
+    }
 
     //! this function handles mouse scroll events
-    virtual void scroll(double /*xoffset*/, double /*yoffset*/) {}
+    virtual void scroll(double /*xoffset*/, double /*yoffset*/)
+    {
+    }
 
     //! this function is called if the window is resized
-    virtual void resize(int /*width*/, int /*height*/) {}
+    virtual void resize(int /*width*/, int /*height*/)
+    {
+    }
 
     //! this function is called if a file is dropped onto the window
-    virtual void drop(int /*count*/, const char** /*paths*/) {}
+    virtual void drop(int /*count*/, const char** /*paths*/)
+    {
+    }
 
     //! this function renders the ImGUI elements and handles their events
-    virtual void process_imgui() {}
+    virtual void process_imgui()
+    {
+    }
 
     //! this function is called just before rendering
-    virtual void do_processing() {}
+    virtual void do_processing()
+    {
+    }
 
     //! setup ImGUI user interface
     void init_imgui();
@@ -67,17 +81,22 @@ protected:
     void scale_imgui(float scale);
 
     //! is ImGUI visible or hidden?
-    bool show_imgui() const { return show_imgui_; }
+    bool show_imgui() const
+    {
+        return show_imgui_;
+    }
 
     //!  show or hide ImGUI
-    void show_imgui(bool b) { show_imgui_ = b; }
+    void show_imgui(bool b)
+    {
+        show_imgui_ = b;
+    }
 
     //! clear help items
     void clear_help_items();
 
     //! add key binding (or general action description)
-    void add_help_item(std::string key, std::string description,
-                       int position = -1);
+    void add_help_item(std::string key, std::string description, int position = -1);
 
     //! show ImGUI help dialog
     void show_help();
@@ -87,22 +106,37 @@ protected:
     void screenshot();
 
     //! width of window
-    int width() const { return width_; }
+    int width() const
+    {
+        return width_;
+    }
 
     //! height of window
-    int height() const { return height_; }
+    int height() const
+    {
+        return height_;
+    }
 
     //! highDPI scaling
-    float high_dpi_scaling() const { return scaling_; }
+    float high_dpi_scaling() const
+    {
+        return scaling_;
+    }
 
     //! imgui scaling
-    float imgui_scaling() const { return imgui_scale_; }
+    float imgui_scaling() const
+    {
+        return imgui_scale_;
+    }
 
     //! get position of mouse cursor
     void cursor_pos(double& x, double& y) const;
 
     //! is left mouse button pressed down?
-    bool left_mouse_pressed() const { return button_[GLFW_MOUSE_BUTTON_LEFT]; }
+    bool left_mouse_pressed() const
+    {
+        return button_[GLFW_MOUSE_BUTTON_LEFT];
+    }
     //! is right mouse button pressed down?
     bool right_mouse_pressed() const
     {
@@ -115,19 +149,26 @@ protected:
     }
 
     //! is CTRL modifier key pressed down?
-    bool ctrl_pressed() const { return ctrl_pressed_; }
+    bool ctrl_pressed() const
+    {
+        return ctrl_pressed_;
+    }
     //! is ALT modifier key pressed down?
-    bool alt_pressed() const { return alt_pressed_; }
+    bool alt_pressed() const
+    {
+        return alt_pressed_;
+    }
     //! is SHIFT modifier key pressed down?
-    bool shift_pressed() const { return shift_pressed_; }
+    bool shift_pressed() const
+    {
+        return shift_pressed_;
+    }
 
-private:
+  private:
     static void glfw_error(int error, const char* description);
-    static void glfw_keyboard(GLFWwindow* window, int key, int scancode,
-                              int action, int mods);
+    static void glfw_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void glfw_character(GLFWwindow* window, unsigned int c);
-    static void glfw_mouse(GLFWwindow* window, int button, int action,
-                           int mods);
+    static void glfw_mouse(GLFWwindow* window, int button, int action, int mods);
     static void glfw_motion(GLFWwindow* window, double xpos, double ypos);
     static void glfw_scroll(GLFWwindow* window, double xoffset, double yoffset);
     static void glfw_resize(GLFWwindow* window, int width, int height);

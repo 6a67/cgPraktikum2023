@@ -8,7 +8,8 @@
 #include "pmp/io/io_flags.h"
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \brief Read into \p mesh from \p file
 //! \details File extension determines file type. Supported formats and
@@ -40,7 +41,6 @@ void read(SurfaceMesh& mesh, const std::filesystem::path& file);
 //! In addition, the OBJ and PMP formats support writing per-halfedge
 //! texture coordinates.
 //! \ingroup io
-void write(const SurfaceMesh& mesh, const std::filesystem::path& file,
-           const IOFlags& flags = IOFlags());
+void write(const SurfaceMesh& mesh, const std::filesystem::path& file, const IOFlags& flags = IOFlags());
 
 } // namespace pmp

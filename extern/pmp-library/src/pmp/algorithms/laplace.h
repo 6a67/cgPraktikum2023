@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include "pmp/surface_mesh.h"
 #include "pmp/algorithms/numerics.h"
+#include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 /// compute uniform mass matrix, containing vertex valence on the diagonal
 void setup_uniform_mass_matrix(const SurfaceMesh& mesh, DiagonalMatrix& M);
@@ -19,8 +20,7 @@ void setup_uniform_laplace_matrix(const SurfaceMesh& mesh, SparseMatrix& M);
 void setup_mass_matrix(const SurfaceMesh& mesh, DiagonalMatrix& M);
 
 /// compute cotan Laplace matrix, optionally clamping negative cotan weights to zero
-void setup_laplace_matrix(const SurfaceMesh& mesh, SparseMatrix& L,
-                          bool clamp = false);
+void setup_laplace_matrix(const SurfaceMesh& mesh, SparseMatrix& L, bool clamp = false);
 
 /// compute gradient matrix
 void setup_gradient_matrix(const SurfaceMesh& mesh, SparseMatrix& G);

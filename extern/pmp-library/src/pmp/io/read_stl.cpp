@@ -8,7 +8,8 @@
 #include <limits>
 #include <map>
 
-namespace pmp {
+namespace pmp
+{
 
 // comparison operator for vec3
 struct CompareVec3
@@ -50,8 +51,7 @@ void read_stl(SurfaceMesh& mesh, const std::filesystem::path& file)
     // ASCII or binary STL?
     auto c = fgets(line.data(), 6, in);
     assert(c != nullptr);
-    const bool binary = ((strncmp(line.data(), "SOLID", 5) != 0) &&
-                         (strncmp(line.data(), "solid", 5) != 0));
+    const bool binary = ((strncmp(line.data(), "SOLID", 5) != 0) && (strncmp(line.data(), "solid", 5) != 0));
 
     // parse binary STL
     if (binary)
@@ -98,8 +98,7 @@ void read_stl(SurfaceMesh& mesh, const std::filesystem::path& file)
             }
 
             // Add face only if it is not degenerated
-            if ((vertices[0] != vertices[1]) && (vertices[0] != vertices[2]) &&
-                (vertices[1] != vertices[2]))
+            if ((vertices[0] != vertices[1]) && (vertices[0] != vertices[2]) && (vertices[1] != vertices[2]))
                 mesh.add_face(vertices);
 
             n_items = fread(line.data(), 1, 2, in);
@@ -155,9 +154,7 @@ void read_stl(SurfaceMesh& mesh, const std::filesystem::path& file)
                 }
 
                 // Add face only if it is not degenerated
-                if ((vertices[0] != vertices[1]) &&
-                    (vertices[0] != vertices[2]) &&
-                    (vertices[1] != vertices[2]))
+                if ((vertices[0] != vertices[1]) && (vertices[0] != vertices[2]) && (vertices[1] != vertices[2]))
                     mesh.add_face(vertices);
             }
         }

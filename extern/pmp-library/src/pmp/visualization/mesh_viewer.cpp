@@ -12,7 +12,8 @@
 
 #include "pmp/io/io.h"
 
-namespace pmp {
+namespace pmp
+{
 
 MeshViewer::MeshViewer(const char* title, int width, int height, bool showgui)
     : TrackballViewer(title, width, height, showgui), renderer_(mesh_)
@@ -61,8 +62,7 @@ void MeshViewer::load_mesh(const char* filename)
     }
 
     // print mesh statistic
-    std::cout << "Loaded " << filename << ": " << mesh_.n_vertices()
-              << " vertices, " << mesh_.n_faces() << " faces\n";
+    std::cout << "Loaded " << filename << ": " << mesh_.n_vertices() << " vertices, " << mesh_.n_faces() << " faces\n";
 
     filename_ = filename;
     renderer_.set_crease_angle(crease_angle_);
@@ -82,8 +82,7 @@ void MeshViewer::load_matcap(const char* filename)
     set_draw_mode("Texture");
 }
 
-void MeshViewer::load_texture(const char* filename, GLint format,
-                              GLint min_filter, GLint mag_filter, GLint wrap)
+void MeshViewer::load_texture(const char* filename, GLint format, GLint min_filter, GLint mag_filter, GLint wrap)
 {
     // load texture from file
     try
@@ -145,8 +144,7 @@ void MeshViewer::process_imgui()
 
         // control crease angle
         ImGui::PushItemWidth(100);
-        ImGui::SliderFloat("Crease Angle", &crease_angle_, 0.0f, 180.0f,
-                           "%.0f");
+        ImGui::SliderFloat("Crease Angle", &crease_angle_, 0.0f, 180.0f, "%.0f");
         ImGui::PopItemWidth();
         if (crease_angle_ != renderer_.crease_angle())
         {
@@ -168,24 +166,24 @@ void MeshViewer::keyboard(int key, int scancode, int action, int mods)
 
     switch (key)
     {
-        case GLFW_KEY_BACKSPACE: // reload model
-        {
-            if (!filename_.empty())
-                load_mesh(filename_.c_str());
-            break;
-        }
+    case GLFW_KEY_BACKSPACE: // reload model
+    {
+        if (!filename_.empty())
+            load_mesh(filename_.c_str());
+        break;
+    }
 
-        case GLFW_KEY_W: // write mesh
-        {
-            write(mesh_, "output.off");
-            break;
-        }
+    case GLFW_KEY_W: // write mesh
+    {
+        write(mesh_, "output.off");
+        break;
+    }
 
-        default:
-        {
-            TrackballViewer::keyboard(key, scancode, action, mods);
-            break;
-        }
+    default:
+    {
+        TrackballViewer::keyboard(key, scancode, action, mods);
+        break;
+    }
     }
 }
 

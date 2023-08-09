@@ -8,9 +8,9 @@
 #include "pmp/io/io_flags.h"
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
-void write_pmp(SurfaceMesh& mesh, const std::filesystem::path& file,
-               const IOFlags& flags);
+void write_pmp(SurfaceMesh& mesh, const std::filesystem::path& file, const IOFlags& flags);
 
 } // namespace pmp

@@ -1,18 +1,19 @@
-namespace Eigen { 
+namespace Eigen
+{
 
-namespace internal {
+namespace internal
+{
 
 template <typename Scalar>
-void dogleg(
-        const Matrix< Scalar, Dynamic, Dynamic >  &qrfac,
-        const Matrix< Scalar, Dynamic, 1 >  &diag,
-        const Matrix< Scalar, Dynamic, 1 >  &qtb,
-        Scalar delta,
-        Matrix< Scalar, Dynamic, 1 >  &x)
+void dogleg(const Matrix<Scalar, Dynamic, Dynamic>& qrfac,
+            const Matrix<Scalar, Dynamic, 1>& diag,
+            const Matrix<Scalar, Dynamic, 1>& qtb,
+            Scalar delta,
+            Matrix<Scalar, Dynamic, 1>& x)
 {
     using std::abs;
     using std::sqrt;
-    
+
     typedef DenseIndex Index;
 
     /* Local variables */
@@ -24,23 +25,25 @@ void dogleg(
     /* Function Body */
     const Scalar epsmch = NumTraits<Scalar>::epsilon();
     const Index n = qrfac.cols();
-    eigen_assert(n==qtb.size());
-    eigen_assert(n==x.size());
-    eigen_assert(n==diag.size());
-    Matrix< Scalar, Dynamic, 1 >  wa1(n), wa2(n);
+    eigen_assert(n == qtb.size());
+    eigen_assert(n == x.size());
+    eigen_assert(n == diag.size());
+    Matrix<Scalar, Dynamic, 1> wa1(n), wa2(n);
 
     /* first, calculate the gauss-newton direction. */
-    for (j = n-1; j >=0; --j) {
-        temp = qrfac(j,j);
-        if (temp == 0.) {
-            temp = epsmch * qrfac.col(j).head(j+1).maxCoeff();
+    for (j = n - 1; j >= 0; --j)
+    {
+        temp = qrfac(j, j);
+        if (temp == 0.)
+        {
+            temp = epsmch * qrfac.col(j).head(j + 1).maxCoeff();
             if (temp == 0.)
                 temp = epsmch;
         }
-        if (j==n-1)
+        if (j == n - 1)
             x[j] = qtb[j] / temp;
         else
-            x[j] = (qtb[j] - qrfac.row(j).tail(n-j-1).dot(x.tail(n-j-1))) / temp;
+            x[j] = (qtb[j] - qrfac.row(j).tail(n - j - 1).dot(x.tail(n - j - 1))) / temp;
     }
 
     /* test whether the gauss-newton direction is acceptable. */
@@ -54,8 +57,9 @@ void dogleg(
     /* next, calculate the scaled gradient direction. */
 
     wa1.fill(0.);
-    for (j = 0; j < n; ++j) {
-        wa1.tail(n-j) += qrfac.row(j).tail(n-j) * qtb[j];
+    for (j = 0; j < n; ++j)
+    {
+        wa1.tail(n - j) += qrfac.row(j).tail(n - j) * qtb[j];
         wa1[j] /= diag[j];
     }
 
@@ -69,13 +73,15 @@ void dogleg(
 
     /* calculate the point along the scaled gradient */
     /* at which the quadratic is minimized. */
-    wa1.array() /= (diag*gnorm).array();
+    wa1.array() /= (diag * gnorm).array();
     // TODO : once unit tests cover this part,:
     // wa2 = qrfac.template triangularView<Upper>() * wa1;
-    for (j = 0; j < n; ++j) {
+    for (j = 0; j < n; ++j)
+    {
         sum = 0.;
-        for (i = j; i < n; ++i) {
-            sum += qrfac(j,i) * wa1[i];
+        for (i = j; i < n; ++i)
+        {
+            sum += qrfac(j, i) * wa1[i];
         }
         wa2[j] = sum;
     }
@@ -92,13 +98,15 @@ void dogleg(
     /* at which the quadratic is minimized. */
     bnorm = qtb.stableNorm();
     temp = bnorm / gnorm * (bnorm / qnorm) * (sgnorm / delta);
-    temp = temp - delta / qnorm * numext::abs2(sgnorm / delta) + sqrt(numext::abs2(temp - delta / qnorm) + (1.-numext::abs2(delta / qnorm)) * (1.-numext::abs2(sgnorm / delta)));
+    temp = temp - delta / qnorm * numext::abs2(sgnorm / delta)
+           + sqrt(numext::abs2(temp - delta / qnorm)
+                  + (1. - numext::abs2(delta / qnorm)) * (1. - numext::abs2(sgnorm / delta)));
     alpha = delta / qnorm * (1. - numext::abs2(sgnorm / delta)) / temp;
 algo_end:
 
     /* form appropriate convex combination of the gauss-newton */
     /* direction and the scaled gradient direction. */
-    temp = (1.-alpha) * (std::min)(sgnorm,delta);
+    temp = (1. - alpha) * (std::min)(sgnorm, delta);
     x = temp * wa1 + alpha * x;
 }
 

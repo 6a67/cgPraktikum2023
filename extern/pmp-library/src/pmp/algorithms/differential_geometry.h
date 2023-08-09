@@ -3,10 +3,11 @@
 
 #pragma once
 
-#include "pmp/types.h"
 #include "pmp/surface_mesh.h"
+#include "pmp/types.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \addtogroup algorithms
 //! @{
@@ -63,8 +64,8 @@ Scalar surface_area(const SurfaceMesh& mesh);
 Scalar voronoi_area(const SurfaceMesh& mesh, Vertex v);
 
 //! \brief Compute mixed Voronoi area of a vertex
-//! \details This version is preferred for irregular triangles with obtuse angles. See \cite meyer_2003_discrete for details.
-//! \pre Input mesh needs to be a triangle mesh.
+//! \details This version is preferred for irregular triangles with obtuse angles. See \cite meyer_2003_discrete for
+//! details. \pre Input mesh needs to be a triangle mesh.
 Scalar voronoi_area_mixed(const SurfaceMesh& mesh, Vertex v);
 
 //! compute area assigned to edge e

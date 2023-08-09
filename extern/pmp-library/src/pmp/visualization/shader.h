@@ -5,21 +5,25 @@
 
 #include <vector>
 
-#include "pmp/visualization/gl.h"
 #include "pmp/mat_vec.h"
+#include "pmp/visualization/gl.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! Class for handling shaders.
 //! \ingroup visualization
 class Shader
 {
-public:
+  public:
     //! Default destructor, clears all shaders.
     ~Shader();
 
     //! Indicate if shader is valid.
-    bool is_valid() const { return pid_ != 0; }
+    bool is_valid() const
+    {
+        return pid_ != 0;
+    }
 
     //! Get source from strings, compile, and link vertex and fragment shader.
     //! \param vshader string with the address to the vertex shader
@@ -34,8 +38,11 @@ public:
     //! \param gfile filename of geometry shader
     //! \param tcfile filename of tessellation control shader
     //! \param tefile filename of tessellation evaluation shader
-    void load(const char* vfile, const char* ffile, const char* gfile = nullptr,
-              const char* tcfile = nullptr, const char* tefile = nullptr);
+    void load(const char* vfile,
+              const char* ffile,
+              const char* gfile = nullptr,
+              const char* tcfile = nullptr,
+              const char* tefile = nullptr);
 
     //! Enable/bind this shader program.
     void use();
@@ -76,7 +83,7 @@ public:
     //! \param mat the value for the uniform
     void set_uniform(const char* name, const mat4& mat);
 
-private:
+  private:
     // deletes all shader and frees GPU shader capacities
     void cleanup();
 

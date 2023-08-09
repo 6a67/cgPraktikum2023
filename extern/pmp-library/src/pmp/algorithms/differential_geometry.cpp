@@ -6,7 +6,8 @@
 #include <cmath>
 #include <limits>
 
-namespace pmp {
+namespace pmp
+{
 
 Scalar triangle_area(const Point& p0, const Point& p1, const Point& p2)
 {
@@ -114,8 +115,7 @@ Scalar voronoi_area_mixed(const SurfaceMesh& mesh, Vertex v)
                 cotr = dotr / triangle_area;
 
                 // clamp cot(angle) by clamping angle to [3, 177]
-                area += 0.125 * (sqrnorm(pr) * clamp_cot(cotq) +
-                                 sqrnorm(pq) * clamp_cot(cotr));
+                area += 0.125 * (sqrnorm(pr) * clamp_cot(cotq) + sqrnorm(pq) * clamp_cot(cotr));
             }
         }
     }
@@ -215,8 +215,7 @@ double cotan_weight(const SurfaceMesh& mesh, Edge e)
 
     if (!mesh.is_boundary(h0))
     {
-        const dvec3 p2 =
-            (dvec3)mesh.position(mesh.to_vertex(mesh.next_halfedge(h0)));
+        const dvec3 p2 = (dvec3)mesh.position(mesh.to_vertex(mesh.next_halfedge(h0)));
         const dvec3 d0 = p0 - p2;
         const dvec3 d1 = p1 - p2;
         const double area = norm(cross(d0, d1));
@@ -230,8 +229,7 @@ double cotan_weight(const SurfaceMesh& mesh, Edge e)
 
     if (!mesh.is_boundary(h1))
     {
-        const dvec3 p2 =
-            (dvec3)mesh.position(mesh.to_vertex(mesh.next_halfedge(h1)));
+        const dvec3 p2 = (dvec3)mesh.position(mesh.to_vertex(mesh.next_halfedge(h1)));
         const dvec3 d0 = p0 - p2;
         const dvec3 d1 = p1 - p2;
         const double area = norm(cross(d0, d1));

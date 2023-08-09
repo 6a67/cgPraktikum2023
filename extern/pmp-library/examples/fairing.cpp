@@ -1,24 +1,23 @@
 // Copyright 2011-2019 the Polygon Mesh Processing Library developers.
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
-#include <pmp/visualization/mesh_viewer.h>
+#include <imgui.h>
 #include <pmp/algorithms/curvature.h>
 #include <pmp/algorithms/fairing.h>
-#include <imgui.h>
+#include <pmp/visualization/mesh_viewer.h>
 
 using namespace pmp;
 
 class Viewer : public MeshViewer
 {
-public:
+  public:
     Viewer(const char* title, int width, int height);
 
-protected:
+  protected:
     void process_imgui() override;
 };
 
-Viewer::Viewer(const char* title, int width, int height)
-    : MeshViewer(title, width, height)
+Viewer::Viewer(const char* title, int width, int height) : MeshViewer(title, width, height)
 {
 }
 

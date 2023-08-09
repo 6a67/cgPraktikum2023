@@ -5,7 +5,8 @@
 #include "pmp/algorithms/differential_geometry.h"
 #include <limits>
 
-namespace pmp {
+namespace pmp
+{
 
 BoundingBox bounds(const SurfaceMesh& mesh)
 {

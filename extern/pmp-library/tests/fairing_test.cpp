@@ -3,10 +3,10 @@
 
 #include "gtest/gtest.h"
 
+#include "helpers.h"
 #include "pmp/algorithms/fairing.h"
 #include "pmp/algorithms/subdivision.h"
 #include "pmp/algorithms/utilities.h"
-#include "helpers.h"
 
 using namespace pmp;
 

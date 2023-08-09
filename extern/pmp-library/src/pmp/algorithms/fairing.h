@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! Minimize surface area.
 //! \sa fair()

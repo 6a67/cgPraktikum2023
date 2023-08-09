@@ -5,7 +5,8 @@
 
 #include "pmp/io/helpers.h"
 
-namespace pmp {
+namespace pmp
+{
 
 void read_pmp(SurfaceMesh& mesh, const std::filesystem::path& file)
 {
@@ -50,8 +51,7 @@ void read_pmp(SurfaceMesh& mesh, const std::filesystem::path& file)
     if (has_htex)
     {
         auto htex = mesh.halfedge_property<TexCoord>("h:tex");
-        [[maybe_unused]] size_t nhtc =
-            fread((char*)htex.data(), sizeof(TexCoord), nh, in);
+        [[maybe_unused]] size_t nhtc = fread((char*)htex.data(), sizeof(TexCoord), nh, in);
         assert(nhtc == nh);
     }
 

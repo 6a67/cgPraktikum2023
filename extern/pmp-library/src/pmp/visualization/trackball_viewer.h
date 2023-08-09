@@ -6,19 +6,19 @@
 #include <string>
 #include <vector>
 
-#include "pmp/visualization/window.h"
 #include "pmp/mat_vec.h"
+#include "pmp/visualization/window.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! A simple GLFW viewer with trackball user interface
 //! \ingroup visualization
 class TrackballViewer : public Window
 {
-public:
+  public:
     //! constructor
-    TrackballViewer(const char* title, int width, int height,
-                    bool showgui = true);
+    TrackballViewer(const char* title, int width, int height, bool showgui = true);
 
     //! destructor
     ~TrackballViewer() override;
@@ -30,7 +30,7 @@ public:
     //! adjust camera such that the whole scene (defined by set_scene()) is visible
     void view_all();
 
-protected:
+  protected:
     //! this function is called when the scene has to be rendered. it
     //! clears the buffers, calls the draw() method, and performs buffer swap
     void display() override;
@@ -50,7 +50,7 @@ protected:
     //! this function is called if the window is resized
     void resize(int width, int height) override;
 
-protected:
+  protected:
     //! reset the list of draw modes
     void clear_draw_modes();
 
@@ -60,14 +60,14 @@ protected:
     //! activate a draw mode
     void set_draw_mode(const std::string& drawMode);
 
-protected:
+  protected:
     //! initialize all OpenGL states
     virtual void init();
 
     //! this function is responsible for rendering the scene
     virtual void draw(const std::string& drawMode) = 0;
 
-protected:
+  protected:
     //! turn a mouse event into a rotation around the scene center. calls rotate().
     void rotation(int x, int y);
 
@@ -95,7 +95,7 @@ protected:
     //! virtual trackball: map 2D screen point to unit sphere. used by rotate().
     bool map_to_sphere(const ivec2& point, vec3& result);
 
-protected:
+  protected:
     //! draw modes
     unsigned int draw_mode_;
     unsigned int n_draw_modes_;

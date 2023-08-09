@@ -11,20 +11,21 @@
 
 #include "pmp/algorithms/fairing.h"
 
-namespace pmp {
-namespace {
+namespace pmp
+{
+namespace
+{
 
 class HoleFilling
 {
-public:
+  public:
     explicit HoleFilling(SurfaceMesh& mesh);
     void fill_hole(Halfedge h);
 
-private:
+  private:
     struct Weight
     {
-        Weight(Scalar angle = std::numeric_limits<Scalar>::max(),
-               Scalar area = std::numeric_limits<Scalar>::max())
+        Weight(Scalar angle = std::numeric_limits<Scalar>::max(), Scalar area = std::numeric_limits<Scalar>::max())
             : angle_(angle), area_(area)
         {
         }
@@ -36,8 +37,7 @@ private:
 
         bool operator<(const Weight& rhs) const
         {
-            return (angle_ < rhs.angle_ ||
-                    (angle_ == rhs.angle_ && area_ < rhs.area_));
+            return (angle_ < rhs.angle_ || (angle_ == rhs.angle_ && area_ < rhs.area_));
         }
 
         Scalar angle_;
@@ -70,8 +70,7 @@ private:
     Vertex opposite_vertex(unsigned int i) const
     {
         assert(i < hole_.size());
-        return mesh_.to_vertex(
-            mesh_.next_halfedge(mesh_.opposite_halfedge(hole_[i])));
+        return mesh_.to_vertex(mesh_.next_halfedge(mesh_.opposite_halfedge(hole_[i])));
     }
 
     // does interior edge (_a,_b) exist already?
@@ -109,8 +108,7 @@ bool HoleFilling::is_interior_edge(Vertex a, Vertex b) const
     Halfedge h = mesh_.find_halfedge(a, b);
     if (!h.is_valid())
         return false; // edge does not exist
-    return (!mesh_.is_boundary(h) &&
-            !mesh_.is_boundary(mesh_.opposite_halfedge(h)));
+    return (!mesh_.is_boundary(h) && !mesh_.is_boundary(mesh_.opposite_halfedge(h)));
 }
 
 Scalar HoleFilling::compute_area(Vertex a, Vertex b, Vertex c) const
@@ -246,8 +244,7 @@ void HoleFilling::triangulate_hole(Halfedge h)
             continue;
         int split = index_[start][end];
 
-        mesh_.add_triangle(hole_vertex(start), hole_vertex(split),
-                           hole_vertex(end));
+        mesh_.add_triangle(hole_vertex(start), hole_vertex(split), hole_vertex(end));
 
         todo.emplace_back(start, split);
         todo.emplace_back(split, end);
@@ -267,8 +264,7 @@ HoleFilling::Weight HoleFilling::compute_weight(int i, int j, int k) const
 
     // if one of the potential edges already exists, this would result
     // in an invalid triangulation -> prevent by giving infinite weight
-    if (is_interior_edge(a, b) || is_interior_edge(b, c) ||
-        is_interior_edge(c, a))
+    if (is_interior_edge(a, b) || is_interior_edge(b, c) || is_interior_edge(c, a))
     {
         return {};
     }
@@ -307,8 +303,7 @@ void HoleFilling::refine()
     l = 0.0;
     for (int i = 0; i < n; ++i)
     {
-        l += distance(points_[hole_vertex(i)],
-                      points_[hole_vertex((i + 1) % n)]);
+        l += distance(points_[hole_vertex(i)], points_[hole_vertex((i + 1) % n)]);
     }
     l /= (Scalar)n;
     lmin = 0.7 * l;
@@ -462,8 +457,7 @@ void HoleFilling::flip_edges()
 void HoleFilling::relaxation()
 {
     // properties
-    VertexProperty<int> idx =
-        mesh_.add_vertex_property<int>("HoleFilling:idx", -1);
+    VertexProperty<int> idx = mesh_.add_vertex_property<int>("HoleFilling:idx", -1);
 
     // collect free vertices
     std::vector<Vertex> vertices;

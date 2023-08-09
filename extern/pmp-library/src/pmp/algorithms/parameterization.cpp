@@ -6,11 +6,13 @@
 
 #include <cmath>
 
-#include "pmp/surface_mesh.h"
 #include "pmp/algorithms/differential_geometry.h"
+#include "pmp/surface_mesh.h"
 
-namespace pmp {
-namespace {
+namespace pmp
+{
+namespace
+{
 
 bool has_boundary(const SurfaceMesh& mesh)
 {
@@ -153,9 +155,7 @@ void harmonic_parameterization(SurfaceMesh& mesh, bool use_uniform_weights)
             B.row(v.idx()) = static_cast<Eigen::Vector2d>(tex[v]);
 
     // solve system
-    auto is_constrained = [&](unsigned int i) {
-        return mesh.is_boundary(Vertex(i));
-    };
+    auto is_constrained = [&](unsigned int i) { return mesh.is_boundary(Vertex(i)); };
     DenseMatrix X = cholesky_solve(L, B, is_constrained, B);
 
     // copy solution
@@ -217,7 +217,7 @@ void lscm_parameterization(SurfaceMesh& mesh)
             area = 1.0 / area;
 
         // uncomment the following line if your meshes are very bad...
-        //area = 1.0;
+        // area = 1.0;
 
         // calculate W_j,Ti (index by corner a,b,c and real/imaginary)
         double w_ar = c2d[0] - b2d[0];

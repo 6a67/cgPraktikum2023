@@ -2,16 +2,17 @@
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
 #include "pmp/algorithms/curvature.h"
-#include "pmp/exceptions.h"
-#include "pmp/algorithms/normals.h"
 #include "pmp/algorithms/differential_geometry.h"
 #include "pmp/algorithms/laplace.h"
+#include "pmp/algorithms/normals.h"
+#include "pmp/exceptions.h"
 
-namespace pmp {
+namespace pmp
+{
 
 class CurvatureAnalyzer
 {
-public:
+  public:
     //! construct with mesh to be analyzed
     CurvatureAnalyzer(SurfaceMesh& mesh);
 
@@ -27,8 +28,7 @@ public:
 
     //! compute curvature information for each vertex, optionally followed
     //! by some smoothing iterations of the curvature values
-    void analyze_tensor(unsigned int post_smoothing_steps = 0,
-                        bool two_ring_neighborhood = false);
+    void analyze_tensor(unsigned int post_smoothing_steps = 0, bool two_ring_neighborhood = false);
 
     //! return mean curvature
     Scalar mean_curvature(Vertex v) const
@@ -43,10 +43,16 @@ public:
     }
 
     //! return minimum (signed) curvature
-    Scalar min_curvature(Vertex v) const { return min_curvature_[v]; }
+    Scalar min_curvature(Vertex v) const
+    {
+        return min_curvature_[v];
+    }
 
     //! return maximum (signed) curvature
-    Scalar max_curvature(Vertex v) const { return max_curvature_[v]; }
+    Scalar max_curvature(Vertex v) const
+    {
+        return max_curvature_[v];
+    }
 
     //! return maximum absolute curvature
     Scalar max_abs_curvature(Vertex v) const
@@ -54,7 +60,7 @@ public:
         return std::max(fabs(min_curvature_[v]), fabs(max_curvature_[v]));
     }
 
-private:
+  private:
     // determine curvature values on boundary from non-boundary neighbors
     void set_boundary_curvatures();
 
@@ -106,8 +112,7 @@ void CurvatureAnalyzer::analyze(unsigned int post_smoothing_steps)
             for (auto vh : mesh_.halfedges(v))
             {
                 p1 = mesh_.position(mesh_.to_vertex(vh));
-                p2 = mesh_.position(
-                    mesh_.to_vertex(mesh_.ccw_rotated_halfedge(vh)));
+                p2 = mesh_.position(mesh_.to_vertex(mesh_.ccw_rotated_halfedge(vh)));
                 sum_angles += angle(p1 - p0, p2 - p0);
             }
 
@@ -130,8 +135,7 @@ void CurvatureAnalyzer::analyze(unsigned int post_smoothing_steps)
     smooth_curvatures(post_smoothing_steps);
 }
 
-void CurvatureAnalyzer::analyze_tensor(unsigned int post_smoothing_steps,
-                                       bool two_ring_neighborhood)
+void CurvatureAnalyzer::analyze_tensor(unsigned int post_smoothing_steps, bool two_ring_neighborhood)
 {
     auto area = mesh_.add_vertex_property<double>("curv:area", 0.0);
     auto normal = mesh_.add_face_property<dvec3>("curv:normal");
@@ -227,8 +231,7 @@ void CurvatureAnalyzer::analyze_tensor(unsigned int post_smoothing_steps,
             tensor /= A;
 
             // Eigen-decomposition
-            bool ok = symmetric_eigendecomposition(tensor, eval1, eval2, eval3,
-                                                   evec1, evec2, evec3);
+            bool ok = symmetric_eigendecomposition(tensor, eval1, eval2, eval3, evec1, evec2, evec3);
             if (ok)
             {
                 // curvature values:
@@ -393,8 +396,7 @@ void curvature_to_texture_coordinates(SurfaceMesh& mesh)
     }
 }
 
-void curvature(SurfaceMesh& mesh, Curvature c, int smoothing_steps,
-               bool use_tensor, bool use_two_ring)
+void curvature(SurfaceMesh& mesh, Curvature c, int smoothing_steps, bool use_tensor, bool use_two_ring)
 {
     CurvatureAnalyzer analyzer(mesh);
     if (use_tensor)
@@ -406,38 +408,38 @@ void curvature(SurfaceMesh& mesh, Curvature c, int smoothing_steps,
 
     switch (c)
     {
-        case Curvature::min:
-        {
-            for (auto v : mesh.vertices())
-                curvatures[v] = analyzer.min_curvature(v);
-            break;
-        }
-        case Curvature::max:
-        {
-            for (auto v : mesh.vertices())
-                curvatures[v] = analyzer.max_curvature(v);
-            break;
-        }
-        case Curvature::mean:
-        {
-            for (auto v : mesh.vertices())
-                curvatures[v] = fabs(analyzer.mean_curvature(v));
-            break;
-        }
-        case Curvature::gauss:
-        {
-            for (auto v : mesh.vertices())
-                curvatures[v] = analyzer.gauss_curvature(v);
-            break;
-        }
-        case Curvature::max_abs:
-        {
-            for (auto v : mesh.vertices())
-                curvatures[v] = analyzer.max_abs_curvature(v);
-            break;
-        }
-        default:
-            throw InvalidInputException("Unknown Curvature type");
+    case Curvature::min:
+    {
+        for (auto v : mesh.vertices())
+            curvatures[v] = analyzer.min_curvature(v);
+        break;
+    }
+    case Curvature::max:
+    {
+        for (auto v : mesh.vertices())
+            curvatures[v] = analyzer.max_curvature(v);
+        break;
+    }
+    case Curvature::mean:
+    {
+        for (auto v : mesh.vertices())
+            curvatures[v] = fabs(analyzer.mean_curvature(v));
+        break;
+    }
+    case Curvature::gauss:
+    {
+        for (auto v : mesh.vertices())
+            curvatures[v] = analyzer.gauss_curvature(v);
+        break;
+    }
+    case Curvature::max_abs:
+    {
+        for (auto v : mesh.vertices())
+            curvatures[v] = analyzer.max_abs_curvature(v);
+        break;
+    }
+    default:
+        throw InvalidInputException("Unknown Curvature type");
     }
 }
 

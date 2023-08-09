@@ -5,22 +5,23 @@
 
 #include "pmp/types.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! Simple class for representing a bounding box.
 //! \ingroup core
 class BoundingBox
 {
-public:
+  public:
     //! Construct infinite/invalid bounding box.
-    BoundingBox()
-        : min_(std::numeric_limits<Scalar>::max()),
-          max_(-std::numeric_limits<Scalar>::max())
+    BoundingBox() : min_(std::numeric_limits<Scalar>::max()), max_(-std::numeric_limits<Scalar>::max())
     {
     }
 
     //! Construct from min and max points.
-    BoundingBox(const Point& min, const Point& max) : min_(min), max_(max) {}
+    BoundingBox(const Point& min, const Point& max) : min_(min), max_(max)
+    {
+    }
 
     //! Add point to the bounding box.
     BoundingBox& operator+=(const Point& p)
@@ -49,13 +50,22 @@ public:
     }
 
     //! Get min point.
-    Point& min() { return min_; }
+    Point& min()
+    {
+        return min_;
+    }
 
     //! Get max point.
-    Point& max() { return max_; }
+    Point& max()
+    {
+        return max_;
+    }
 
     //! Get center point.
-    Point center() const { return 0.5f * (min_ + max_); }
+    Point center() const
+    {
+        return 0.5f * (min_ + max_);
+    }
 
     //! Indicate if the bounding box is empty.
     bool is_empty() const
@@ -69,7 +79,7 @@ public:
         return is_empty() ? Scalar(0.0) : distance(max_, min_);
     }
 
-private:
+  private:
     Point min_, max_;
 };
 

@@ -7,21 +7,22 @@
 #include <psapi.h>
 #include <windows.h>
 #elif defined __linux__
-#include <sys/resource.h>
-#include <unistd.h>
 #include <cstdio>
 #include <iostream>
+#include <sys/resource.h>
+#include <unistd.h>
 #elif defined __APPLE__
 #include <mach/mach.h>
 #endif
 
-namespace pmp {
+namespace pmp
+{
 
 //! A simple class to retrieve memory usage information.
 //! \ingroup core
 class MemoryUsage
 {
-public:
+  public:
     //! \brief Get the maximum memory size the application has used so far.
     //! \return the max. resident set size (RSS) in bytes
     static size_t max_size();
@@ -87,8 +88,7 @@ size_t MemoryUsage::current_size()
 
     struct mach_task_basic_info info;
     mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
-    auto ret = task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
-                         (task_info_t)&info, &infoCount);
+    auto ret = task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount);
     if (ret != KERN_SUCCESS)
     {
         std::cerr << "Failed to retrieve task information" << std::endl;

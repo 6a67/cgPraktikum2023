@@ -3,9 +3,9 @@
 
 #include "gtest/gtest.h"
 
+#include "helpers.h"
 #include "pmp/algorithms/features.h"
 #include "pmp/algorithms/shapes.h"
-#include "helpers.h"
 
 using namespace pmp;
 

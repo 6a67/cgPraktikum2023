@@ -17,7 +17,8 @@
 #error Intel Compiler only supports required C++ features since version 13.1.
 // note that most stuff in principle works with 13.0 but when combining
 // some features, at some point 13.0 will just fail with an internal assertion
-#elif defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 6))
+#elif defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)                                           \
+    && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 6))
 // G++ < 4.6 by default will continue processing the source files - even if we use #error to make
 // it error out. For this reason, we use the pragma to make sure G++ aborts at the first error
 // it sees. Unfortunately, that is still not our #error directive, but at least the output is
@@ -39,17 +40,30 @@
 #error This library needs at least a C++11 compliant compiler. If you use g++/clang, please enable the -std=c++11 compiler flag. (-std=c++0x on older versions.)
 #endif
 
-namespace Eigen {
+namespace Eigen
+{
 
-namespace internal {
+namespace internal
+{
 
 /* std::get is only constexpr in C++14, not yet in C++11
  */
 
-
-template<std::size_t I_, class T> constexpr inline T&       array_get(std::vector<T>&       a) { return a[I_]; }
-template<std::size_t I_, class T> constexpr inline T&&      array_get(std::vector<T>&&      a) { return a[I_]; }
-template<std::size_t I_, class T> constexpr inline T const& array_get(std::vector<T> const& a) { return a[I_]; }
+template <std::size_t I_, class T>
+constexpr inline T& array_get(std::vector<T>& a)
+{
+    return a[I_];
+}
+template <std::size_t I_, class T>
+constexpr inline T&& array_get(std::vector<T>&& a)
+{
+    return a[I_];
+}
+template <std::size_t I_, class T>
+constexpr inline T const& array_get(std::vector<T> const& a)
+{
+    return a[I_];
+}
 
 /* Suppose you have a template of the form
  * template<typename T> struct X;
@@ -66,10 +80,10 @@ template<std::size_t I_, class T> constexpr inline T const& array_get(std::vecto
  * so we have to create a workaround for this.
  */
 #if defined(__GNUC__) && !defined(__INTEL_COMPILER)
-#define EIGEN_TPL_PP_SPEC_HACK_DEF(mt, n)    mt... n
-#define EIGEN_TPL_PP_SPEC_HACK_DEFC(mt, n)   , EIGEN_TPL_PP_SPEC_HACK_DEF(mt, n)
-#define EIGEN_TPL_PP_SPEC_HACK_USE(n)        n...
-#define EIGEN_TPL_PP_SPEC_HACK_USEC(n)       , n...
+#define EIGEN_TPL_PP_SPEC_HACK_DEF(mt, n) mt... n
+#define EIGEN_TPL_PP_SPEC_HACK_DEFC(mt, n) , EIGEN_TPL_PP_SPEC_HACK_DEF(mt, n)
+#define EIGEN_TPL_PP_SPEC_HACK_USE(n) n...
+#define EIGEN_TPL_PP_SPEC_HACK_USEC(n) , n...
 #else
 #define EIGEN_TPL_PP_SPEC_HACK_DEF(mt, n)
 #define EIGEN_TPL_PP_SPEC_HACK_DEFC(mt, n)

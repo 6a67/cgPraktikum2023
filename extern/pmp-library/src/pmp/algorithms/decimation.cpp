@@ -10,35 +10,53 @@
 #include "pmp/algorithms/distance_point_triangle.h"
 #include "pmp/algorithms/normals.h"
 
-namespace pmp {
-namespace {
+namespace pmp
+{
+namespace
+{
 
 template <class HeapEntry, class HeapInterface>
 class Heap : private std::vector<HeapEntry>
 {
-public:
+  public:
     using This = Heap<HeapEntry, HeapInterface>;
 
     // Constructor
-    Heap() : HeapVector() {}
+    Heap() : HeapVector()
+    {
+    }
 
     // Construct with a given \p HeapInterface.
-    Heap(const HeapInterface& i) : HeapVector(), interface_(i) {}
+    Heap(const HeapInterface& i) : HeapVector(), interface_(i)
+    {
+    }
 
     // Destructor.
     ~Heap() = default;
 
     // clear the heap
-    void clear() { HeapVector::clear(); }
+    void clear()
+    {
+        HeapVector::clear();
+    }
 
     // is heap empty?
-    bool empty() { return HeapVector::empty(); }
+    bool empty()
+    {
+        return HeapVector::empty();
+    }
 
     // returns the size of heap
-    unsigned int size() { return (unsigned int)HeapVector::size(); }
+    unsigned int size()
+    {
+        return (unsigned int)HeapVector::size();
+    }
 
     // reserve space for N entries
-    void reserve(unsigned int n) { HeapVector::reserve(n); }
+    void reserve(unsigned int n)
+    {
+        HeapVector::reserve(n);
+    }
 
     // reset heap position to -1 (not in heap)
     void reset_heap_position(HeapEntry h)
@@ -121,13 +139,11 @@ public:
         unsigned int i, j;
         for (i = 0; i < size(); ++i)
         {
-            if (((j = left(i)) < size()) &&
-                interface_.greater(entry(i), entry(j)))
+            if (((j = left(i)) < size()) && interface_.greater(entry(i), entry(j)))
             {
                 ok = false;
             }
-            if (((j = right(i)) < size()) &&
-                interface_.greater(entry(i), entry(j)))
+            if (((j = right(i)) < size()) && interface_.greater(entry(i), entry(j)))
             {
                 ok = false;
             }
@@ -135,7 +151,7 @@ public:
         return ok;
     }
 
-private:
+  private:
     using HeapVector = std::vector<HeapEntry>;
 
     // Upheap. Establish heap property.
@@ -166,8 +182,7 @@ private:
             if (childIdx >= s)
                 break;
 
-            if ((childIdx + 1 < s) &&
-                (interface_.less(entry(childIdx + 1), entry(childIdx))))
+            if ((childIdx + 1 < s) && (interface_.less(entry(childIdx + 1), entry(childIdx))))
                 ++childIdx;
 
             if (interface_.less(h, entry(childIdx)))
@@ -196,13 +211,22 @@ private:
     }
 
     // Get parent's index
-    inline unsigned int parent(unsigned int i) { return (i - 1) >> 1; }
+    inline unsigned int parent(unsigned int i)
+    {
+        return (i - 1) >> 1;
+    }
 
     // Get left child's index
-    inline unsigned int left(unsigned int i) { return (i << 1) + 1; }
+    inline unsigned int left(unsigned int i)
+    {
+        return (i << 1) + 1;
+    }
 
     // Get right child's index
-    inline unsigned int right(unsigned int i) { return (i << 1) + 2; }
+    inline unsigned int right(unsigned int i)
+    {
+        return (i << 1) + 2;
+    }
 
     // Instance of HeapInterface
     HeapInterface interface_;
@@ -211,7 +235,7 @@ private:
 // Store a quadric as a symmetric 4x4 matrix.
 class Quadric
 {
-public: // clang-format off
+  public: // clang-format off
 
     // construct quadric from upper triangle of symmetric 4x4 matrix
     Quadric(double a, double b, double c, double d,
@@ -281,23 +305,31 @@ private:
 
 class NormalCone
 {
-public:
+  public:
     NormalCone() = default;
 
     // Initialize cone with center (unit vector) and angle (radius in radians)
-    NormalCone(const Normal& normal, Scalar angle = 0.0)
-        : center_normal_(normal), angle_(angle)
+    NormalCone(const Normal& normal, Scalar angle = 0.0) : center_normal_(normal), angle_(angle)
     {
     }
 
     // returns center normal
-    const Normal& center_normal() const { return center_normal_; }
+    const Normal& center_normal() const
+    {
+        return center_normal_;
+    }
 
     // returns size of cone (radius in radians)
-    Scalar angle() const { return angle_; }
+    Scalar angle() const
+    {
+        return angle_;
+    }
 
     // merge *this with n.
-    NormalCone& merge(const Normal& n) { return merge(NormalCone(n)); }
+    NormalCone& merge(const Normal& n)
+    {
+        return merge(NormalCone(n));
+    }
 
     // merge *this with nc. *this will then enclose both cones.
     NormalCone& merge(const NormalCone& nc)
@@ -326,32 +358,34 @@ public:
 
             // axis by SLERP
             Scalar axis_angle = Scalar(0.5) * (min_angle + max_angle);
-            center_normal_ =
-                ((center_normal_ * std::sin(center_angle - axis_angle) +
-                  nc.center_normal_ * std::sin(axis_angle)) /
-                 std::sin(center_angle));
+            center_normal_
+                = ((center_normal_ * std::sin(center_angle - axis_angle) + nc.center_normal_ * std::sin(axis_angle))
+                   / std::sin(center_angle));
         }
 
         return *this;
     }
 
-private:
+  private:
     Normal center_normal_;
     Scalar angle_;
 };
 
 class Decimation
 {
-public:
+  public:
     Decimation(SurfaceMesh& mesh);
     ~Decimation();
-    void initialize(Scalar aspect_ratio = 0.0, Scalar edge_length = 0.0,
-                    unsigned int max_valence = 0, Scalar normal_deviation = 0.0,
-                    Scalar hausdorff_error = 0.0, Scalar seam_threshold = 1e-2,
+    void initialize(Scalar aspect_ratio = 0.0,
+                    Scalar edge_length = 0.0,
+                    unsigned int max_valence = 0,
+                    Scalar normal_deviation = 0.0,
+                    Scalar hausdorff_error = 0.0,
+                    Scalar seam_threshold = 1e-2,
                     Scalar seam_angle_deviation = 1);
     void decimate(unsigned int n_vertices);
 
-private:
+  private:
     // Store data for an halfedge collapse
     struct CollapseData
     {
@@ -385,18 +419,29 @@ private:
     // Heap interface
     class HeapInterface
     {
-    public:
-        HeapInterface(VertexProperty<float> prio, VertexProperty<int> pos)
-            : prio_(prio), pos_(pos)
+      public:
+        HeapInterface(VertexProperty<float> prio, VertexProperty<int> pos) : prio_(prio), pos_(pos)
         {
         }
 
-        bool less(Vertex v0, Vertex v1) { return prio_[v0] < prio_[v1]; }
-        bool greater(Vertex v0, Vertex v1) { return prio_[v0] > prio_[v1]; }
-        int get_heap_position(Vertex v) { return pos_[v]; }
-        void set_heap_position(Vertex v, int pos) { pos_[v] = pos; }
+        bool less(Vertex v0, Vertex v1)
+        {
+            return prio_[v0] < prio_[v1];
+        }
+        bool greater(Vertex v0, Vertex v1)
+        {
+            return prio_[v0] > prio_[v1];
+        }
+        int get_heap_position(Vertex v)
+        {
+            return pos_[v];
+        }
+        void set_heap_position(Vertex v, int pos)
+        {
+            pos_[v] = pos;
+        }
 
-    private:
+      private:
         VertexProperty<float> prio_;
         VertexProperty<int> pos_;
     };
@@ -493,9 +538,12 @@ Decimation::~Decimation()
     mesh_.remove_edge_property(texture_seams_);
 }
 
-void Decimation::initialize(Scalar aspect_ratio, Scalar edge_length,
-                            unsigned int max_valence, Scalar normal_deviation,
-                            Scalar hausdorff_error, Scalar seam_threshold,
+void Decimation::initialize(Scalar aspect_ratio,
+                            Scalar edge_length,
+                            unsigned int max_valence,
+                            Scalar normal_deviation,
+                            Scalar hausdorff_error,
+                            Scalar seam_threshold,
                             Scalar seam_angle_deviation)
 {
     // store parameters
@@ -588,14 +636,14 @@ void Decimation::initialize(Scalar aspect_ratio, Scalar edge_length,
         {
             // texcoords are stored in halfedge pointing towards a vertex
             Halfedge h0 = mesh_.halfedge(e, 0);
-            Halfedge h1 = mesh_.halfedge(e, 1);     //opposite halfedge
+            Halfedge h1 = mesh_.halfedge(e, 1);     // opposite halfedge
             Halfedge h0p = mesh_.prev_halfedge(h0); // start point edge 0
             Halfedge h1p = mesh_.prev_halfedge(h1); // start point edge 1
 
             // if start or end points differ more than seam_threshold
             // the corresponding edge is a texture seam
-            if (norm(texcoords[h1] - texcoords[h0p]) > seam_threshold_ ||
-                norm(texcoords[h0] - texcoords[h1p]) > seam_threshold_)
+            if (norm(texcoords[h1] - texcoords[h0p]) > seam_threshold_
+                || norm(texcoords[h0] - texcoords[h1p]) > seam_threshold_)
             {
                 texture_seams_[e] = true;
             }
@@ -747,8 +795,7 @@ bool Decimation::is_collapse_legal(const CollapseData& cd)
         return false;
 
     // there should be at least 2 incident faces at v0
-    if (mesh_.cw_rotated_halfedge(mesh_.cw_rotated_halfedge(cd.v0v1)) ==
-        cd.v0v1)
+    if (mesh_.cw_rotated_halfedge(mesh_.cw_rotated_halfedge(cd.v0v1)) == cd.v0v1)
         return false;
 
     // topological check
@@ -817,11 +864,9 @@ bool Decimation::is_collapse_legal(const CollapseData& cd)
 
         Face fll, frr;
         if (cd.vl.is_valid())
-            fll = mesh_.face(
-                mesh_.opposite_halfedge(mesh_.prev_halfedge(cd.v0v1)));
+            fll = mesh_.face(mesh_.opposite_halfedge(mesh_.prev_halfedge(cd.v0v1)));
         if (cd.vr.is_valid())
-            frr = mesh_.face(
-                mesh_.opposite_halfedge(mesh_.next_halfedge(cd.v1v0)));
+            frr = mesh_.face(mesh_.opposite_halfedge(mesh_.next_halfedge(cd.v1v0)));
 
         for (auto f : mesh_.faces(cd.v0))
         {
@@ -878,8 +923,7 @@ bool Decimation::is_collapse_legal(const CollapseData& cd)
         // collect points to be tested
         for (auto f : mesh_.faces(cd.v0))
         {
-            std::copy(face_points_[f].begin(), face_points_[f].end(),
-                      std::back_inserter(points));
+            std::copy(face_points_[f].begin(), face_points_[f].end(), std::back_inserter(points));
         }
         points.push_back(vpoint_[cd.v0]);
 
@@ -973,23 +1017,18 @@ bool Decimation::texcoord_check(Halfedge h)
     {
         if (texture_seams[mesh_.edge(seam2)])
         {
-            auto s1 = normalize(texcoords[seam1] -
-                                texcoords[mesh_.prev_halfedge(seam1)]);
-            auto s2 = normalize(texcoords[seam2] -
-                                texcoords[mesh_.prev_halfedge(seam2)]);
+            auto s1 = normalize(texcoords[seam1] - texcoords[mesh_.prev_halfedge(seam1)]);
+            auto s2 = normalize(texcoords[seam2] - texcoords[mesh_.prev_halfedge(seam2)]);
 
             // opposite uvs
             Halfedge o_seam1 = mesh_.opposite_halfedge(seam1);
             Halfedge o_seam2 = mesh_.opposite_halfedge(seam2);
-            auto o1 = normalize(texcoords[o_seam1] -
-                                texcoords[mesh_.prev_halfedge(o_seam1)]);
-            auto o2 = normalize(texcoords[o_seam2] -
-                                texcoords[mesh_.prev_halfedge(o_seam2)]);
+            auto o1 = normalize(texcoords[o_seam1] - texcoords[mesh_.prev_halfedge(o_seam1)]);
+            auto o2 = normalize(texcoords[o_seam2] - texcoords[mesh_.prev_halfedge(o_seam2)]);
 
             // check if the angle between the seam edge to be collapsed and the
             // seam edge prolonged is smaller than the allowed deviation
-            if (dot(s1, s2) < seam_angle_deviation_ ||
-                dot(o1, o2) < seam_angle_deviation_)
+            if (dot(s1, s2) < seam_angle_deviation_ || dot(o1, o2) < seam_angle_deviation_)
             {
                 // angle is too large -> don't collapse this edge
                 return false;
@@ -1038,8 +1077,7 @@ void Decimation::preprocess_collapse(const CollapseData& cd)
                 is_first_side = false;
 
                 // loop case 1
-                if (mesh_.to_vertex(mesh_.next_halfedge(h)) ==
-                    mesh_.from_vertex(hit))
+                if (mesh_.to_vertex(mesh_.next_halfedge(h)) == mesh_.from_vertex(hit))
                 {
                     v1v2 = mesh_.next_halfedge(h);
                     texcoords[mesh_.opposite_halfedge(v1v2)] = texcoords[hit];
@@ -1048,8 +1086,7 @@ void Decimation::preprocess_collapse(const CollapseData& cd)
                 }
 
                 // loop case 2
-                if (mesh_.to_vertex(mesh_.next_halfedge(o)) ==
-                    mesh_.from_vertex(hit))
+                if (mesh_.to_vertex(mesh_.next_halfedge(o)) == mesh_.from_vertex(hit))
                 {
                     v2v1 = mesh_.prev_halfedge(o);
                     v0v2 = mesh_.opposite_halfedge(hit);
@@ -1101,22 +1138,19 @@ void Decimation::postprocess_collapse(const CollapseData& cd)
         // points of v1's one-ring
         for (auto f : mesh_.faces(cd.v1))
         {
-            std::copy(face_points_[f].begin(), face_points_[f].end(),
-                      std::back_inserter(points));
+            std::copy(face_points_[f].begin(), face_points_[f].end(), std::back_inserter(points));
             face_points_[f].clear();
         }
 
         // points of the 2 removed triangles
         if (cd.fl.is_valid())
         {
-            std::copy(face_points_[cd.fl].begin(), face_points_[cd.fl].end(),
-                      std::back_inserter(points));
+            std::copy(face_points_[cd.fl].begin(), face_points_[cd.fl].end(), std::back_inserter(points));
             Points().swap(face_points_[cd.fl]); // free mem
         }
         if (cd.fr.is_valid())
         {
-            std::copy(face_points_[cd.fr].begin(), face_points_[cd.fr].end(),
-                      std::back_inserter(points));
+            std::copy(face_points_[cd.fr].begin(), face_points_[cd.fr].end(), std::back_inserter(points));
             Points().swap(face_points_[cd.fr]); // free mem
         }
 
@@ -1215,14 +1249,23 @@ Decimation::CollapseData::CollapseData(SurfaceMesh& sm, Halfedge h) : mesh(sm)
 }
 } // namespace
 
-void decimate(SurfaceMesh& mesh, unsigned int n_vertices, Scalar aspect_ratio,
-              Scalar edge_length, unsigned int max_valence,
-              Scalar normal_deviation, Scalar hausdorff_error,
-              Scalar seam_threshold, Scalar seam_angle_deviation)
+void decimate(SurfaceMesh& mesh,
+              unsigned int n_vertices,
+              Scalar aspect_ratio,
+              Scalar edge_length,
+              unsigned int max_valence,
+              Scalar normal_deviation,
+              Scalar hausdorff_error,
+              Scalar seam_threshold,
+              Scalar seam_angle_deviation)
 {
     Decimation decimator(mesh);
-    decimator.initialize(aspect_ratio, edge_length, max_valence,
-                         normal_deviation, hausdorff_error, seam_threshold,
+    decimator.initialize(aspect_ratio,
+                         edge_length,
+                         max_valence,
+                         normal_deviation,
+                         hausdorff_error,
+                         seam_threshold,
                          seam_angle_deviation);
     decimator.decimate(n_vertices);
 }

@@ -3,10 +3,10 @@
 
 #include "pmp/io/write_obj.h"
 
-namespace pmp {
+namespace pmp
+{
 
-void write_obj(const SurfaceMesh& mesh, const std::filesystem::path& file,
-               const IOFlags& flags)
+void write_obj(const SurfaceMesh& mesh, const std::filesystem::path& file, const IOFlags& flags)
 {
     FILE* out = fopen(file.string().c_str(), "w");
     if (!out)

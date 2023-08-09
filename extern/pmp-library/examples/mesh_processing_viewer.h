@@ -7,11 +7,11 @@
 
 class MeshProcessingViewer : public pmp::MeshViewer
 {
-public:
+  public:
     //! constructor
     MeshProcessingViewer(const char* title, int width, int height);
 
-protected:
+  protected:
     //! this function handles mouse button presses
     void mouse(int button, int action, int mods) override;
 

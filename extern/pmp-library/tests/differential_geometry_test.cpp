@@ -3,9 +3,9 @@
 
 #include "gtest/gtest.h"
 
-#include <pmp/surface_mesh.h>
 #include <pmp/algorithms/differential_geometry.h>
 #include <pmp/algorithms/shapes.h>
+#include <pmp/surface_mesh.h>
 
 #include "helpers.h"
 
@@ -15,7 +15,7 @@ using namespace pmp;
 
 class DifferentialGeometryTest : public ::testing::Test
 {
-public:
+  public:
     SurfaceMesh mesh;
     static SurfaceMesh sphere;
 
@@ -45,8 +45,7 @@ SurfaceMesh DifferentialGeometryTest::sphere = icosphere(5);
 TEST_F(DifferentialGeometryTest, area_points)
 {
     add_triangle();
-    Scalar a =
-        triangle_area(mesh.position(v0), mesh.position(v1), mesh.position(v2));
+    Scalar a = triangle_area(mesh.position(v0), mesh.position(v1), mesh.position(v2));
     EXPECT_EQ(a, 0.5);
 }
 

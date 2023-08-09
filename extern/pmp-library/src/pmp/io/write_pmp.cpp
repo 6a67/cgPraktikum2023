@@ -2,13 +2,13 @@
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
 #include "pmp/io/write_pmp.h"
-#include "pmp/types.h"
 #include "pmp/io/helpers.h"
+#include "pmp/types.h"
 
-namespace pmp {
+namespace pmp
+{
 
-void write_pmp(const SurfaceMesh& mesh, const std::filesystem::path& file,
-               const IOFlags&)
+void write_pmp(const SurfaceMesh& mesh, const std::filesystem::path& file, const IOFlags&)
 {
     // open file (in binary mode)
     FILE* out = fopen(file.string().c_str(), "wb");

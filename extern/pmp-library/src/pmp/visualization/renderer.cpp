@@ -5,13 +5,14 @@
 
 #include <stb_image.h>
 
-#include "pmp/exceptions.h"
-#include "pmp/visualization/phong_shader.h"
-#include "pmp/visualization/mat_cap_shader.h"
-#include "pmp/visualization/cold_warm_texture.h"
 #include "pmp/algorithms/normals.h"
+#include "pmp/exceptions.h"
+#include "pmp/visualization/cold_warm_texture.h"
+#include "pmp/visualization/mat_cap_shader.h"
+#include "pmp/visualization/phong_shader.h"
 
-namespace pmp {
+namespace pmp
+{
 
 Renderer::Renderer(const SurfaceMesh& mesh) : mesh_(mesh)
 {
@@ -62,16 +63,13 @@ Renderer::~Renderer()
     glDeleteVertexArrays(1, &vertex_array_object_);
 }
 
-void Renderer::load_texture(const char* filename, GLint format,
-                            GLint min_filter, GLint mag_filter, GLint wrap)
+void Renderer::load_texture(const char* filename, GLint format, GLint min_filter, GLint mag_filter, GLint wrap)
 {
 #ifdef __EMSCRIPTEN__
     // emscripen/WebGL does not like mapmapping for SRGB textures
-    if ((min_filter == GL_NEAREST_MIPMAP_NEAREST ||
-         min_filter == GL_NEAREST_MIPMAP_LINEAR ||
-         min_filter == GL_LINEAR_MIPMAP_NEAREST ||
-         min_filter == GL_LINEAR_MIPMAP_LINEAR) &&
-        (format == GL_SRGB8))
+    if ((min_filter == GL_NEAREST_MIPMAP_NEAREST || min_filter == GL_NEAREST_MIPMAP_LINEAR
+         || min_filter == GL_LINEAR_MIPMAP_NEAREST || min_filter == GL_LINEAR_MIPMAP_LINEAR)
+        && (format == GL_SRGB8))
         min_filter = GL_LINEAR;
 #endif
 
@@ -80,31 +78,29 @@ void Renderer::load_texture(const char* filename, GLint format,
     GLint load_format;
     switch (format)
     {
-        case GL_RGB:
-        case GL_SRGB8:
-            load_components = 3;
-            load_format = GL_RGB;
-            break;
+    case GL_RGB:
+    case GL_SRGB8:
+        load_components = 3;
+        load_format = GL_RGB;
+        break;
 
-        case GL_RGBA:
-        case GL_SRGB8_ALPHA8:
-            load_components = 4;
-            load_format = GL_RGBA;
-            break;
+    case GL_RGBA:
+    case GL_SRGB8_ALPHA8:
+        load_components = 4;
+        load_format = GL_RGBA;
+        break;
 
-        default:
-            load_components = 3;
-            load_format = GL_RGB;
+    default:
+        load_components = 3;
+        load_format = GL_RGB;
     }
 
     // load with stb_image
     int width, height, n;
     stbi_set_flip_vertically_on_load(true);
-    unsigned char* img =
-        stbi_load(filename, &width, &height, &n, load_components);
+    unsigned char* img = stbi_load(filename, &width, &height, &n, load_components);
     if (!img)
-        throw IOException("Failed to load texture file: " +
-                          std::string(filename));
+        throw IOException("Failed to load texture file: " + std::string(filename));
 
     // delete old texture
     glDeleteTextures(1, &texture_);
@@ -116,8 +112,7 @@ void Renderer::load_texture(const char* filename, GLint format,
     // upload texture data
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, load_format,
-                 GL_UNSIGNED_BYTE, img);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, load_format, GL_UNSIGNED_BYTE, img);
 
     // compute mipmaps
     if (min_filter == GL_LINEAR_MIPMAP_LINEAR)
@@ -163,8 +158,7 @@ void Renderer::use_cold_warm_texture()
         // setup new texture
         glGenTextures(1, &texture_);
         glBindTexture(GL_TEXTURE_2D, texture_);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 1, 0, GL_RGB,
-                     GL_UNSIGNED_BYTE, cold_warm_texture.data());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, cold_warm_texture.data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -209,8 +203,7 @@ void Renderer::use_checkerboard_texture()
         // generate texture
         glGenTextures(1, &texture_);
         glBindTexture(GL_TEXTURE_2D, texture_);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, res, res, 0, GL_RGB,
-                     GL_UNSIGNED_BYTE, tex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, res, res, 0, GL_RGB, GL_UNSIGNED_BYTE, tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -433,8 +426,7 @@ void Renderer::update_opengl_buffers()
     if (!position_array.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-        glBufferData(GL_ARRAY_BUFFER, position_array.size() * 3 * sizeof(float),
-                     position_array.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, position_array.size() * 3 * sizeof(float), position_array.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(0);
         n_vertices_ = position_array.size();
@@ -449,8 +441,7 @@ void Renderer::update_opengl_buffers()
     if (!normal_array.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_);
-        glBufferData(GL_ARRAY_BUFFER, normal_array.size() * 3 * sizeof(float),
-                     normal_array.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, normal_array.size() * 3 * sizeof(float), normal_array.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(1);
     }
@@ -463,8 +454,7 @@ void Renderer::update_opengl_buffers()
     if (!tex_array.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, tex_coord_buffer_);
-        glBufferData(GL_ARRAY_BUFFER, tex_array.size() * 2 * sizeof(float),
-                     tex_array.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, tex_array.size() * 2 * sizeof(float), tex_array.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(2);
         has_texcoords_ = true;
@@ -479,8 +469,7 @@ void Renderer::update_opengl_buffers()
     if (!color_array.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
-        glBufferData(GL_ARRAY_BUFFER, color_array.size() * 3 * sizeof(float),
-                     color_array.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, color_array.size() * 3 * sizeof(float), color_array.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
         glEnableVertexAttribArray(3);
         has_vertex_colors_ = true;
@@ -506,9 +495,8 @@ void Renderer::update_opengl_buffers()
         }
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     edge_indices.size() * sizeof(unsigned int),
-                     edge_indices.data(), GL_STATIC_DRAW);
+        glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER, edge_indices.size() * sizeof(unsigned int), edge_indices.data(), GL_STATIC_DRAW);
         n_edges_ = edge_indices.size();
     }
     else
@@ -532,9 +520,7 @@ void Renderer::update_opengl_buffers()
         }
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     features.size() * sizeof(unsigned int), features.data(),
-                     GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, features.size() * sizeof(unsigned int), features.data(), GL_STATIC_DRAW);
         n_features_ = features.size();
     }
     else
@@ -544,8 +530,7 @@ void Renderer::update_opengl_buffers()
     glBindVertexArray(0);
 }
 
-void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
-                    const std::string& draw_mode)
+void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix, const std::string& draw_mode)
 {
     // did we generate buffers already?
     if (!vertex_array_object_)
@@ -618,8 +603,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     phong_shader_.set_uniform("use_texture", false);
     phong_shader_.set_uniform("use_srgb", false);
     phong_shader_.set_uniform("show_texture_layout", false);
-    phong_shader_.set_uniform("use_vertex_color",
-                              has_vertex_colors_ && use_colors_);
+    phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
 
     glBindVertexArray(vertex_array_object_);
 
@@ -668,8 +652,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
             if (texture_mode_ == TextureMode::MatCap)
             {
                 matcap_shader_.use();
-                matcap_shader_.set_uniform("modelview_projection_matrix",
-                                           mvp_matrix);
+                matcap_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
                 matcap_shader_.set_uniform("normal_matrix", n_matrix);
                 matcap_shader_.set_uniform("alpha", alpha_);
                 glBindTexture(GL_TEXTURE_2D, texture_);
@@ -735,8 +718,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     glCheckError();
 }
 
-void Renderer::tesselate(const std::vector<vec3>& points,
-                         std::vector<ivec3>& triangles)
+void Renderer::tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles)
 {
     const int n = points.size();
 
@@ -753,10 +735,8 @@ void Renderer::tesselate(const std::vector<vec3>& points,
     // quad? simply compare to two options
     else if (n == 4)
     {
-        if (area(points[0], points[1], points[2]) +
-                area(points[0], points[2], points[3]) <
-            area(points[0], points[1], points[3]) +
-                area(points[1], points[2], points[3]))
+        if (area(points[0], points[1], points[2]) + area(points[0], points[2], points[3])
+            < area(points[0], points[1], points[3]) + area(points[1], points[2], points[3]))
         {
             triangles.emplace_back(0, 1, 2);
             triangles.emplace_back(0, 2, 3);
@@ -794,9 +774,7 @@ void Renderer::tesselate(const std::vector<vec3>& points,
             // find best split i < m < i+j
             for (m = i + 1; m < k; ++m)
             {
-                w = triangulation(i, m).area +
-                    area(points[i], points[m], points[k]) +
-                    triangulation(m, k).area;
+                w = triangulation(i, m).area + area(points[i], points[m], points[k]) + triangulation(m, k).area;
 
                 if (w < wmin)
                 {

@@ -4,7 +4,8 @@
 #include "pmp/algorithms/fairing.h"
 #include "pmp/algorithms/laplace.h"
 
-namespace pmp {
+namespace pmp
+{
 
 void minimize_area(SurfaceMesh& mesh)
 {

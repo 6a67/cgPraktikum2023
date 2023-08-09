@@ -6,13 +6,14 @@
 #include <chrono>
 #include <iostream>
 
-namespace pmp {
+namespace pmp
+{
 
 //! A simple stop watch class.
 //! \ingroup core
 class StopWatch
 {
-public:
+  public:
     //! Start time measurement.
     void start()
     {
@@ -48,7 +49,7 @@ public:
         return 1000.0 * elapsed_;
     }
 
-private:
+  private:
     using hclock = std::chrono::high_resolution_clock;
     using time_point = std::chrono::time_point<hclock>;
     using duration = std::chrono::duration<double>;

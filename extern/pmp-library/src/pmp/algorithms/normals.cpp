@@ -3,7 +3,8 @@
 
 #include "pmp/algorithms/normals.h"
 
-namespace pmp {
+namespace pmp
+{
 
 Normal face_normal(const SurfaceMesh& mesh, Face f)
 {
@@ -34,8 +35,7 @@ Normal face_normal(const SurfaceMesh& mesh, Face f)
         // This vector then has to be normalized.
         for (auto fh : mesh.halfedges(f))
         {
-            n +=
-                cross(vpoint[mesh.from_vertex(fh)], vpoint[mesh.to_vertex(fh)]);
+            n += cross(vpoint[mesh.from_vertex(fh)], vpoint[mesh.to_vertex(fh)]);
         }
 
         return normalize(n);
@@ -77,10 +77,8 @@ Normal vertex_normal(const SurfaceMesh& mesh, Vertex v)
                     angle = acos(cosine);
 
                     // compute triangle or polygon normal
-                    is_triangle = (mesh.next_halfedge(mesh.next_halfedge(
-                                       mesh.next_halfedge(h))) == h);
-                    n = is_triangle ? normalize(cross(p1, p2))
-                                    : face_normal(mesh, mesh.face(h));
+                    is_triangle = (mesh.next_halfedge(mesh.next_halfedge(mesh.next_halfedge(h))) == h);
+                    n = is_triangle ? normalize(cross(p1, p2)) : face_normal(mesh, mesh.face(h));
 
                     n *= angle;
                     nn += n;
@@ -135,10 +133,8 @@ Normal corner_normal(const SurfaceMesh& mesh, Halfedge h, Scalar crease_angle)
                 p2 -= p0;
 
                 // compute triangle or polygon normal
-                is_triangle = (mesh.next_halfedge(mesh.next_halfedge(
-                                   mesh.next_halfedge(h))) == h);
-                n = is_triangle ? normalize(cross(p1, p2))
-                                : face_normal(mesh, mesh.face(h));
+                is_triangle = (mesh.next_halfedge(mesh.next_halfedge(mesh.next_halfedge(h))) == h);
+                n = is_triangle ? normalize(cross(p1, p2)) : face_normal(mesh, mesh.face(h));
 
                 // check whether normal is within crease_angle bound
                 if (dot(n, nf) >= cos_crease_angle)

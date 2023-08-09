@@ -6,27 +6,31 @@
 #include <cmath>
 
 #include <algorithm>
-#include <stdexcept>
-#include <memory>
 #include <limits>
+#include <memory>
+#include <stdexcept>
 
-#include "pmp/algorithms/curvature.h"
-#include "pmp/algorithms/normals.h"
 #include "pmp/algorithms/barycentric_coordinates.h"
+#include "pmp/algorithms/curvature.h"
 #include "pmp/algorithms/differential_geometry.h"
 #include "pmp/algorithms/distance_point_triangle.h"
+#include "pmp/algorithms/normals.h"
 #include "pmp/bounding_box.h"
 
-namespace pmp {
-namespace {
+namespace pmp
+{
+namespace
+{
 
 class TriangleKdTree
 {
-public:
-    TriangleKdTree(std::shared_ptr<const SurfaceMesh> mesh,
-                   unsigned int max_faces = 10, unsigned int max_depth = 30);
+  public:
+    TriangleKdTree(std::shared_ptr<const SurfaceMesh> mesh, unsigned int max_faces = 10, unsigned int max_depth = 30);
 
-    ~TriangleKdTree() { delete root_; }
+    ~TriangleKdTree()
+    {
+        delete root_;
+    }
 
     struct NearestNeighbor
     {
@@ -37,7 +41,7 @@ public:
 
     NearestNeighbor nearest(const Point& p) const;
 
-private:
+  private:
     using Faces = std::vector<Face>;
 
     struct Node
@@ -58,18 +62,15 @@ private:
         Node* right_child{nullptr};
     };
 
-    void build_recurse(Node* node, unsigned int max_handles,
-                       unsigned int depth);
+    void build_recurse(Node* node, unsigned int max_handles, unsigned int depth);
 
-    void nearest_recurse(Node* node, const Point& point,
-                         NearestNeighbor& data) const;
+    void nearest_recurse(Node* node, const Point& point, NearestNeighbor& data) const;
 
     Node* root_;
     std::vector<std::array<Point, 3>> face_points_;
 };
 
-TriangleKdTree::TriangleKdTree(std::shared_ptr<const SurfaceMesh> mesh,
-                               unsigned int max_faces, unsigned int max_depth)
+TriangleKdTree::TriangleKdTree(std::shared_ptr<const SurfaceMesh> mesh, unsigned int max_faces, unsigned int max_depth)
 {
     // init
     root_ = new Node();
@@ -97,8 +98,7 @@ TriangleKdTree::TriangleKdTree(std::shared_ptr<const SurfaceMesh> mesh,
     build_recurse(root_, max_faces, max_depth);
 }
 
-void TriangleKdTree::build_recurse(Node* node, unsigned int max_faces,
-                                   unsigned int depth)
+void TriangleKdTree::build_recurse(Node* node, unsigned int max_faces, unsigned int depth)
 {
     // should we stop at this level ?
     if ((depth == 0) || (node->faces->size() <= max_faces))
@@ -166,8 +166,7 @@ void TriangleKdTree::build_recurse(Node* node, unsigned int max_faces,
     }
 
     // stop here?
-    if (left->faces->size() == node->faces->size() ||
-        right->faces->size() == node->faces->size())
+    if (left->faces->size() == node->faces->size() || right->faces->size() == node->faces->size())
     {
         // compact my memory
         node->faces->shrink_to_fit();
@@ -207,8 +206,7 @@ TriangleKdTree::NearestNeighbor TriangleKdTree::nearest(const Point& p) const
     return data;
 }
 
-void TriangleKdTree::nearest_recurse(Node* node, const Point& point,
-                                     NearestNeighbor& data) const
+void TriangleKdTree::nearest_recurse(Node* node, const Point& point, NearestNeighbor& data) const
 {
     // terminal node?
     if (!node->left_child)
@@ -249,17 +247,18 @@ void TriangleKdTree::nearest_recurse(Node* node, const Point& point,
 
 class Remeshing
 {
-public:
+  public:
     Remeshing(SurfaceMesh& mesh);
 
-    void uniform_remeshing(Scalar edge_length, unsigned int iterations = 10,
-                           bool use_projection = true);
+    void uniform_remeshing(Scalar edge_length, unsigned int iterations = 10, bool use_projection = true);
 
-    void adaptive_remeshing(Scalar min_edge_length, Scalar max_edge_length,
-                            Scalar approx_error, unsigned int iterations = 10,
+    void adaptive_remeshing(Scalar min_edge_length,
+                            Scalar max_edge_length,
+                            Scalar approx_error,
+                            unsigned int iterations = 10,
                             bool use_projection = true);
 
-private:
+  private:
     void preprocessing();
     void postprocessing();
 
@@ -276,13 +275,11 @@ private:
 
     bool is_too_long(Vertex v0, Vertex v1) const
     {
-        return distance(points_[v0], points_[v1]) >
-               4.0 / 3.0 * std::min(vsizing_[v0], vsizing_[v1]);
+        return distance(points_[v0], points_[v1]) > 4.0 / 3.0 * std::min(vsizing_[v0], vsizing_[v1]);
     }
     bool is_too_short(Vertex v0, Vertex v1) const
     {
-        return distance(points_[v0], points_[v1]) <
-               4.0 / 5.0 * std::min(vsizing_[v0], vsizing_[v1]);
+        return distance(points_[v0], points_[v1]) < 4.0 / 5.0 * std::min(vsizing_[v0], vsizing_[v1]);
     }
 
     SurfaceMesh& mesh_;
@@ -312,8 +309,7 @@ private:
     VertexProperty<Scalar> refsizing_;
 };
 
-Remeshing::Remeshing(SurfaceMesh& mesh)
-    : mesh_(mesh), refmesh_(nullptr), kd_tree_(nullptr)
+Remeshing::Remeshing(SurfaceMesh& mesh) : mesh_(mesh), refmesh_(nullptr), kd_tree_(nullptr)
 {
     if (!mesh_.is_triangle_mesh())
         throw InvalidInputException("Input is not a triangle mesh!");
@@ -327,8 +323,7 @@ Remeshing::Remeshing(SurfaceMesh& mesh)
     has_feature_edges_ = mesh_.has_edge_property("e:feature");
 }
 
-void Remeshing::uniform_remeshing(Scalar edge_length, unsigned int iterations,
-                                  bool use_projection)
+void Remeshing::uniform_remeshing(Scalar edge_length, unsigned int iterations, bool use_projection)
 {
     uniform_ = true;
     use_projection_ = use_projection;
@@ -354,9 +349,8 @@ void Remeshing::uniform_remeshing(Scalar edge_length, unsigned int iterations,
     postprocessing();
 }
 
-void Remeshing::adaptive_remeshing(Scalar min_edge_length,
-                                   Scalar max_edge_length, Scalar approx_error,
-                                   unsigned int iterations, bool use_projection)
+void Remeshing::adaptive_remeshing(
+    Scalar min_edge_length, Scalar max_edge_length, Scalar approx_error, unsigned int iterations, bool use_projection)
 {
     uniform_ = false;
     min_edge_length_ = min_edge_length;
@@ -417,8 +411,7 @@ void Remeshing::preprocessing()
             // lock an edge if one of its vertices is locked
             for (auto e : mesh_.edges())
             {
-                elocked_[e] = (vlocked_[mesh_.vertex(e, 0)] ||
-                               vlocked_[mesh_.vertex(e, 1)]);
+                elocked_[e] = (vlocked_[mesh_.vertex(e, 0)] || vlocked_[mesh_.vertex(e, 1)]);
             }
         }
     }
@@ -530,7 +523,7 @@ void Remeshing::preprocessing()
             if (e < r)
             {
                 // see mathworld: "circle segment" and "equilateral triangle"
-                //h = sqrt(2.0*r*e-e*e) * 3.0 / sqrt(3.0);
+                // h = sqrt(2.0*r*e-e*e) * 3.0 / sqrt(3.0);
                 h = sqrt(6.0 * e * r - 3.0 * e * e); // simplified...
             }
             else
@@ -671,8 +664,7 @@ void Remeshing::split_long_edges()
 
                 if (is_feature)
                 {
-                    enew = is_boundary ? Edge(mesh_.n_edges() - 2)
-                                       : Edge(mesh_.n_edges() - 3);
+                    enew = is_boundary ? Edge(mesh_.n_edges() - 2) : Edge(mesh_.n_edges() - 3);
                     efeature_[enew] = true;
                     vfeature_[vnew] = true;
                 }
@@ -748,14 +740,12 @@ void Remeshing::collapse_short_edges()
                         // the other two edges removed by collapse must not be features
                         h0 = mesh_.prev_halfedge(h01);
                         h1 = mesh_.next_halfedge(h10);
-                        if (efeature_[mesh_.edge(h0)] ||
-                            efeature_[mesh_.edge(h1)])
+                        if (efeature_[mesh_.edge(h0)] || efeature_[mesh_.edge(h1)])
                             hcol01 = false;
                         // the other two edges removed by collapse must not be features
                         h0 = mesh_.prev_halfedge(h10);
                         h1 = mesh_.next_halfedge(h01);
-                        if (efeature_[mesh_.edge(h0)] ||
-                            efeature_[mesh_.edge(h1)])
+                        if (efeature_[mesh_.edge(h0)] || efeature_[mesh_.edge(h1)])
                             hcol10 = false;
                     }
                     else if (f0)
@@ -859,8 +849,7 @@ void Remeshing::flip_edges()
                 v1 = mesh_.to_vertex(h);
                 v3 = mesh_.to_vertex(mesh_.next_halfedge(h));
 
-                if (!vlocked_[v0] && !vlocked_[v1] && !vlocked_[v2] &&
-                    !vlocked_[v3])
+                if (!vlocked_[v0] && !vlocked_[v1] && !vlocked_[v2] && !vlocked_[v3])
                 {
                     val0 = valence[v0];
                     val1 = valence[v1];
@@ -964,8 +953,7 @@ void Remeshing::tangential_smoothing(unsigned int iterations)
                             b += points_[vv];
                             b *= 0.5;
 
-                            w = distance(points_[v], points_[vv]) /
-                                (0.5 * (vsizing_[v] + vsizing_[vv]));
+                            w = distance(points_[v], points_[vv]) / (0.5 * (vsizing_[v] + vsizing_[vv]));
                             ww += w;
                             u += w * b;
 
@@ -1158,16 +1146,14 @@ Point Remeshing::weighted_centroid(Vertex v)
         b += points_[v3];
         b *= (1.0 / 3.0);
 
-        double area =
-            norm(cross(points_[v2] - points_[v1], points_[v3] - points_[v1]));
+        double area = norm(cross(points_[v2] - points_[v1], points_[v3] - points_[v1]));
 
         // take care of degenerate faces to avoid all zero weights and division
         // by zero later on
         if (area == 0)
             area = 1.0;
 
-        double w =
-            area / pow((vsizing_[v1] + vsizing_[v2] + vsizing_[v3]) / 3.0, 2.0);
+        double w = area / pow((vsizing_[v1] + vsizing_[v2] + vsizing_[v3]) / 3.0, 2.0);
 
         p += w * b;
         ww += w;
@@ -1179,19 +1165,19 @@ Point Remeshing::weighted_centroid(Vertex v)
 }
 } // namespace
 
-void uniform_remeshing(SurfaceMesh& mesh, Scalar edge_length,
-                       unsigned int iterations, bool use_projection)
+void uniform_remeshing(SurfaceMesh& mesh, Scalar edge_length, unsigned int iterations, bool use_projection)
 {
     Remeshing(mesh).uniform_remeshing(edge_length, iterations, use_projection);
 }
 
-void adaptive_remeshing(SurfaceMesh& mesh, Scalar min_edge_length,
-                        Scalar max_edge_length, Scalar approx_error,
-                        unsigned int iterations, bool use_projection)
+void adaptive_remeshing(SurfaceMesh& mesh,
+                        Scalar min_edge_length,
+                        Scalar max_edge_length,
+                        Scalar approx_error,
+                        unsigned int iterations,
+                        bool use_projection)
 {
-    Remeshing(mesh).adaptive_remeshing(min_edge_length, max_edge_length,
-                                       approx_error, iterations,
-                                       use_projection);
+    Remeshing(mesh).adaptive_remeshing(min_edge_length, max_edge_length, approx_error, iterations, use_projection);
 }
 
 } // namespace pmp

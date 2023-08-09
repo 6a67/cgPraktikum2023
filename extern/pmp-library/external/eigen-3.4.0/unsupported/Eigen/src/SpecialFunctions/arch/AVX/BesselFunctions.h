@@ -1,8 +1,10 @@
 #ifndef EIGEN_AVX_BESSELFUNCTIONS_H
 #define EIGEN_AVX_BESSELFUNCTIONS_H
 
-namespace Eigen {
-namespace internal {
+namespace Eigen
+{
+namespace internal
+{
 
 F16_PACKET_FUNCTION(Packet8f, Packet8h, pbessel_i0)
 BF16_PACKET_FUNCTION(Packet8f, Packet8bf, pbessel_i0)
@@ -40,7 +42,7 @@ BF16_PACKET_FUNCTION(Packet8f, Packet8bf, pbessel_y0)
 F16_PACKET_FUNCTION(Packet8f, Packet8h, pbessel_y1)
 BF16_PACKET_FUNCTION(Packet8f, Packet8bf, pbessel_y1)
 
-}  // namespace internal
-}  // namespace Eigen
+} // namespace internal
+} // namespace Eigen
 
-#endif  // EIGEN_AVX_BESSELFUNCTIONS_H
+#endif // EIGEN_AVX_BESSELFUNCTIONS_H

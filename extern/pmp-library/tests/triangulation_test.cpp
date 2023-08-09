@@ -3,8 +3,8 @@
 
 #include "gtest/gtest.h"
 
-#include <pmp/algorithms/triangulation.h>
 #include "helpers.h"
+#include <pmp/algorithms/triangulation.h>
 
 using namespace pmp;
 

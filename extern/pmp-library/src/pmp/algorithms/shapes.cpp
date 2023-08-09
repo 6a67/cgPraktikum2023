@@ -2,14 +2,16 @@
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
 #include "pmp/algorithms/shapes.h"
-#include "pmp/algorithms/subdivision.h"
 #include "pmp/algorithms/differential_geometry.h"
+#include "pmp/algorithms/subdivision.h"
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
-namespace pmp {
-namespace {
+namespace pmp
+{
+namespace
+{
 void project_to_unit_sphere(SurfaceMesh& mesh)
 {
     for (auto v : mesh.vertices())
@@ -152,8 +154,7 @@ SurfaceMesh quad_sphere(size_t n_subdivisions)
     return mesh;
 }
 
-SurfaceMesh uv_sphere(const Point& center, Scalar radius, size_t n_slices,
-                      size_t n_stacks)
+SurfaceMesh uv_sphere(const Point& center, Scalar radius, size_t n_slices, size_t n_stacks)
 {
     SurfaceMesh mesh;
 
@@ -324,8 +325,7 @@ SurfaceMesh cylinder(size_t n_subdivisions, Scalar radius, Scalar height)
     return mesh;
 }
 
-SurfaceMesh torus(size_t radial_resolution, size_t tubular_resolution,
-                  Scalar radius, Scalar thickness)
+SurfaceMesh torus(size_t radial_resolution, size_t tubular_resolution, Scalar radius, Scalar thickness)
 {
     assert(radial_resolution >= 3);
     assert(tubular_resolution >= 3);

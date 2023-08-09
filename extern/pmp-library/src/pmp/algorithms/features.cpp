@@ -4,7 +4,8 @@
 #include "pmp/algorithms/features.h"
 #include "pmp/algorithms/normals.h"
 
-namespace pmp {
+namespace pmp
+{
 
 size_t detect_features(SurfaceMesh& mesh, Scalar angle)
 {

@@ -10,7 +10,7 @@
 
 class SurfaceMeshTest : public ::testing::Test
 {
-public:
+  public:
     pmp::SurfaceMesh mesh;
     pmp::Vertex v0, v1, v2, v3;
     pmp::Face f0, f1;

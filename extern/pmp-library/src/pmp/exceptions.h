@@ -5,7 +5,8 @@
 
 #include <stdexcept>
 
-namespace pmp {
+namespace pmp
+{
 
 //! \addtogroup core
 //! @{
@@ -16,7 +17,7 @@ namespace pmp {
 //! general polygon mesh is passed instead.
 class InvalidInputException : public std::invalid_argument
 {
-public:
+  public:
     InvalidInputException(const std::string& what) : std::invalid_argument(what)
     {
     }
@@ -25,8 +26,10 @@ public:
 //! \brief Exception indicating failure so solve an equation system.
 class SolverException : public std::runtime_error
 {
-public:
-    SolverException(const std::string& what) : std::runtime_error(what) {}
+  public:
+    SolverException(const std::string& what) : std::runtime_error(what)
+    {
+    }
 };
 
 //! \brief Exception indicating failure to allocate a new resource.
@@ -34,29 +37,37 @@ public:
 //! implementation-defined allocation limits.
 class AllocationException : public std::length_error
 {
-public:
-    AllocationException(const std::string& what) : std::length_error(what) {}
+  public:
+    AllocationException(const std::string& what) : std::length_error(what)
+    {
+    }
 };
 
 //! \brief Exception indicating a topological error has occurred.
 class TopologyException : public std::logic_error
 {
-public:
-    TopologyException(const std::string& what) : std::logic_error(what) {}
+  public:
+    TopologyException(const std::string& what) : std::logic_error(what)
+    {
+    }
 };
 
 //! \brief Exception indicating an error occurred while performing IO.
 class IOException : public std::runtime_error
 {
-public:
-    IOException(const std::string& what) : std::runtime_error(what) {}
+  public:
+    IOException(const std::string& what) : std::runtime_error(what)
+    {
+    }
 };
 
 //! \brief Exception indicating an OpenGL error.
 class GLException : public std::runtime_error
 {
-public:
-    GLException(const std::string& what) : std::runtime_error(what) {}
+  public:
+    GLException(const std::string& what) : std::runtime_error(what)
+    {
+    }
 };
 
 //! @}

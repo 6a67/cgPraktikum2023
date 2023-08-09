@@ -4,8 +4,8 @@
 
 #include "gtest/gtest.h"
 
-#include <pmp/surface_mesh.h>
 #include <pmp/mat_vec.h>
+#include <pmp/surface_mesh.h>
 #include <vector>
 
 using namespace pmp;

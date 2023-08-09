@@ -3,15 +3,16 @@
 
 #include "pmp/io/read_off.h"
 
-#include "pmp/io/helpers.h"
 #include "pmp/exceptions.h"
+#include "pmp/io/helpers.h"
 
-namespace pmp {
+namespace pmp
+{
 
-void read_off_ascii(SurfaceMesh& mesh, FILE* in, const bool has_normals,
-                    const bool has_texcoords, const bool has_colors);
-void read_off_binary(SurfaceMesh& mesh, FILE* in, const bool has_normals,
-                     const bool has_texcoords, const bool has_colors);
+void read_off_ascii(
+    SurfaceMesh& mesh, FILE* in, const bool has_normals, const bool has_texcoords, const bool has_colors);
+void read_off_binary(
+    SurfaceMesh& mesh, FILE* in, const bool has_normals, const bool has_texcoords, const bool has_colors);
 
 void read_off(SurfaceMesh& mesh, const std::filesystem::path& file)
 {
@@ -94,8 +95,8 @@ void read_off(SurfaceMesh& mesh, const std::filesystem::path& file)
     fclose(in);
 }
 
-void read_off_ascii(SurfaceMesh& mesh, FILE* in, const bool has_normals,
-                    const bool has_texcoords, const bool has_colors)
+void read_off_ascii(
+    SurfaceMesh& mesh, FILE* in, const bool has_normals, const bool has_texcoords, const bool has_colors)
 {
     std::array<char, 1000> line;
     int nc;
@@ -116,8 +117,7 @@ void read_off_ascii(SurfaceMesh& mesh, FILE* in, const bool has_normals,
         colors = mesh.vertex_property<Color>("v:color");
 
     // #Vertices, #Faces, #Edges
-    [[maybe_unused]] auto items =
-        fscanf(in, "%d %d %d\n", (int*)&nv, (int*)&nf, (int*)&ne);
+    [[maybe_unused]] auto items = fscanf(in, "%d %d %d\n", (int*)&nv, (int*)&nf, (int*)&ne);
 
     mesh.reserve(nv, std::max(3 * nv, ne), nf);
 
@@ -197,8 +197,8 @@ void read_off_ascii(SurfaceMesh& mesh, FILE* in, const bool has_normals,
     }
 }
 
-void read_off_binary(SurfaceMesh& mesh, FILE* in, const bool has_normals,
-                     const bool has_texcoords, const bool has_colors)
+void read_off_binary(
+    SurfaceMesh& mesh, FILE* in, const bool has_normals, const bool has_texcoords, const bool has_colors)
 {
     IndexType i, j, idx(0);
     IndexType nv(0), nf(0), ne(0);

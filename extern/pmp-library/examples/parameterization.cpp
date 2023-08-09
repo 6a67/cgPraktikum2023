@@ -1,25 +1,24 @@
 // Copyright 2011-2021 the Polygon Mesh Processing Library developers.
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
-#include <pmp/visualization/mesh_viewer.h>
-#include <pmp/algorithms/parameterization.h>
 #include <imgui.h>
+#include <pmp/algorithms/parameterization.h>
+#include <pmp/visualization/mesh_viewer.h>
 
 using namespace pmp;
 
 class Viewer : public MeshViewer
 {
-public:
+  public:
     Viewer(const char* title, int width, int height);
     void load_mesh(const char* filename) override;
 
-protected:
+  protected:
     void process_imgui() override;
     void draw(const std::string& _draw_mode) override;
 };
 
-Viewer::Viewer(const char* title, int width, int height)
-    : MeshViewer(title, width, height)
+Viewer::Viewer(const char* title, int width, int height) : MeshViewer(title, width, height)
 {
 }
 
@@ -47,8 +46,7 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Parametrization",
-                                ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Parametrization", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::Spacing();
         if (ImGui::Button("Discrete Harmonic Param"))

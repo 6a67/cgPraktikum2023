@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \brief Compute discrete harmonic parameterization.
 //! \details See \cite desbrun_2002_intrinsic for details.
@@ -13,8 +14,7 @@ namespace pmp {
 //! \throw InvalidInputException if the input precondition is violated.
 //! \throw SolverException in case of failure to solve the linear system.
 //! \ingroup algorithms
-void harmonic_parameterization(SurfaceMesh& mesh,
-                               bool use_uniform_weights = false);
+void harmonic_parameterization(SurfaceMesh& mesh, bool use_uniform_weights = false);
 
 //! \brief Compute parameterization based on least squares conformal mapping.
 //! \details See \cite levy_2002_least for details.

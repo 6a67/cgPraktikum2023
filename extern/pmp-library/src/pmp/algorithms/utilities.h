@@ -6,7 +6,8 @@
 #include "pmp/bounding_box.h"
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \addtogroup algorithms
 //! @{
@@ -23,8 +24,7 @@ Scalar min_face_area(const SurfaceMesh& mesh);
 //! Compute length of an edge \p e in \p mesh .
 inline Scalar edge_length(const SurfaceMesh& mesh, Edge e)
 {
-    return distance(mesh.position(mesh.vertex(e, 0)),
-                    mesh.position(mesh.vertex(e, 1)));
+    return distance(mesh.position(mesh.vertex(e, 0)), mesh.position(mesh.vertex(e, 1)));
 }
 
 //! Compute mean edge length of \p mesh .

@@ -3,12 +3,13 @@
 
 #include "helpers.h"
 
-#include "pmp/algorithms/shapes.h"
 #include "pmp/algorithms/features.h"
+#include "pmp/algorithms/shapes.h"
 #include "pmp/algorithms/subdivision.h"
 #include "pmp/algorithms/triangulation.h"
 
-namespace pmp {
+namespace pmp
+{
 
 static SurfaceMesh icosahedron_mesh;
 
@@ -176,8 +177,7 @@ SurfaceMesh texture_seams_mesh()
     }
 
     // change texcoords to create a texture seam
-    std::vector<Face> faces = {Face(0),  Face(1),  Face(12), Face(13),
-                               Face(14), Face(15), Face(16), Face(17)};
+    std::vector<Face> faces = {Face(0), Face(1), Face(12), Face(13), Face(14), Face(15), Face(16), Face(17)};
     for (auto f : faces)
     {
         for (auto h : mesh.halfedges(f))

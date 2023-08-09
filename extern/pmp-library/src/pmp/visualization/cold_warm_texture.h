@@ -3,7 +3,8 @@
 
 #pragma once
 
-namespace pmp {
+namespace pmp
+{
 
 // clang-format off
 const std::array<GLubyte, 768> cold_warm_texture = {{

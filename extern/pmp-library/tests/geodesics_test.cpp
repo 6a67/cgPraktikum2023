@@ -74,9 +74,7 @@ TEST(GeodesicsTest, geodesic_maxnum)
     // compute geodesic distance from first vertex
     unsigned int maxnum = 42;
     std::vector<Vertex> neighbors;
-    auto num =
-        geodesics(mesh, std::vector<Vertex>{Vertex(0)},
-                  std::numeric_limits<Scalar>::max(), maxnum, &neighbors);
+    auto num = geodesics(mesh, std::vector<Vertex>{Vertex(0)}, std::numeric_limits<Scalar>::max(), maxnum, &neighbors);
     EXPECT_TRUE(num == maxnum);
     EXPECT_TRUE(neighbors.size() == maxnum);
 

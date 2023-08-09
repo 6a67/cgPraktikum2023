@@ -3,7 +3,8 @@
 
 #pragma once
 
-namespace pmp {
+namespace pmp
+{
 
 //! Flags to control reading and writing.
 //! \ingroup io

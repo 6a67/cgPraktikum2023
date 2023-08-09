@@ -7,17 +7,19 @@
 #include <stdexcept>
 #include <vector>
 
-namespace pmp {
-namespace {
+namespace pmp
+{
+namespace
+{
 
 class Triangulation
 {
-public:
+  public:
     explicit Triangulation(SurfaceMesh& mesh);
 
     void triangulate(Face f);
 
-private:
+  private:
     // Compute the weight of the triangle (i,j,k).
     Scalar compute_weight(int i, int j, int k) const;
 
@@ -69,8 +71,7 @@ void Triangulation::triangulate(Face f)
 
     // compute minimal triangulation by dynamic programming
     weight_.clear();
-    weight_.resize(n,
-                   std::vector<Scalar>(n, std::numeric_limits<Scalar>::max()));
+    weight_.resize(n, std::vector<Scalar>(n, std::numeric_limits<Scalar>::max()));
     index_.clear();
     index_.resize(n, std::vector<int>(n, 0));
 
@@ -94,8 +95,7 @@ void Triangulation::triangulate(Face f)
             // find best split i < m < i+j
             for (size_t m = i + 1; m < k; ++m)
             {
-                Scalar w =
-                    weight_[i][m] + compute_weight(i, m, k) + weight_[m][k];
+                Scalar w = weight_[i][m] + compute_weight(i, m, k) + weight_[m][k];
 
                 if (w < wmin)
                 {

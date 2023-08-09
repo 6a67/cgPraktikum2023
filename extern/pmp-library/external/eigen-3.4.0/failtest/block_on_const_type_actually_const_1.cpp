@@ -8,9 +8,12 @@
 
 using namespace Eigen;
 
-void foo(){
+void foo()
+{
     MatrixXf m;
     Block<CV_QUALIFIER MatrixXf, 3, 3>(m, 0, 0).coeffRef(0, 0) = 1.0f;
 }
 
-int main() {}
+int main()
+{
+}

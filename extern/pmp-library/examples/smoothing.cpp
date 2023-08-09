@@ -1,24 +1,23 @@
 // Copyright 2011-2019 the Polygon Mesh Processing Library developers.
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
-#include <pmp/visualization/mesh_viewer.h>
+#include <imgui.h>
 #include <pmp/algorithms/curvature.h>
 #include <pmp/algorithms/smoothing.h>
-#include <imgui.h>
+#include <pmp/visualization/mesh_viewer.h>
 
 using namespace pmp;
 
 class Viewer : public MeshViewer
 {
-public:
+  public:
     Viewer(const char* title, int width, int height);
 
-protected:
+  protected:
     void process_imgui() override;
 };
 
-Viewer::Viewer(const char* title, int width, int height)
-    : MeshViewer(title, width, height)
+Viewer::Viewer(const char* title, int width, int height) : MeshViewer(title, width, height)
 {
     crease_angle_ = 180.0;
 }
@@ -84,8 +83,7 @@ void Viewer::process_imgui()
             // only re-scale if we don't have a (fixed) boundary
             bool rescale = !has_boundary;
 
-            Scalar dt =
-                uniform_laplace ? timestep : timestep * radius_ * radius_;
+            Scalar dt = uniform_laplace ? timestep : timestep * radius_ * radius_;
             try
             {
                 implicit_smoothing(mesh_, dt, uniform_laplace, rescale);

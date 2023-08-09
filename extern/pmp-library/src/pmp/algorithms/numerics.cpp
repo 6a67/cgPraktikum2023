@@ -3,7 +3,8 @@
 
 #include "pmp/algorithms/numerics.h"
 
-namespace pmp {
+namespace pmp
+{
 
 DenseMatrix cholesky_solve(const SparseMatrix& A, const DenseMatrix& b)
 {
@@ -17,7 +18,8 @@ DenseMatrix cholesky_solve(const SparseMatrix& A, const DenseMatrix& b)
     return solver.solve(b);
 }
 
-DenseMatrix cholesky_solve(const SparseMatrix& A, const DenseMatrix& B,
+DenseMatrix cholesky_solve(const SparseMatrix& A,
+                           const DenseMatrix& B,
                            std::function<bool(unsigned int)> is_constrained,
                            const DenseMatrix& C)
 {
@@ -87,9 +89,7 @@ DenseMatrix cholesky_solve(const SparseMatrix& A, const DenseMatrix& B,
     return X;
 }
 
-void setup_selector_matrix(const SurfaceMesh& mesh,
-                           std::function<bool(Vertex)> is_selected,
-                           SparseMatrix& S)
+void setup_selector_matrix(const SurfaceMesh& mesh, std::function<bool(Vertex)> is_selected, SparseMatrix& S)
 {
     std::vector<Triplet> triplets;
     triplets.reserve(mesh.n_vertices());

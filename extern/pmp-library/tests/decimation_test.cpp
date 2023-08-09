@@ -3,9 +3,9 @@
 
 #include "gtest/gtest.h"
 
+#include "helpers.h"
 #include "pmp/algorithms/decimation.h"
 #include "pmp/algorithms/features.h"
-#include "helpers.h"
 
 using namespace pmp;
 
@@ -14,7 +14,8 @@ TEST(DecimationTest, simplification)
 {
     auto mesh = subdivided_icosahedron();
     clear_features(mesh);
-    decimate(mesh, mesh.n_vertices() * 0.01,
+    decimate(mesh,
+             mesh.n_vertices() * 0.01,
              5,    // aspect ratio
              0.5,  // edge length
              10,   // max valence
@@ -42,7 +43,8 @@ TEST(DecimationTest, simplification_texture_mesh)
     ASSERT_TRUE(mesh.has_halfedge_property("h:tex"));
 
     auto seam_threshold = 1.0e-2;
-    decimate(mesh, mesh.n_vertices() - 4,
+    decimate(mesh,
+             mesh.n_vertices() - 4,
              10.0,           // aspect ratio
              0.0,            // edge length
              0.0,            // max valence
@@ -60,14 +62,14 @@ TEST(DecimationTest, simplification_texture_mesh)
         {
             // texcoords are stored in halfedge pointing towards a vertex
             Halfedge h0 = mesh.halfedge(e, 0);
-            Halfedge h1 = mesh.halfedge(e, 1);     //opposite halfedge
+            Halfedge h1 = mesh.halfedge(e, 1);     // opposite halfedge
             Halfedge h0p = mesh.prev_halfedge(h0); // start point edge 0
             Halfedge h1p = mesh.prev_halfedge(h1); // start point edge 1
 
             // if start or end points differ more than seam_threshold
             // the corresponding edge is a texture seam
-            if (norm(texcoords[h1] - texcoords[h0p]) > seam_threshold ||
-                norm(texcoords[h0] - texcoords[h1p]) > seam_threshold)
+            if (norm(texcoords[h1] - texcoords[h0p]) > seam_threshold
+                || norm(texcoords[h0] - texcoords[h1p]) > seam_threshold)
             {
                 seam_edges++;
                 seams[e] = true;

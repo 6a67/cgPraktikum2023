@@ -3,17 +3,17 @@
 
 #include "mesh_processing_viewer.h"
 
-#include <pmp/algorithms/subdivision.h>
-#include <pmp/algorithms/features.h>
-#include <pmp/algorithms/decimation.h>
-#include <pmp/algorithms/remeshing.h>
 #include <pmp/algorithms/curvature.h>
+#include <pmp/algorithms/decimation.h>
+#include <pmp/algorithms/differential_geometry.h>
+#include <pmp/algorithms/features.h>
 #include <pmp/algorithms/geodesics.h>
 #include <pmp/algorithms/hole_filling.h>
+#include <pmp/algorithms/remeshing.h>
 #include <pmp/algorithms/shapes.h>
 #include <pmp/algorithms/smoothing.h>
+#include <pmp/algorithms/subdivision.h>
 #include <pmp/algorithms/triangulation.h>
-#include <pmp/algorithms/differential_geometry.h>
 #include <pmp/algorithms/utilities.h>
 
 #include <imgui.h>
@@ -34,9 +34,7 @@ void onerror(const char* filename)
 
 using namespace pmp;
 
-MeshProcessingViewer::MeshProcessingViewer(const char* title, int width,
-                                           int height)
-    : MeshViewer(title, width, height)
+MeshProcessingViewer::MeshProcessingViewer(const char* title, int width, int height) : MeshViewer(title, width, height)
 {
     // add help items
     add_help_item("O", "Flip mesh orientation", 5);
@@ -49,121 +47,120 @@ void MeshProcessingViewer::keyboard(int key, int scancode, int action, int mods)
 
     switch (key)
     {
-        case GLFW_KEY_A:
-        {
-            detect_features(mesh_, 25);
-            update_mesh();
-            break;
-        }
-        case GLFW_KEY_D: // dualize mesh
-        {
-            dual(mesh_);
-            update_mesh();
-            break;
-        }
-        case GLFW_KEY_H:
-        {
-            set_draw_mode("Hidden Line");
-            break;
-        }
-        case GLFW_KEY_O: // change face orientation
-        {
+    case GLFW_KEY_A:
+    {
+        detect_features(mesh_, 25);
+        update_mesh();
+        break;
+    }
+    case GLFW_KEY_D: // dualize mesh
+    {
+        dual(mesh_);
+        update_mesh();
+        break;
+    }
+    case GLFW_KEY_H:
+    {
+        set_draw_mode("Hidden Line");
+        break;
+    }
+    case GLFW_KEY_O: // change face orientation
+    {
 #ifdef __EMSCRIPTEN__
-            // [fileHandle] = await window.showOpenFilePicker();
-            instance = this;
-            EM_ASM(console.log("mario"););
-            emscripten_async_wget("icosphere.off", "input.off", onload,
-                                  onerror);
+        // [fileHandle] = await window.showOpenFilePicker();
+        instance = this;
+        EM_ASM(console.log("mario"););
+        emscripten_async_wget("icosphere.off", "input.off", onload, onerror);
 #else
-            flip_faces(mesh_);
+        flip_faces(mesh_);
 #endif
-            update_mesh();
-            break;
-        }
-        case GLFW_KEY_M: // merge two faces incident to longest edge
+        update_mesh();
+        break;
+    }
+    case GLFW_KEY_M: // merge two faces incident to longest edge
+    {
+        Scalar l, ll(0);
+        Edge ee;
+        for (auto e : mesh_.edges())
         {
-            Scalar l, ll(0);
-            Edge ee;
-            for (auto e : mesh_.edges())
+            Vertex v0 = mesh_.vertex(e, 0);
+            Vertex v1 = mesh_.vertex(e, 1);
+            Point p0 = mesh_.position(v0);
+            Point p1 = mesh_.position(v1);
+            l = distance(p0, p1);
+            if (l > ll && mesh_.is_removal_ok(e))
             {
-                Vertex v0 = mesh_.vertex(e, 0);
-                Vertex v1 = mesh_.vertex(e, 1);
-                Point p0 = mesh_.position(v0);
-                Point p1 = mesh_.position(v1);
-                l = distance(p0, p1);
-                if (l > ll && mesh_.is_removal_ok(e))
-                {
-                    ll = l;
-                    ee = e;
-                }
+                ll = l;
+                ee = e;
             }
+        }
 
-            if (ee.is_valid())
-            {
-                std::cout << "Merge faces incident to edge " << ee << std::endl;
-                mesh_.remove_edge(ee);
-                update_mesh();
-            }
-            break;
-        }
-        case GLFW_KEY_T:
+        if (ee.is_valid())
         {
-            triangulate(mesh_);
+            std::cout << "Merge faces incident to edge " << ee << std::endl;
+            mesh_.remove_edge(ee);
             update_mesh();
-            break;
         }
+        break;
+    }
+    case GLFW_KEY_T:
+    {
+        triangulate(mesh_);
+        update_mesh();
+        break;
+    }
+    case GLFW_KEY_1:
+    case GLFW_KEY_2:
+    case GLFW_KEY_3:
+    case GLFW_KEY_4:
+    case GLFW_KEY_5:
+    case GLFW_KEY_6:
+    case GLFW_KEY_7:
+    case GLFW_KEY_8:
+    case GLFW_KEY_9:
+    {
+        switch (key)
+        {
         case GLFW_KEY_1:
+            mesh_.assign(tetrahedron());
+            break;
         case GLFW_KEY_2:
+            mesh_.assign(octahedron());
+            break;
         case GLFW_KEY_3:
+            mesh_.assign(hexahedron());
+            break;
         case GLFW_KEY_4:
+            mesh_.assign(icosahedron());
+            break;
         case GLFW_KEY_5:
+            mesh_.assign(dodecahedron());
+            break;
         case GLFW_KEY_6:
+            mesh_.assign(icosphere(3));
+            break;
         case GLFW_KEY_7:
+            mesh_.assign(quad_sphere(3));
+            break;
         case GLFW_KEY_8:
+            mesh_.assign(uv_sphere());
+            break;
         case GLFW_KEY_9:
-        {
-            switch (key)
-            {
-                case GLFW_KEY_1:
-                    mesh_.assign(tetrahedron());
-                    break;
-                case GLFW_KEY_2:
-                    mesh_.assign(octahedron());
-                    break;
-                case GLFW_KEY_3:
-                    mesh_.assign(hexahedron());
-                    break;
-                case GLFW_KEY_4:
-                    mesh_.assign(icosahedron());
-                    break;
-                case GLFW_KEY_5:
-                    mesh_.assign(dodecahedron());
-                    break;
-                case GLFW_KEY_6:
-                    mesh_.assign(icosphere(3));
-                    break;
-                case GLFW_KEY_7:
-                    mesh_.assign(quad_sphere(3));
-                    break;
-                case GLFW_KEY_8:
-                    mesh_.assign(uv_sphere());
-                    break;
-                case GLFW_KEY_9:
-                    mesh_.assign(torus());
-                    break;
-            }
+            mesh_.assign(torus());
+            break;
+        }
 
-            BoundingBox bb = bounds(mesh_);
-            set_scene((vec3)bb.center(), 0.5 * bb.size());
-            set_draw_mode("Hidden Line");
-            update_mesh();
-            break;
-        }
-        default:
-        {
-            MeshViewer::keyboard(key, scancode, action, mods);
-            break;
-        }
+        BoundingBox bb = bounds(mesh_);
+        set_scene((vec3)bb.center(), 0.5 * bb.size());
+        set_draw_mode("Hidden Line");
+        update_mesh();
+        break;
+    }
+    default:
+    {
+        MeshViewer::keyboard(key, scancode, action, mods);
+        break;
+    }
     }
 }
 
@@ -273,8 +270,7 @@ void MeshProcessingViewer::process_imgui()
             try
             {
                 auto nv = mesh_.n_vertices() * 0.01 * target_percentage;
-                decimate(mesh_, nv, aspect_ratio, 0.0, 0.0, normal_deviation,
-                         0.0, 0.01, seam_angle_deviation);
+                decimate(mesh_, nv, aspect_ratio, 0.0, 0.0, normal_deviation, 0.0, 0.01, seam_angle_deviation);
             }
             catch (const InvalidInputException& e)
             {
@@ -416,8 +412,7 @@ void MeshProcessingViewer::process_imgui()
 
 void MeshProcessingViewer::mouse(int button, int action, int mods)
 {
-    if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_RIGHT &&
-        shift_pressed())
+    if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_RIGHT && shift_pressed())
     {
         double x, y;
         cursor_pos(x, y);

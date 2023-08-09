@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \brief Mesh decimation based on approximation error and fairness
 //! criteria.
@@ -15,10 +16,14 @@ namespace pmp {
 //! \pre Input mesh needs to be a triangle mesh.
 //! \throw InvalidInputException if the input precondition is violated.
 //! \ingroup algorithms
-void decimate(SurfaceMesh& mesh, unsigned int n_vertices,
-              Scalar aspect_ratio = 0.0, Scalar edge_length = 0.0,
-              unsigned int max_valence = 0, Scalar normal_deviation = 0.0,
-              Scalar hausdorff_error = 0.0, Scalar seam_threshold = 1e-2,
+void decimate(SurfaceMesh& mesh,
+              unsigned int n_vertices,
+              Scalar aspect_ratio = 0.0,
+              Scalar edge_length = 0.0,
+              unsigned int max_valence = 0,
+              Scalar normal_deviation = 0.0,
+              Scalar hausdorff_error = 0.0,
+              Scalar seam_threshold = 1e-2,
               Scalar seam_angle_deviation = 1);
 
 } // namespace pmp

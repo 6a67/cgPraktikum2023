@@ -8,7 +8,8 @@
 #include "pmp/mat_vec.h"
 
 //! The pmp-library namespace
-namespace pmp {
+namespace pmp
+{
 
 //! \addtogroup core
 //! @{

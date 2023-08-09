@@ -8,7 +8,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \brief Compute geodesic distance from a set of seed vertices
 //! \details The method works by a Dijkstra-like breadth first traversal from
@@ -23,11 +24,11 @@ namespace pmp {
 //! \param[out] neighbors The vector of neighbor vertices.
 //! \return The number of neighbors that have been found.
 //! \ingroup algorithms
-unsigned int geodesics(
-    SurfaceMesh& mesh, const std::vector<Vertex>& seeds,
-    Scalar maxdist = std::numeric_limits<Scalar>::max(),
-    unsigned int maxnum = std::numeric_limits<unsigned int>::max(),
-    std::vector<Vertex>* neighbors = nullptr);
+unsigned int geodesics(SurfaceMesh& mesh,
+                       const std::vector<Vertex>& seeds,
+                       Scalar maxdist = std::numeric_limits<Scalar>::max(),
+                       unsigned int maxnum = std::numeric_limits<unsigned int>::max(),
+                       std::vector<Vertex>* neighbors = nullptr);
 
 //! \brief Compute geodesic distance from a set of seed vertices
 //! \details Compute geodesic distances based on the heat method,

@@ -4,10 +4,10 @@
 #include "trackball_viewer.h"
 #include <algorithm>
 
-namespace pmp {
+namespace pmp
+{
 
-TrackballViewer::TrackballViewer(const char* title, int width, int height,
-                                 bool showgui)
+TrackballViewer::TrackballViewer(const char* title, int width, int height, bool showgui)
     : Window(title, width, height, showgui)
 {
     // define basic draw modes
@@ -60,42 +60,42 @@ void TrackballViewer::keyboard(int key, int code, int action, int mods)
 
     switch (key)
     {
-        case GLFW_KEY_SPACE:
-        {
-            if (++draw_mode_ >= n_draw_modes_)
-                draw_mode_ = 0;
-            std::string mode = draw_mode_names_[draw_mode_];
-            std::cout << "setting draw mode to " << mode << std::endl;
-            set_draw_mode(mode);
-            break;
-        }
+    case GLFW_KEY_SPACE:
+    {
+        if (++draw_mode_ >= n_draw_modes_)
+            draw_mode_ = 0;
+        std::string mode = draw_mode_names_[draw_mode_];
+        std::cout << "setting draw mode to " << mode << std::endl;
+        set_draw_mode(mode);
+        break;
+    }
 
-        case GLFW_KEY_LEFT:
-        {
-            rotate(vec3(0, 1, 0), -5.0);
-            break;
-        }
-        case GLFW_KEY_RIGHT:
-        {
-            rotate(vec3(0, 1, 0), 5.0);
-            break;
-        }
-        case GLFW_KEY_UP:
-        {
-            rotate(vec3(1, 0, 0), -5.0);
-            break;
-        }
-        case GLFW_KEY_DOWN:
-        {
-            rotate(vec3(1, 0, 0), 5.0);
-            break;
-        }
+    case GLFW_KEY_LEFT:
+    {
+        rotate(vec3(0, 1, 0), -5.0);
+        break;
+    }
+    case GLFW_KEY_RIGHT:
+    {
+        rotate(vec3(0, 1, 0), 5.0);
+        break;
+    }
+    case GLFW_KEY_UP:
+    {
+        rotate(vec3(1, 0, 0), -5.0);
+        break;
+    }
+    case GLFW_KEY_DOWN:
+    {
+        rotate(vec3(1, 0, 0), 5.0);
+        break;
+    }
 
-        default:
-        {
-            Window::keyboard(key, code, action, mods);
-            break;
-        }
+    default:
+    {
+        Window::keyboard(key, code, action, mods);
+        break;
+    }
     }
 }
 
@@ -120,8 +120,7 @@ void TrackballViewer::display()
     far_ = std::max(0.002f * radius_, z + radius_);
 
     // update projection matrix
-    projection_matrix_ = perspective_matrix(
-        fovy_, (float)width() / (float)height(), near_, far_);
+    projection_matrix_ = perspective_matrix(fovy_, (float)width() / (float)height(), near_, far_);
 
     // draw the scene in current draw mode
     if (draw_mode_ < draw_mode_names_.size())
@@ -244,12 +243,8 @@ bool TrackballViewer::pick(int x, int y, vec3& result)
 
     if (zf != 1.0f)
     {
-        float xf =
-            ((float)x - (float)viewport[0]) / ((float)viewport[2]) * 2.0f -
-            1.0f;
-        float yf =
-            ((float)y - (float)viewport[1]) / ((float)viewport[3]) * 2.0f -
-            1.0f;
+        float xf = ((float)x - (float)viewport[0]) / ((float)viewport[2]) * 2.0f - 1.0f;
+        float yf = ((float)y - (float)viewport[1]) / ((float)viewport[3]) * 2.0f - 1.0f;
         zf = zf * 2.0f - 1.0f;
 
         mat4 mvp = projection_matrix_ * modelview_matrix_;
@@ -281,8 +276,7 @@ void TrackballViewer::fly_to(int x, int y)
 
 bool TrackballViewer::map_to_sphere(const ivec2& point2D, vec3& result)
 {
-    if ((point2D[0] >= 0) && (point2D[0] <= width()) && (point2D[1] >= 0) &&
-        (point2D[1] <= height()))
+    if ((point2D[0] >= 0) && (point2D[0] <= width()) && (point2D[1] >= 0) && (point2D[1] <= height()))
     {
         double w = width();
         double h = height();
@@ -340,8 +334,7 @@ void TrackballViewer::translation(int x, int y)
     float up = tan(fovy_ / 2.0f * M_PI / 180.f) * near_;
     float right = aspect * up;
 
-    translate(vec3(2.0 * dx / width() * right / near_ * z,
-                   -2.0 * dy / height() * up / near_ * z, 0.0f));
+    translate(vec3(2.0 * dx / width() * right / near_ * z, -2.0 * dy / height() * up / near_ * z, 0.0f));
 }
 
 void TrackballViewer::zoom(int, int y)
@@ -363,8 +356,8 @@ void TrackballViewer::rotate(const vec3& axis, float angle)
     vec4 ec = modelview_matrix_ * mc;
     vec3 c(ec[0] / ec[3], ec[1] / ec[3], ec[2] / ec[3]);
 
-    modelview_matrix_ = translation_matrix(c) * rotation_matrix(axis, angle) *
-                        translation_matrix(-c) * modelview_matrix_;
+    modelview_matrix_
+        = translation_matrix(c) * rotation_matrix(axis, angle) * translation_matrix(-c) * modelview_matrix_;
 }
 
 } // namespace pmp

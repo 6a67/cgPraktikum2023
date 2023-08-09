@@ -7,10 +7,10 @@
 
 #include <fstream>
 
-namespace pmp {
+namespace pmp
+{
 
-void write_stl(const SurfaceMesh& mesh, const std::filesystem::path& file,
-               const IOFlags& flags)
+void write_stl(const SurfaceMesh& mesh, const std::filesystem::path& file, const IOFlags& flags)
 {
     if (!mesh.is_triangle_mesh())
     {

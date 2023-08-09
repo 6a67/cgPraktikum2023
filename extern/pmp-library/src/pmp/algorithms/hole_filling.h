@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \brief Fill the hole specified by halfedge \p h
 //! \details Close simple holes (boundary loops of manifold vertices) by first

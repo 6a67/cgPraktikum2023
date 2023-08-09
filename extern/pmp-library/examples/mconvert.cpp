@@ -1,8 +1,8 @@
 // Copyright 2011-2021 the Polygon Mesh Processing Library developers.
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
-#include <pmp/surface_mesh.h>
 #include <pmp/io/io.h>
+#include <pmp/surface_mesh.h>
 
 #include <unistd.h>
 
@@ -28,20 +28,20 @@ int main(int argc, char** argv)
     {
         switch (c)
         {
-            case 'b':
-                binary = true;
-                break;
+        case 'b':
+            binary = true;
+            break;
 
-            case 'i':
-                input = optarg;
-                break;
+        case 'i':
+            input = optarg;
+            break;
 
-            case 'o':
-                output = optarg;
-                break;
+        case 'o':
+            output = optarg;
+            break;
 
-            default:
-                usage_and_exit();
+        default:
+            usage_and_exit();
         }
     }
 

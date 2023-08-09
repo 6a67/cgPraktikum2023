@@ -4,11 +4,12 @@
 #include "pmp/visualization/shader.h"
 #include "pmp/exceptions.h"
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
-namespace pmp {
+namespace pmp
+{
 
 Shader::~Shader()
 {
@@ -54,8 +55,7 @@ void Shader::source(const char* vshader, const char* fshader)
     link();
 }
 
-void Shader::load(const char* vfile, const char* ffile, const char* gfile,
-                  const char* tcfile, const char* tefile)
+void Shader::load(const char* vfile, const char* ffile, const char* gfile, const char* tcfile, const char* tefile)
 {
     GLint id;
 

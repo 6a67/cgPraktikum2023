@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \brief Perform one step of Catmull-Clark subdivision.
 //! \details See \cite catmull_1978_recursively for details.

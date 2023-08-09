@@ -5,10 +5,10 @@
 #include "pmp/algorithms/differential_geometry.h"
 #include "pmp/algorithms/laplace.h"
 
-namespace pmp {
+namespace pmp
+{
 
-void explicit_smoothing(SurfaceMesh& mesh, unsigned int iters,
-                        bool use_uniform_laplace)
+void explicit_smoothing(SurfaceMesh& mesh, unsigned int iters, bool use_uniform_laplace)
 {
     if (!mesh.n_vertices())
         return;
@@ -53,8 +53,7 @@ void explicit_smoothing(SurfaceMesh& mesh, unsigned int iters,
     matrix_to_coordinates(X, mesh);
 }
 
-void implicit_smoothing(SurfaceMesh& mesh, Scalar timestep,
-                        bool use_uniform_laplace, bool rescale)
+void implicit_smoothing(SurfaceMesh& mesh, Scalar timestep, bool use_uniform_laplace, bool rescale)
 {
     if (!mesh.n_vertices())
         return;
@@ -89,9 +88,7 @@ void implicit_smoothing(SurfaceMesh& mesh, Scalar timestep,
     DenseMatrix B = M * X;
 
     // solve system
-    auto is_constrained = [&](unsigned int i) {
-        return mesh.is_boundary(Vertex(i));
-    };
+    auto is_constrained = [&](unsigned int i) { return mesh.is_boundary(Vertex(i)); };
     X = cholesky_solve(A, B, is_constrained, X);
     matrix_to_coordinates(X, mesh);
 

@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! Type of curvature to be computed
 //! \ingroup algorithms
@@ -24,8 +25,10 @@ enum class Curvature
 //! \cite meyer_2003_discrete and \cite cohen-steiner_2003_restricted for
 //! details.
 //! \ingroup algorithms
-void curvature(SurfaceMesh& mesh, Curvature c = Curvature::mean,
-               int smoothing_steps = 0, bool use_tensor = false,
+void curvature(SurfaceMesh& mesh,
+               Curvature c = Curvature::mean,
+               int smoothing_steps = 0,
+               bool use_tensor = false,
                bool use_two_ring = false);
 
 //! convert curvature values "v:curv" to 1D texture coordinates stored in vertex property "v:tex"

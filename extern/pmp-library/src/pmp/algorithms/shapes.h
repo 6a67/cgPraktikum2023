@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \addtogroup algorithms
 //! @{
@@ -34,8 +35,8 @@ SurfaceMesh icosphere(size_t n_subdivisions = 3);
 SurfaceMesh quad_sphere(size_t n_subdivisions = 3);
 
 //! Generate UV sphere with given \p center, \p radius, \p n_slices, and \p n_stacks.
-SurfaceMesh uv_sphere(const Point& center = Point(0, 0, 0), Scalar radius = 1.0,
-                      size_t n_slices = 15, size_t n_stacks = 15);
+SurfaceMesh
+uv_sphere(const Point& center = Point(0, 0, 0), Scalar radius = 1.0, size_t n_slices = 15, size_t n_stacks = 15);
 
 //! \brief Generate a plane mesh.
 //! \details Generates a pure quad mesh in the x-y plane with origin (0,0,0)
@@ -49,8 +50,7 @@ SurfaceMesh plane(size_t resolution = 4);
 //! \param n_subdivisions Number of subdivisions of the base circle. Needs to be >= 3. Default: 30.
 //! \param radius Radius of the base circle. Default: 1.
 //! \param height Height of the the cone. Default: 2.5.
-SurfaceMesh cone(size_t n_subdivisions = 30, Scalar radius = 1.0,
-                 Scalar height = 2.5);
+SurfaceMesh cone(size_t n_subdivisions = 30, Scalar radius = 1.0, Scalar height = 2.5);
 
 //! \brief Generate a cylinder mesh.
 //! \details Generates a polygonal mesh of a cylinder. The cylinder is
@@ -58,8 +58,7 @@ SurfaceMesh cone(size_t n_subdivisions = 30, Scalar radius = 1.0,
 //! \param n_subdivisions Number of subdivisions of the cylinder. Needs to be >= 3. Default: 30.
 //! \param radius Radius of the cylinder. Default: 1.
 //! \param height Height of the cylinder. Default: 2.5.
-SurfaceMesh cylinder(size_t n_subdivisions = 30, Scalar radius = 1.0,
-                     Scalar height = 2.5);
+SurfaceMesh cylinder(size_t n_subdivisions = 30, Scalar radius = 1.0, Scalar height = 2.5);
 
 //! \brief Generate a torus mesh.
 //! \details Generates a quad mesh of a torus with its major circle in the x-y plane.
@@ -67,8 +66,8 @@ SurfaceMesh cylinder(size_t n_subdivisions = 30, Scalar radius = 1.0,
 //! \param tubular_resolution Number of subdivisions of along the tube. Needs to be >= 3. Default: 40.
 //! \param radius Radius of the major circle. Default: 1.
 //! \param thickness Thickness of the tube. Default: 0.4.
-SurfaceMesh torus(size_t radial_resolution = 20, size_t tubular_resolution = 40,
-                  Scalar radius = 1.0, Scalar thickness = 0.4);
+SurfaceMesh
+torus(size_t radial_resolution = 20, size_t tubular_resolution = 40, Scalar radius = 1.0, Scalar thickness = 0.4);
 
 //! @}
 

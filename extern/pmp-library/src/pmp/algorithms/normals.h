@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \brief Compute vertex normals for the whole \p mesh.
 //! \details Calls vertex_normal() for each vertex and adds a new

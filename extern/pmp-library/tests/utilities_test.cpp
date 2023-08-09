@@ -3,17 +3,17 @@
 
 #include "gtest/gtest.h"
 
+#include "helpers.h"
+#include "pmp/algorithms/utilities.h"
 #include "pmp/surface_mesh.h"
 #include "pmp/types.h"
-#include "pmp/algorithms/utilities.h"
-#include "helpers.h"
 #include "surface_mesh_test.h"
 
 using namespace pmp;
 
 class UtilitiesTest : public SurfaceMeshTest
 {
-public:
+  public:
     std::vector<IndexType> vertex_indices(Face f) const
     {
         std::vector<IndexType> vertices;

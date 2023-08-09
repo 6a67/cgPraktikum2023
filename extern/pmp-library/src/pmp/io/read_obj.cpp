@@ -3,18 +3,17 @@
 
 #include "pmp/io/read_obj.h"
 
-namespace pmp {
+namespace pmp
+{
 
 void read_obj(SurfaceMesh& mesh, const std::filesystem::path& file)
 {
     std::array<char, 200> s;
     float x, y, z;
     std::vector<Vertex> vertices;
-    std::vector<TexCoord> all_tex_coords; //individual texture coordinates
-    std::vector<int>
-        halfedge_tex_idx; //texture coordinates sorted for halfedges
-    HalfedgeProperty<TexCoord> tex_coords =
-        mesh.halfedge_property<TexCoord>("h:tex");
+    std::vector<TexCoord> all_tex_coords; // individual texture coordinates
+    std::vector<int> halfedge_tex_idx;    // texture coordinates sorted for halfedges
+    HalfedgeProperty<TexCoord> tex_coords = mesh.halfedge_property<TexCoord>("h:tex");
     bool with_tex_coord = false;
 
     // open file (in ASCII mode)
@@ -81,8 +80,7 @@ void read_obj(SurfaceMesh& mesh, const std::filesystem::path& file)
                 // overwrite next separator
 
                 // skip '/', '\n', ' ', '\0', '\r' <-- don't forget Windows
-                while (*p1 != '/' && *p1 != '\r' && *p1 != '\n' && *p1 != ' ' &&
-                       *p1 != '\0')
+                while (*p1 != '/' && *p1 != '\r' && *p1 != '\n' && *p1 != ' ' && *p1 != '\0')
                     ++p1;
 
                 // detect end of vertex
@@ -109,23 +107,23 @@ void read_obj(SurfaceMesh& mesh, const std::filesystem::path& file)
                 {
                     switch (component)
                     {
-                        case 0: // vertex
-                        {
-                            int idx = atoi(p0);
-                            if (idx < 0)
-                                idx = mesh.n_vertices() + idx + 1;
-                            vertices.emplace_back(idx - 1);
-                            break;
-                        }
-                        case 1: // texture coord
-                        {
-                            int idx = atoi(p0) - 1;
-                            halfedge_tex_idx.push_back(idx);
-                            with_tex_coord = true;
-                            break;
-                        }
-                        case 2: // normal
-                            break;
+                    case 0: // vertex
+                    {
+                        int idx = atoi(p0);
+                        if (idx < 0)
+                            idx = mesh.n_vertices() + idx + 1;
+                        vertices.emplace_back(idx - 1);
+                        break;
+                    }
+                    case 1: // texture coord
+                    {
+                        int idx = atoi(p0) - 1;
+                        halfedge_tex_idx.push_back(idx);
+                        with_tex_coord = true;
+                        break;
+                    }
+                    case 2: // normal
+                        break;
                     }
                 }
 
@@ -148,8 +146,7 @@ void read_obj(SurfaceMesh& mesh, const std::filesystem::path& file)
                 unsigned v_idx = 0;
                 do
                 {
-                    tex_coords[*h_fit] =
-                        all_tex_coords.at(halfedge_tex_idx.at(v_idx));
+                    tex_coords[*h_fit] = all_tex_coords.at(halfedge_tex_idx.at(v_idx));
                     ++v_idx;
                     ++h_fit;
                 } while (h_fit != h_end);

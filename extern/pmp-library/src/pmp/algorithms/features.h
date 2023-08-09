@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \brief Mark edges with dihedral angle larger than \p angle as feature.
 //! \return The number of feature edges detected.

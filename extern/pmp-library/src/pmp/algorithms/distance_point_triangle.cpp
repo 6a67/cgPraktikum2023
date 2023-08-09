@@ -7,10 +7,10 @@
 
 #include <limits>
 
-namespace pmp {
+namespace pmp
+{
 
-Scalar dist_point_line_segment(const Point& p, const Point& v0, const Point& v1,
-                               Point& nearest_point)
+Scalar dist_point_line_segment(const Point& p, const Point& v0, const Point& v1, Point& nearest_point)
 {
     Point d1(p - v0);
     Point d2(v1 - v0);
@@ -30,8 +30,7 @@ Scalar dist_point_line_segment(const Point& p, const Point& v0, const Point& v1,
     return norm(d1);
 }
 
-Scalar dist_point_triangle(const Point& p, const Point& v0, const Point& v1,
-                           const Point& v2, Point& nearest_point)
+Scalar dist_point_triangle(const Point& p, const Point& v0, const Point& v1, const Point& v2, Point& nearest_point)
 {
     Point v0v1 = v1 - v0;
     Point v0v2 = v2 - v0;

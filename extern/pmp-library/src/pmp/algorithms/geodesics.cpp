@@ -5,37 +5,39 @@
 #include "pmp/algorithms/laplace.h"
 
 #include <cassert>
-#include <set>
 #include <map>
+#include <set>
 
-namespace pmp {
-namespace {
+namespace pmp
+{
+namespace
+{
 
 class Geodesics
 {
-public:
+  public:
     Geodesics(SurfaceMesh& mesh, bool use_virtual_edges = true);
     ~Geodesics();
-    unsigned int compute(
-        const std::vector<Vertex>& seed,
-        Scalar maxdist = std::numeric_limits<Scalar>::max(),
-        unsigned int maxnum = std::numeric_limits<unsigned int>::max(),
-        std::vector<Vertex>* neighbors = nullptr);
+    unsigned int compute(const std::vector<Vertex>& seed,
+                         Scalar maxdist = std::numeric_limits<Scalar>::max(),
+                         unsigned int maxnum = std::numeric_limits<unsigned int>::max(),
+                         std::vector<Vertex>* neighbors = nullptr);
 
-private:
+  private:
     // functor for comparing two vertices w.r.t. their geodesic distance
     class VertexCmp
     {
-    public:
-        VertexCmp(const VertexProperty<Scalar>& dist) : dist_(dist) {}
+      public:
+        VertexCmp(const VertexProperty<Scalar>& dist) : dist_(dist)
+        {
+        }
 
         bool operator()(Vertex v0, Vertex v1) const
         {
-            return ((dist_[v0] == dist_[v1]) ? (v0 < v1)
-                                             : (dist_[v0] < dist_[v1]));
+            return ((dist_[v0] == dist_[v1]) ? (v0 < v1) : (dist_[v0] < dist_[v1]));
         }
 
-    private:
+      private:
         const VertexProperty<Scalar>& dist_;
     };
 
@@ -45,7 +47,9 @@ private:
     // virtual edges for walking through obtuse triangles
     struct VirtualEdge
     {
-        VirtualEdge(Vertex v, Scalar l) : vertex(v), length(l) {}
+        VirtualEdge(Vertex v, Scalar l) : vertex(v), length(l)
+        {
+        }
         Vertex vertex;
         Scalar length;
     };
@@ -54,12 +58,12 @@ private:
     using VirtualEdges = std::map<Halfedge, VirtualEdge>;
 
     void find_virtual_edges();
-    unsigned int init_front(const std::vector<Vertex>& seed,
-                            std::vector<Vertex>* neighbors);
-    unsigned int propagate_front(Scalar maxdist, unsigned int maxnum,
-                                 std::vector<Vertex>* neighbors);
+    unsigned int init_front(const std::vector<Vertex>& seed, std::vector<Vertex>* neighbors);
+    unsigned int propagate_front(Scalar maxdist, unsigned int maxnum, std::vector<Vertex>* neighbors);
     void heap_vertex(Vertex v);
-    Scalar distance(Vertex v0, Vertex v1, Vertex v2,
+    Scalar distance(Vertex v0,
+                    Vertex v1,
+                    Vertex v2,
                     Scalar r0 = std::numeric_limits<Scalar>::max(),
                     Scalar r1 = std::numeric_limits<Scalar>::max());
 
@@ -74,8 +78,7 @@ private:
     VertexProperty<bool> processed_;
 };
 
-Geodesics::Geodesics(SurfaceMesh& mesh, bool use_virtual_edges)
-    : mesh_(mesh), use_virtual_edges_(use_virtual_edges)
+Geodesics::Geodesics(SurfaceMesh& mesh, bool use_virtual_edges) : mesh_(mesh), use_virtual_edges_(use_virtual_edges)
 {
     distance_ = mesh_.vertex_property<Scalar>("geodesic:distance");
     processed_ = mesh_.add_vertex_property<bool>("geodesic:processed");
@@ -125,8 +128,7 @@ void Geodesics::find_virtual_edges()
                 if (dot(d0, d1) < max_angle_cos)
                 {
                     // compute angles
-                    alpha = 0.5 * acos(std::min(
-                                      one, std::max(minus_one, dot(d0, d1))));
+                    alpha = 0.5 * acos(std::min(one, std::max(minus_one, dot(d0, d1))));
                     beta = max_angle - alpha;
                     tan_beta = tan(beta);
 
@@ -147,8 +149,7 @@ void Geodesics::find_virtual_edges()
                     hhh = mesh_.opposite_halfedge(hh);
 
                     // unfold ...
-                    while (((vh0 == start_vh0) || (vh1 == start_vh1)) &&
-                           (!mesh_.is_boundary(hhh)))
+                    while (((vh0 == start_vh0) || (vh1 == start_vh1)) && (!mesh_.is_boundary(hhh)))
                     {
                         // get next point
                         vhn = mesh_.to_vertex(mesh_.next_halfedge(hhh));
@@ -165,9 +166,7 @@ void Geodesics::find_virtual_edges()
                         // point in tolerance?
                         if ((fabs(vn[1]) / fabs(vn[0])) < tan_beta)
                         {
-                            virtual_edges_.insert(
-                                std::pair<Halfedge, VirtualEdge>(
-                                    h, VirtualEdge(vhn, norm(vn))));
+                            virtual_edges_.insert(std::pair<Halfedge, VirtualEdge>(h, VirtualEdge(vhn, norm(vn))));
                             break;
                         }
 
@@ -197,9 +196,8 @@ void Geodesics::find_virtual_edges()
     }
 }
 
-unsigned int Geodesics::compute(const std::vector<Vertex>& seed, Scalar maxdist,
-                                unsigned int maxnum,
-                                std::vector<Vertex>* neighbors)
+unsigned int
+Geodesics::compute(const std::vector<Vertex>& seed, Scalar maxdist, unsigned int maxnum, std::vector<Vertex>* neighbors)
 {
     unsigned int num(0);
 
@@ -233,8 +231,7 @@ unsigned int Geodesics::compute(const std::vector<Vertex>& seed, Scalar maxdist,
     return num;
 }
 
-unsigned int Geodesics::init_front(const std::vector<Vertex>& seed,
-                                   std::vector<Vertex>* neighbors)
+unsigned int Geodesics::init_front(const std::vector<Vertex>& seed, std::vector<Vertex>* neighbors)
 {
     unsigned int num(0);
 
@@ -264,8 +261,7 @@ unsigned int Geodesics::init_front(const std::vector<Vertex>& seed,
     {
         for (auto vv : mesh_.vertices(v))
         {
-            const Scalar dist =
-                pmp::distance(mesh_.position(v), mesh_.position(vv));
+            const Scalar dist = pmp::distance(mesh_.position(v), mesh_.position(vv));
             if (dist < distance_[vv])
             {
                 distance_[vv] = dist;
@@ -296,8 +292,7 @@ unsigned int Geodesics::init_front(const std::vector<Vertex>& seed,
     return num;
 }
 
-unsigned int Geodesics::propagate_front(Scalar maxdist, unsigned int maxnum,
-                                        std::vector<Vertex>* neighbors)
+unsigned int Geodesics::propagate_front(Scalar maxdist, unsigned int maxnum, std::vector<Vertex>* neighbors)
 {
     unsigned int num(0);
 
@@ -375,8 +370,7 @@ void Geodesics::heap_vertex(Vertex v)
 
                 if (processed_[v0] && processed_[vv])
                 {
-                    dist = distance(v0, vv, v,
-                                    std::numeric_limits<Scalar>::max(), d);
+                    dist = distance(v0, vv, v, std::numeric_limits<Scalar>::max(), d);
                     if (dist < dist_min)
                     {
                         dist_min = dist;
@@ -386,8 +380,7 @@ void Geodesics::heap_vertex(Vertex v)
 
                 if (processed_[v1] && processed_[vv])
                 {
-                    dist = distance(vv, v1, v, d,
-                                    std::numeric_limits<Scalar>::max());
+                    dist = distance(vv, v1, v, d, std::numeric_limits<Scalar>::max());
                     if (dist < dist_min)
                     {
                         dist_min = dist;
@@ -421,8 +414,7 @@ void Geodesics::heap_vertex(Vertex v)
     }
 }
 
-Scalar Geodesics::distance(Vertex v0, Vertex v1, Vertex v2, Scalar r0,
-                           Scalar r1)
+Scalar Geodesics::distance(Vertex v0, Vertex v1, Vertex v2, Scalar r0, Scalar r1)
 {
     Point A, B, C;
     double TA, TB;
@@ -531,12 +523,13 @@ void distance_to_texture_coordinates(SurfaceMesh& mesh)
     }
 }
 
-unsigned int geodesics(SurfaceMesh& mesh, const std::vector<Vertex>& seed,
-                       Scalar maxdist, unsigned int maxnum,
+unsigned int geodesics(SurfaceMesh& mesh,
+                       const std::vector<Vertex>& seed,
+                       Scalar maxdist,
+                       unsigned int maxnum,
                        std::vector<Vertex>* neighbors)
 {
-    return Geodesics(mesh, true /*virtual edges*/)
-        .compute(seed, maxdist, maxnum, neighbors);
+    return Geodesics(mesh, true /*virtual edges*/).compute(seed, maxdist, maxnum, neighbors);
 }
 
 void geodesics_heat(SurfaceMesh& mesh, const std::vector<Vertex>& seed)

@@ -3,15 +3,15 @@
 
 #include "gtest/gtest.h"
 
-#include <pmp/surface_mesh.h>
 #include <pmp/algorithms/distance_point_triangle.h>
+#include <pmp/surface_mesh.h>
 #include <vector>
 
 using namespace pmp;
 
 class DistancePointTriangleTest : public ::testing::Test
 {
-public:
+  public:
     SurfaceMesh mesh;
     Vertex v0, v1, v2, v3;
     Face f0;
@@ -30,8 +30,7 @@ TEST_F(DistancePointTriangleTest, distance_point_degenerate_triangle)
     add_degenerate_triangle();
     Point p(0, 1, 0);
     Point nearest;
-    Scalar dist = dist_point_triangle(p, mesh.position(v0), mesh.position(v1),
-                                      mesh.position(v2), nearest);
+    Scalar dist = dist_point_triangle(p, mesh.position(v0), mesh.position(v1), mesh.position(v2), nearest);
     EXPECT_FLOAT_EQ(dist, 1.0);
     EXPECT_EQ(nearest, Point(0, 0, 0));
 }

@@ -5,7 +5,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! \brief Triangulate all faces in \p mesh by applying triangulate().
 //! \ingroup algorithms

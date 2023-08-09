@@ -4,13 +4,12 @@
 #include "pmp/io/write_off.h"
 #include "pmp/io/helpers.h"
 
-namespace pmp {
+namespace pmp
+{
 
-void write_off_binary(const SurfaceMesh& mesh,
-                      const std::filesystem::path& file);
+void write_off_binary(const SurfaceMesh& mesh, const std::filesystem::path& file);
 
-void write_off(const SurfaceMesh& mesh, const std::filesystem::path& file,
-               const IOFlags& flags)
+void write_off(const SurfaceMesh& mesh, const std::filesystem::path& file, const IOFlags& flags)
 {
     if (flags.use_binary)
     {
@@ -91,8 +90,7 @@ void write_off(const SurfaceMesh& mesh, const std::filesystem::path& file,
     fclose(out);
 }
 
-void write_off_binary(const SurfaceMesh& mesh,
-                      const std::filesystem::path& file)
+void write_off_binary(const SurfaceMesh& mesh, const std::filesystem::path& file)
 {
     FILE* out = fopen(file.string().c_str(), "w");
     if (!out)

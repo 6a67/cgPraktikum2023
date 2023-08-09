@@ -11,13 +11,16 @@
 #include <utility>
 #include <vector>
 
-namespace pmp {
+namespace pmp
+{
 
 class BasePropertyArray
 {
-public:
+  public:
     //! Default constructor
-    explicit BasePropertyArray(std::string name) : name_(std::move(name)) {}
+    explicit BasePropertyArray(std::string name) : name_(std::move(name))
+    {
+    }
 
     //! Destructor.
     virtual ~BasePropertyArray() = default;
@@ -41,33 +44,47 @@ public:
     virtual BasePropertyArray* clone() const = 0;
 
     //! Return the name of the property
-    const std::string& name() const { return name_; }
+    const std::string& name() const
+    {
+        return name_;
+    }
 
-protected:
+  protected:
     std::string name_;
 };
 
 template <class T>
 class PropertyArray : public BasePropertyArray
 {
-public:
+  public:
     using ValueType = T;
     using VectorType = std::vector<ValueType>;
     using reference = typename VectorType::reference;
     using const_reference = typename VectorType::const_reference;
 
-    PropertyArray(std::string name, T t = T())
-        : BasePropertyArray(std::move(name)), value_(std::move(t))
+    PropertyArray(std::string name, T t = T()) : BasePropertyArray(std::move(name)), value_(std::move(t))
     {
     }
 
-    void reserve(size_t n) override { data_.reserve(n); }
+    void reserve(size_t n) override
+    {
+        data_.reserve(n);
+    }
 
-    void resize(size_t n) override { data_.resize(n, value_); }
+    void resize(size_t n) override
+    {
+        data_.resize(n, value_);
+    }
 
-    void push_back() override { data_.push_back(value_); }
+    void push_back() override
+    {
+        data_.push_back(value_);
+    }
 
-    void free_memory() override { data_.shrink_to_fit(); }
+    void free_memory() override
+    {
+        data_.shrink_to_fit();
+    }
 
     void swap(size_t i0, size_t i1) override
     {
@@ -84,10 +101,16 @@ public:
     }
 
     //! Get pointer to array (does not work for T==bool)
-    const T* data() const { return &data_[0]; }
+    const T* data() const
+    {
+        return &data_[0];
+    }
 
     //! Get reference to the underlying vector
-    std::vector<T>& vector() { return data_; }
+    std::vector<T>& vector()
+    {
+        return data_;
+    }
 
     //! Access the i'th element. No range check is performed!
     reference operator[](size_t idx)
@@ -103,7 +126,7 @@ public:
         return data_[idx];
     }
 
-private:
+  private:
     VectorType data_;
     ValueType value_;
 };
@@ -119,18 +142,26 @@ inline const bool* PropertyArray<bool>::data() const
 template <class T>
 class Property
 {
-public:
+  public:
     using reference = typename PropertyArray<T>::reference;
     using const_reference = typename PropertyArray<T>::const_reference;
 
     friend class PropertyContainer;
     friend class SurfaceMesh;
 
-    explicit Property(PropertyArray<T>* p = nullptr) : parray_(p) {}
+    explicit Property(PropertyArray<T>* p = nullptr) : parray_(p)
+    {
+    }
 
-    void reset() { parray_ = nullptr; }
+    void reset()
+    {
+        parray_ = nullptr;
+    }
 
-    explicit operator bool() const { return parray_ != nullptr; }
+    explicit operator bool() const
+    {
+        return parray_ != nullptr;
+    }
 
     reference operator[](size_t i)
     {
@@ -156,7 +187,7 @@ public:
         return parray_->vector();
     }
 
-private:
+  private:
     PropertyArray<T>& array()
     {
         assert(parray_ != nullptr);
@@ -174,15 +205,21 @@ private:
 
 class PropertyContainer
 {
-public:
+  public:
     // default constructor
     PropertyContainer() = default;
 
     // destructor (deletes all property arrays)
-    virtual ~PropertyContainer() { clear(); }
+    virtual ~PropertyContainer()
+    {
+        clear();
+    }
 
     // copy constructor: performs deep copy of property arrays
-    PropertyContainer(const PropertyContainer& rhs) { operator=(rhs); }
+    PropertyContainer(const PropertyContainer& rhs)
+    {
+        operator=(rhs);
+    }
 
     // assignment: performs deep copy of property arrays
     PropertyContainer& operator=(const PropertyContainer& rhs)
@@ -199,10 +236,16 @@ public:
     }
 
     // returns the current size of the property arrays
-    size_t size() const { return size_; }
+    size_t size() const
+    {
+        return size_;
+    }
 
     // returns the number of property arrays
-    size_t n_properties() const { return parrays_.size(); }
+    size_t n_properties() const
+    {
+        return parrays_.size();
+    }
 
     // returns a vector of all property names
     std::vector<std::string> properties() const
@@ -222,8 +265,7 @@ public:
         {
             if (parray->name() == name)
             {
-                std::cerr << "[PropertyContainer] A property with name \""
-                          << name
+                std::cerr << "[PropertyContainer] A property with name \"" << name
                           << "\" already exists. Returning invalid property.\n";
                 return Property<T>();
             }
@@ -328,7 +370,7 @@ public:
             parray->swap(i0, i1);
     }
 
-private:
+  private:
     std::vector<BasePropertyArray*> parrays_;
     size_t size_{0};
 };

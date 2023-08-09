@@ -3,8 +3,8 @@
 
 #include "gtest/gtest.h"
 
-#include "pmp/algorithms/parameterization.h"
 #include "helpers.h"
+#include "pmp/algorithms/parameterization.h"
 
 using namespace pmp;
 

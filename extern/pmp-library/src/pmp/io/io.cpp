@@ -12,7 +12,8 @@
 #include "pmp/io/write_pmp.h"
 #include "pmp/io/write_stl.h"
 
-namespace pmp {
+namespace pmp
+{
 
 void read(SurfaceMesh& mesh, const std::filesystem::path& file)
 {
@@ -35,8 +36,7 @@ void read(SurfaceMesh& mesh, const std::filesystem::path& file)
         throw IOException("Could not find reader for " + file.string());
 }
 
-void write(const SurfaceMesh& mesh, const std::filesystem::path& file,
-           const IOFlags& flags)
+void write(const SurfaceMesh& mesh, const std::filesystem::path& file, const IOFlags& flags)
 {
     auto ext = file.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), tolower);

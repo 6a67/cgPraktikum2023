@@ -18,7 +18,8 @@
 #include <emscripten/html5.h>
 #endif
 
-namespace pmp {
+namespace pmp
+{
 
 Window* Window::instance_ = nullptr;
 
@@ -86,16 +87,14 @@ Window::Window(const char* title, int width, int height, bool showgui)
     GLenum err = glewInit();
     if (err != GLEW_OK)
     {
-        std::cerr << "Error initializing GLEW: " << glewGetErrorString(err)
-                  << std::endl;
+        std::cerr << "Error initializing GLEW: " << glewGetErrorString(err) << std::endl;
         exit(1);
     }
 
     // debug: print GL and GLSL version
     std::cout << "GLEW   " << glewGetString(GLEW_VERSION) << std::endl;
     std::cout << "GL     " << glGetString(GL_VERSION) << std::endl;
-    std::cout << "GLSL   " << glGetString(GL_SHADING_LANGUAGE_VERSION)
-              << std::endl;
+    std::cout << "GLSL   " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 
     // call glGetError once to clear error queue
     glGetError();
@@ -184,9 +183,7 @@ void Window::init_imgui()
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // load Lato font from pre-compiled ttf file
-    io.Fonts->AddFontFromMemoryCompressedTTF(LatoLatin_compressed_data,
-                                             LatoLatin_compressed_size,
-                                             14 * imgui_scale_);
+    io.Fonts->AddFontFromMemoryCompressedTTF(LatoLatin_compressed_data, LatoLatin_compressed_size, 14 * imgui_scale_);
 
     // window style
     ImGuiStyle& style = ImGui::GetStyle();
@@ -210,19 +207,15 @@ void Window::init_imgui()
     style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.16f, 0.62f, 0.87f, 0.67f);
     style.Colors[ImGuiCol_TitleBg] = ImVec4(0.16f, 0.62f, 0.87f, 0.80f);
     style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.62f, 0.87f, 0.80f);
-    style.Colors[ImGuiCol_TitleBgCollapsed] =
-        ImVec4(0.16f, 0.62f, 0.87f, 0.40f);
+    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.16f, 0.62f, 0.87f, 0.40f);
     style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
     style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.98f, 0.98f, 0.98f, 0.53f);
     style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.69f, 0.69f, 0.69f, 0.80f);
-    style.Colors[ImGuiCol_ScrollbarGrabHovered] =
-        ImVec4(0.49f, 0.49f, 0.49f, 0.80f);
-    style.Colors[ImGuiCol_ScrollbarGrabActive] =
-        ImVec4(0.49f, 0.49f, 0.49f, 1.00f);
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.49f, 0.49f, 0.49f, 0.80f);
+    style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.49f, 0.49f, 0.49f, 1.00f);
     style.Colors[ImGuiCol_CheckMark] = ImVec4(0.16f, 0.62f, 0.87f, 1.00f);
     style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.16f, 0.62f, 0.87f, 0.78f);
-    style.Colors[ImGuiCol_SliderGrabActive] =
-        ImVec4(0.16f, 0.62f, 0.87f, 1.00f);
+    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.16f, 0.62f, 0.87f, 1.00f);
     style.Colors[ImGuiCol_Button] = ImVec4(0.16f, 0.62f, 0.87f, 0.40f);
     style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.16f, 0.62f, 0.87f, 1.00f);
     style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.16f, 0.62f, 0.87f, 1.00f);
@@ -230,19 +223,14 @@ void Window::init_imgui()
     style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.16f, 0.62f, 0.87f, 0.80f);
     style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.16f, 0.62f, 0.87f, 1.00f);
     style.Colors[ImGuiCol_ResizeGrip] = ImVec4(1.00f, 1.00f, 1.00f, 0.00f);
-    style.Colors[ImGuiCol_ResizeGripHovered] =
-        ImVec4(0.16f, 0.62f, 0.87f, 0.67f);
-    style.Colors[ImGuiCol_ResizeGripActive] =
-        ImVec4(0.16f, 0.62f, 0.87f, 0.95f);
+    style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.16f, 0.62f, 0.87f, 0.67f);
+    style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.16f, 0.62f, 0.87f, 0.95f);
     style.Colors[ImGuiCol_PlotLines] = ImVec4(0.39f, 0.39f, 0.39f, 1.00f);
-    style.Colors[ImGuiCol_PlotLinesHovered] =
-        ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+    style.Colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
     style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-    style.Colors[ImGuiCol_PlotHistogramHovered] =
-        ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+    style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
     style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.16f, 0.62f, 0.87f, 0.35f);
-    style.Colors[ImGuiCol_ModalWindowDimBg] =
-        ImVec4(0.20f, 0.20f, 0.20f, 0.70f);
+    style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.70f);
 }
 
 void Window::scale_imgui(float scale)
@@ -253,9 +241,7 @@ void Window::scale_imgui(float scale)
     // reload font
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->Clear();
-    io.Fonts->AddFontFromMemoryCompressedTTF(LatoLatin_compressed_data,
-                                             LatoLatin_compressed_size,
-                                             14 * imgui_scale_);
+    io.Fonts->AddFontFromMemoryCompressedTTF(LatoLatin_compressed_data, LatoLatin_compressed_size, 14 * imgui_scale_);
 
     // trigger font texture regeneration
     ImGui_ImplOpenGL3_DestroyFontsTexture();
@@ -307,8 +293,7 @@ void Window::show_help()
     ImGui::OpenPopup("Key Bindings");
 
     ImGui::SetNextWindowFocus();
-    if (ImGui::BeginPopupModal("Key Bindings", nullptr,
-                               ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal("Key Bindings", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::Columns(2, "help items");
         ImGui::SetColumnWidth(0, 100 * imgui_scale_);
@@ -399,9 +384,7 @@ void Window::render_frame()
 
         // prepare, process, and finish applications ImGUI dialog
         ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
-        ImGui::Begin(
-            "Mesh Info", nullptr,
-            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin("Mesh Info", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::Text("Press '?' for help");
         ImGui::Spacing();
         ImGui::Separator();
@@ -459,8 +442,7 @@ void Window::glfw_character(GLFWwindow* window, unsigned int c)
     }
 }
 
-void Window::glfw_keyboard(GLFWwindow* window, int key, int scancode,
-                           int action, int mods)
+void Window::glfw_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
     if (!ImGui::GetIO().WantCaptureKeyboard)
@@ -468,18 +450,18 @@ void Window::glfw_keyboard(GLFWwindow* window, int key, int scancode,
         // remember modifier status
         switch (key)
         {
-            case GLFW_KEY_LEFT_CONTROL:
-            case GLFW_KEY_RIGHT_CONTROL:
-                instance_->ctrl_pressed_ = (action != GLFW_RELEASE);
-                break;
-            case GLFW_KEY_LEFT_SHIFT:
-            case GLFW_KEY_RIGHT_SHIFT:
-                instance_->shift_pressed_ = (action != GLFW_RELEASE);
-                break;
-            case GLFW_KEY_LEFT_ALT:
-            case GLFW_KEY_RIGHT_ALT:
-                instance_->alt_pressed_ = (action != GLFW_RELEASE);
-                break;
+        case GLFW_KEY_LEFT_CONTROL:
+        case GLFW_KEY_RIGHT_CONTROL:
+            instance_->ctrl_pressed_ = (action != GLFW_RELEASE);
+            break;
+        case GLFW_KEY_LEFT_SHIFT:
+        case GLFW_KEY_RIGHT_SHIFT:
+            instance_->shift_pressed_ = (action != GLFW_RELEASE);
+            break;
+        case GLFW_KEY_LEFT_ALT:
+        case GLFW_KEY_RIGHT_ALT:
+            instance_->alt_pressed_ = (action != GLFW_RELEASE);
+            break;
         }
 
         // send event to window
@@ -504,45 +486,45 @@ void Window::keyboard(int key, int /*code*/, int action, int /*mods*/)
     switch (key)
     {
 #ifndef __EMSCRIPTEN__
-        case GLFW_KEY_ESCAPE:
-        case GLFW_KEY_Q:
-        {
-            exit(0);
-        }
+    case GLFW_KEY_ESCAPE:
+    case GLFW_KEY_Q:
+    {
+        exit(0);
+    }
 
-        case GLFW_KEY_PRINT_SCREEN:
-        case GLFW_KEY_P:
-        {
-            screenshot();
-            break;
-        }
+    case GLFW_KEY_PRINT_SCREEN:
+    case GLFW_KEY_P:
+    {
+        screenshot();
+        break;
+    }
 #endif
-        case GLFW_KEY_F:
-        {
-            if (!is_fullscreen())
-                enter_fullscreen();
-            else
-                exit_fullscreen();
-            break;
-        }
+    case GLFW_KEY_F:
+    {
+        if (!is_fullscreen())
+            enter_fullscreen();
+        else
+            exit_fullscreen();
+        break;
+    }
 
-        case GLFW_KEY_G:
-        {
-            show_imgui(!show_imgui());
-            break;
-        }
+    case GLFW_KEY_G:
+    {
+        show_imgui(!show_imgui());
+        break;
+    }
 
-        case GLFW_KEY_PAGE_UP:
-        {
-            scale_imgui(1.25);
-            break;
-        }
+    case GLFW_KEY_PAGE_UP:
+    {
+        scale_imgui(1.25);
+        break;
+    }
 
-        case GLFW_KEY_PAGE_DOWN:
-        {
-            scale_imgui(0.8);
-            break;
-        }
+    case GLFW_KEY_PAGE_DOWN:
+    {
+        scale_imgui(0.8);
+        break;
+    }
     }
 }
 
@@ -601,14 +583,12 @@ void Window::enter_fullscreen()
     glfwGetWindowSize(window_, &backup_width_, &backup_height_);
 
     // switch to fullscreen on primary monitor
-    glfwSetWindowMonitor(window_, monitor, 0, 0, mode->width, mode->height,
-                         GLFW_DONT_CARE);
+    glfwSetWindowMonitor(window_, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
 }
 
 void Window::exit_fullscreen()
 {
-    glfwSetWindowMonitor(window_, nullptr, backup_xpos_, backup_ypos_,
-                         backup_width_, backup_height_, GLFW_DONT_CARE);
+    glfwSetWindowMonitor(window_, nullptr, backup_xpos_, backup_ypos_, backup_width_, backup_height_, GLFW_DONT_CARE);
 }
 
 #endif
@@ -684,8 +664,7 @@ void Window::screenshot()
 
     // write to file
     stbi_flip_vertically_on_write(true);
-    stbi_write_png(filename.str().c_str(), width_, height_, 3, data,
-                   3 * width_);
+    stbi_write_png(filename.str().c_str(), width_, height_, 3, data, 3 * width_);
 
     // clean up
     delete[] data;

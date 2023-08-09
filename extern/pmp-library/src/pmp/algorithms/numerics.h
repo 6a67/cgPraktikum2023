@@ -4,10 +4,11 @@
 #pragma once
 
 #include "pmp/surface_mesh.h"
-#include <Eigen/Sparse>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 
-namespace pmp {
+namespace pmp
+{
 
 using SparseMatrix = Eigen::SparseMatrix<double>;
 using DiagonalMatrix = Eigen::DiagonalMatrix<double, Eigen::Dynamic>;
@@ -16,12 +17,11 @@ using Triplet = Eigen::Triplet<double>;
 
 DenseMatrix cholesky_solve(const SparseMatrix& A, const DenseMatrix& B);
 
-DenseMatrix cholesky_solve(const SparseMatrix& A, const DenseMatrix& B,
+DenseMatrix cholesky_solve(const SparseMatrix& A,
+                           const DenseMatrix& B,
                            std::function<bool(unsigned int)> is_constrained,
                            const DenseMatrix& C);
 
-void setup_selector_matrix(const SurfaceMesh& mesh,
-                           std::function<bool(Vertex)> is_selected,
-                           SparseMatrix& S);
+void setup_selector_matrix(const SurfaceMesh& mesh, std::function<bool(Vertex)> is_selected, SparseMatrix& S);
 
 } // namespace pmp

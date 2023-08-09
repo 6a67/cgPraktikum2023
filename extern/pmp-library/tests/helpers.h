@@ -5,7 +5,8 @@
 
 #include <pmp/surface_mesh.h>
 
-namespace pmp {
+namespace pmp
+{
 
 // generate triangle fan of six triangles around center vertex
 SurfaceMesh vertex_onering();

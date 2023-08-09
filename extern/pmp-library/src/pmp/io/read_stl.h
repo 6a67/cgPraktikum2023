@@ -7,7 +7,8 @@
 
 #include "pmp/surface_mesh.h"
 
-namespace pmp {
+namespace pmp
+{
 
 void read_stl(SurfaceMesh& mesh, const std::filesystem::path& file);
 

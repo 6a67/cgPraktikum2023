@@ -1,23 +1,22 @@
 // Copyright 2011-2019 the Polygon Mesh Processing Library developers.
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
-#include <pmp/visualization/mesh_viewer.h>
-#include <pmp/algorithms/decimation.h>
 #include <imgui.h>
+#include <pmp/algorithms/decimation.h>
+#include <pmp/visualization/mesh_viewer.h>
 
 using namespace pmp;
 
 class Viewer : public MeshViewer
 {
-public:
+  public:
     Viewer(const char* title, int width, int height);
 
-protected:
+  protected:
     void process_imgui() override;
 };
 
-Viewer::Viewer(const char* title, int width, int height)
-    : MeshViewer(title, width, height)
+Viewer::Viewer(const char* title, int width, int height) : MeshViewer(title, width, height)
 {
     set_draw_mode("Hidden Line");
     crease_angle_ = 0.0;
@@ -52,8 +51,7 @@ void Viewer::process_imgui()
             try
             {
                 auto nv = mesh_.n_vertices() * 0.01 * target_percentage;
-                decimate(mesh_, nv, aspect_ratio, 0.0, 0.0, normal_deviation,
-                         0.0);
+                decimate(mesh_, nv, aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
             }
             catch (const InvalidInputException& e)
             {

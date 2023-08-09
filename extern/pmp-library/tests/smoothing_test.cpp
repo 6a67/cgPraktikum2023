@@ -3,9 +3,9 @@
 
 #include "gtest/gtest.h"
 
-#include "pmp/algorithms/smoothing.h"
-#include "pmp/algorithms/differential_geometry.h"
 #include "helpers.h"
+#include "pmp/algorithms/differential_geometry.h"
+#include "pmp/algorithms/smoothing.h"
 
 using namespace pmp;
 

@@ -3,17 +3,18 @@
 
 #pragma once
 
-#include "pmp/visualization/trackball_viewer.h"
 #include "pmp/surface_mesh.h"
 #include "pmp/visualization/renderer.h"
+#include "pmp/visualization/trackball_viewer.h"
 
-namespace pmp {
+namespace pmp
+{
 
 //! Simple viewer for a SurfaceMesh
 //! \ingroup visualization
 class MeshViewer : public TrackballViewer
 {
-public:
+  public:
     //! constructor
     MeshViewer(const char* title, int width, int height, bool showgui = true);
 
@@ -27,7 +28,8 @@ public:
     void load_matcap(const char* filename);
 
     //! load a texture from file \p filename
-    void load_texture(const char* filename, GLint format = GL_RGB,
+    void load_texture(const char* filename,
+                      GLint format = GL_RGB,
                       GLint min_filter = GL_LINEAR_MIPMAP_LINEAR,
                       GLint mag_filter = GL_LINEAR,
                       GLint wrap = GL_CLAMP_TO_EDGE);
@@ -52,7 +54,7 @@ public:
     //! get vertex closest to 3D position under the mouse cursor
     Vertex pick_vertex(int x, int y);
 
-protected:
+  protected:
     SurfaceMesh mesh_;
     Renderer renderer_;
     std::string filename_; //!< the current file

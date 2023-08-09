@@ -1,10 +1,10 @@
 // Copyright 2011-2019 the Polygon Mesh Processing Library developers.
 // Distributed under a MIT-style license, see LICENSE.txt for details.
 
-#include <pmp/visualization/mesh_viewer.h>
 #include <pmp/algorithms/features.h>
 #include <pmp/algorithms/remeshing.h>
 #include <pmp/algorithms/utilities.h>
+#include <pmp/visualization/mesh_viewer.h>
 
 #include <imgui.h>
 
@@ -12,15 +12,14 @@ using namespace pmp;
 
 class Viewer : public MeshViewer
 {
-public:
+  public:
     Viewer(const char* title, int width, int height);
 
-protected:
+  protected:
     void process_imgui() override;
 };
 
-Viewer::Viewer(const char* title, int width, int height)
-    : MeshViewer(title, width, height)
+Viewer::Viewer(const char* title, int width, int height) : MeshViewer(title, width, height)
 {
     set_draw_mode("Hidden Line");
     crease_angle_ = 0.0;
@@ -54,8 +53,7 @@ void Viewer::process_imgui()
         {
             Scalar l(0);
             for (auto eit : mesh_.edges())
-                l += distance(mesh_.position(mesh_.vertex(eit, 0)),
-                              mesh_.position(mesh_.vertex(eit, 1)));
+                l += distance(mesh_.position(mesh_.vertex(eit, 0)), mesh_.position(mesh_.vertex(eit, 1)));
             l /= (Scalar)mesh_.n_edges();
             try
             {

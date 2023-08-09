@@ -6,7 +6,8 @@
 
 #include <cmath>
 
-namespace pmp {
+namespace pmp
+{
 
 SurfaceMesh::SurfaceMesh()
 {
@@ -248,8 +249,7 @@ Face SurfaceMesh::add_face(const std::vector<Vertex>& vertices)
 
     Vertex v;
     size_t i, ii, id;
-    Halfedge inner_next, inner_prev, outer_next, outer_prev, boundary_next,
-        boundary_prev, patch_start, patch_end;
+    Halfedge inner_next, inner_prev, outer_next, outer_prev, boundary_next, boundary_prev, patch_start, patch_end;
 
     // use global arrays to avoid new/delete of local arrays!!!
     std::vector<Halfedge>& halfedges = add_face_halfedges_;
@@ -303,10 +303,8 @@ Face SurfaceMesh::add_face(const std::vector<Vertex>& vertices)
                 boundary_prev = outer_prev;
                 do
                 {
-                    boundary_prev =
-                        opposite_halfedge(next_halfedge(boundary_prev));
-                } while (!is_boundary(boundary_prev) ||
-                         boundary_prev == inner_prev);
+                    boundary_prev = opposite_halfedge(next_halfedge(boundary_prev));
+                } while (!is_boundary(boundary_prev) || boundary_prev == inner_prev);
                 boundary_next = next_halfedge(boundary_prev);
                 assert(is_boundary(boundary_prev));
                 assert(is_boundary(boundary_next));
@@ -314,8 +312,7 @@ Face SurfaceMesh::add_face(const std::vector<Vertex>& vertices)
                 // ok ?
                 if (boundary_next == inner_next)
                 {
-                    auto what =
-                        "SurfaceMesh::add_face: Patch re-linking failed.";
+                    auto what = "SurfaceMesh::add_face: Patch re-linking failed.";
                     throw TopologyException(what);
                 }
 
@@ -365,32 +362,32 @@ Face SurfaceMesh::add_face(const std::vector<Vertex>& vertices)
             // set outer links
             switch (id)
             {
-                case 1: // prev is new, next is old
-                    boundary_prev = prev_halfedge(inner_next);
-                    next_cache.emplace_back(boundary_prev, outer_next);
+            case 1: // prev is new, next is old
+                boundary_prev = prev_halfedge(inner_next);
+                next_cache.emplace_back(boundary_prev, outer_next);
+                set_halfedge(v, outer_next);
+                break;
+
+            case 2: // next is new, prev is old
+                boundary_next = next_halfedge(inner_prev);
+                next_cache.emplace_back(outer_prev, boundary_next);
+                set_halfedge(v, boundary_next);
+                break;
+
+            case 3: // both are new
+                if (!halfedge(v).is_valid())
+                {
                     set_halfedge(v, outer_next);
-                    break;
-
-                case 2: // next is new, prev is old
-                    boundary_next = next_halfedge(inner_prev);
+                    next_cache.emplace_back(outer_prev, outer_next);
+                }
+                else
+                {
+                    boundary_next = halfedge(v);
+                    boundary_prev = prev_halfedge(boundary_next);
+                    next_cache.emplace_back(boundary_prev, outer_next);
                     next_cache.emplace_back(outer_prev, boundary_next);
-                    set_halfedge(v, boundary_next);
-                    break;
-
-                case 3: // both are new
-                    if (!halfedge(v).is_valid())
-                    {
-                        set_halfedge(v, outer_next);
-                        next_cache.emplace_back(outer_prev, outer_next);
-                    }
-                    else
-                    {
-                        boundary_next = halfedge(v);
-                        boundary_prev = prev_halfedge(boundary_next);
-                        next_cache.emplace_back(boundary_prev, outer_next);
-                        next_cache.emplace_back(outer_prev, boundary_next);
-                    }
-                    break;
+                }
+                break;
             }
 
             // set inner link
@@ -708,7 +705,7 @@ bool SurfaceMesh::is_flip_ok(Edge e) const
 
 void SurfaceMesh::flip(Edge e)
 {
-    //let's make it sure it is actually checked
+    // let's make it sure it is actually checked
     assert(is_flip_ok(e));
 
     Halfedge a0 = halfedge(e, 0);
@@ -766,8 +763,7 @@ bool SurfaceMesh::is_collapse_ok(Halfedge v0v1) const
         vl = to_vertex(next_halfedge(v0v1));
         h1 = next_halfedge(v0v1);
         h2 = next_halfedge(h1);
-        if (is_boundary(opposite_halfedge(h1)) &&
-            is_boundary(opposite_halfedge(h2)))
+        if (is_boundary(opposite_halfedge(h1)) && is_boundary(opposite_halfedge(h2)))
             return false;
     }
 
@@ -777,8 +773,7 @@ bool SurfaceMesh::is_collapse_ok(Halfedge v0v1) const
         vr = to_vertex(next_halfedge(v1v0));
         h1 = next_halfedge(v1v0);
         h2 = next_halfedge(h1);
-        if (is_boundary(opposite_halfedge(h1)) &&
-            is_boundary(opposite_halfedge(h2)))
+        if (is_boundary(opposite_halfedge(h1)) && is_boundary(opposite_halfedge(h2)))
             return false;
     }
 
@@ -787,8 +782,7 @@ bool SurfaceMesh::is_collapse_ok(Halfedge v0v1) const
         return false;
 
     // edge between two boundary vertices should be a boundary edge
-    if (is_boundary(v0) && is_boundary(v1) && !is_boundary(v0v1) &&
-        !is_boundary(v1v0))
+    if (is_boundary(v0) && is_boundary(v1) && !is_boundary(v0v1) && !is_boundary(v1v0))
         return false;
 
     // test intersection of the one-rings of v0 and v1
@@ -1145,10 +1139,8 @@ void SurfaceMesh::garbage_collection()
     auto nF = faces_size();
 
     // setup handle mapping
-    VertexProperty<Vertex> vmap =
-        add_vertex_property<Vertex>("v:garbage-collection");
-    HalfedgeProperty<Halfedge> hmap =
-        add_halfedge_property<Halfedge>("h:garbage-collection");
+    VertexProperty<Vertex> vmap = add_vertex_property<Vertex>("v:garbage-collection");
+    HalfedgeProperty<Halfedge> hmap = add_halfedge_property<Halfedge>("h:garbage-collection");
     FaceProperty<Face> fmap = add_face_property<Face>("f:garbage-collection");
     for (size_t i = 0; i < nV; ++i)
         vmap[Vertex(i)] = Vertex(i);
