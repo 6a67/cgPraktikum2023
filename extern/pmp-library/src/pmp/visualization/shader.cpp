@@ -155,7 +155,7 @@ GLint Shader::compile(const char* source, GLenum type)
     if (status == GL_FALSE)
     {
         auto info = get_info_log();
-        auto what = "Shader: Cannot compile shader:" + info;
+        auto what = "Shader: Cannot compile shader:" + info + "\n" + source;
         cleanup();
         throw GLException(what);
     }
@@ -235,7 +235,7 @@ void Shader::set_uniform(const char* name, const vec4& vec)
     int location = glGetUniformLocation(pid_, name);
     if (location == -1)
     {
-        std::cerr << "Invalid uniform location for: " << name << std::endl;
+        std::cerr << "Invalid uniform location for vec4: " << name << std::endl;
         return;
     }
     glUniform4f(location, vec[0], vec[1], vec[2], vec[3]);
@@ -261,7 +261,7 @@ void Shader::set_uniform(const char* name, const mat4& mat)
     int location = glGetUniformLocation(pid_, name);
     if (location == -1)
     {
-        std::cerr << "Invalid uniform location for: " << name << std::endl;
+        std::cerr << "Invalid uniform location for mat4: " << name << std::endl;
         return;
     }
     glUniformMatrix4fv(location, 1, false, mat.data());

@@ -219,6 +219,13 @@ class Renderer
     GLuint edge_buffer_;
     GLuint feature_buffer_;
 
+    GLuint background_array_object;
+    GLuint background_vertex_buffer_;
+    void load_custom_shader();
+    Shader custom_shader_;
+    GLsizei n_quad_;
+    std::vector<vec3> quad_vertices;
+
     // buffer sizes
     GLsizei n_vertices_;
     GLsizei n_edges_;

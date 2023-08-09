@@ -25,8 +25,13 @@ Renderer::Renderer(const SurfaceMesh& mesh) : mesh_(mesh)
     edge_buffer_ = 0;
     feature_buffer_ = 0;
 
+    background_array_object = 0;
+    background_vertex_buffer_ = 0;
+
     // initialize buffer sizes
+    n_quad_ = 0;
     n_vertices_ = 0;
+
     n_edges_ = 0;
     n_triangles_ = 0;
     n_features_ = 0;
@@ -60,6 +65,7 @@ Renderer::~Renderer()
     glDeleteBuffers(1, &tex_coord_buffer_);
     glDeleteBuffers(1, &edge_buffer_);
     glDeleteBuffers(1, &feature_buffer_);
+    glDeleteVertexArrays(1, &background_array_object);
     glDeleteVertexArrays(1, &vertex_array_object_);
 }
 
@@ -218,6 +224,20 @@ void Renderer::use_checkerboard_texture()
     }
 }
 
+void Renderer::load_custom_shader()
+{
+    try
+    {
+        // TODO: Fix relative paths
+        custom_shader_.load("../src/shaders/simple_color.vert", "../src/shaders/simple_color.frag");
+    }
+    catch (GLException& e)
+    {
+        std::cerr << "Error: loading shader failed" << std::endl;
+        std::cerr << e.what() << std::endl;
+    }
+}
+
 void Renderer::set_crease_angle(Scalar ca)
 {
     if (ca != crease_angle_)
@@ -240,6 +260,13 @@ void Renderer::update_opengl_buffers()
         glGenBuffers(1, &tex_coord_buffer_);
         glGenBuffers(1, &edge_buffer_);
         glGenBuffers(1, &feature_buffer_);
+    }
+
+    if (!background_array_object)
+    {
+        glGenVertexArrays(1, &background_array_object);
+        glBindVertexArray(background_array_object);
+        glGenBuffers(1, &background_vertex_buffer_);
     }
 
     // activate VAO
@@ -526,14 +553,46 @@ void Renderer::update_opengl_buffers()
     else
         n_features_ = 0;
 
-    // unbind vertex array
+    glBindVertexArray(0);
+
+    glBindVertexArray(background_array_object);
+
+    // load background vertices
+    // TODO: Set correct background quad vertices
+    // quad_vertices = {
+    //     vec3(0.0f, 0.0f, 0.0f),
+    //     vec3(1.0f, 0.0f, 0.0f),
+    //     vec3(1.0f, 1.0f, 0.0f),
+
+    //     vec3(0.0f, 0.0f, 0.0f),
+    //     vec3(1.0f, 1.0f, 0.0f),
+    //     vec3(0.0f, 1.0f, 0.0f),
+    // };
+    quad_vertices = {
+        vec3(0.0f, 0.0f, 0.0f),
+        vec3(1.0f, 0.0f, 0.0f),
+        vec3(1.0f, 1.0f, 0.0f),
+
+        vec3(0.0f, 0.0f, 0.0f),
+        vec3(1.0f, 1.0f, 0.0f),
+        vec3(0.0f, 1.0f, 0.0f),
+    };
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, background_vertex_buffer_);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER, quad_vertices.size() * 3 * sizeof(float), quad_vertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(0);
+    n_quad_ = quad_vertices.size();
+
+    // unbind object
     glBindVertexArray(0);
 }
 
 void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix, const std::string& draw_mode)
 {
     // did we generate buffers already?
-    if (!vertex_array_object_)
+    if (!vertex_array_object_ || !background_array_object)
     {
         update_opengl_buffers();
     }
@@ -550,6 +609,11 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
             std::cerr << e.what() << std::endl;
             exit(1);
         }
+    }
+
+    if (!custom_shader_.is_valid())
+    {
+        load_custom_shader();
     }
 
     // load shader?
@@ -635,6 +699,66 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
             glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr);
             glDepthFunc(GL_LESS);
         }
+    }
+    else if (draw_mode == "Fractal Mode")
+    {
+        // SEE: https://stackoverflow.com/a/21652955
+        glBindVertexArray(background_array_object);
+        // TODO: Set correct modelview and projection matrices to show it as "background" face
+        // clang-format off
+        // mat4 model_matrix2 = mat4(
+        //     1.0, 0.0, 0.0, 0.0, 
+        //     0.0, 1.0, 0.0, 0.0,
+        //     0.0, 0.0, 1.0, -15.0,
+        //     0.0, 0.0, 0.0, 1.0
+        // );
+        // mat4 view_matrix2 = mat4(
+        //     1.0, 0.0, 0.0, 0.0, 
+        //     0.0, 1.0, 0.0, 0.0,
+        //     0.0, 0.0, 1.0, 0.0,
+        //     0.0, 0.0, 0.0, 1.0
+        // );
+        // mat4 projection_matrix2 = mat4(
+        //     1.0, 0.0, 0.0, 0.0,
+        //     0.0, 1.0, 0.0, 0.0,
+        //     0.0, 0.0, 1.0, 0.0,
+        //     0.0, 0.0, -1.0, 0.0
+        // );
+        // clang-format on
+
+        // std::cout << "MVP Matrix:\n" << mvp_matrix << std::endl;
+
+        // mat4 mv_matrix2 = modelview_matrix2;
+        // mat4 mvp_matrix2 = projection_matrix2 * view_matrix2 * model_matrix2;
+        // std::cout << "MVP Matrix2:\n" << mvp_matrix2 << std::endl;
+        // mat3 n_matrix2 = inverse(transpose(linear_part(mv_matrix)));
+        // mat4 ortho_projection = ortho_matrix(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
+        // std::cout << "Ortho Matrix:\n" << ortho_projection << std::endl;
+        // for (int i = 0; i < n_quad_; i++)
+        // {
+        //     vec4 point = vec4(quad_vertices[i], 1.0);
+        //     std::cout << i << ". Point Matrix:\n" << point << std::endl;
+        //     std::cout << "Point * Ortho:\n" << (ortho_projection * point) << std::endl;
+        // }
+
+        // custom_shader_.set_uniform("modelview_projection_matrix", ortho_projection);
+
+        custom_shader_.use();
+        custom_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
+        // custom_shader_.set_uniform("modelview_matrix", mv_matrix);
+        // custom_shader_.set_uniform("normal_matrix", n_matrix);
+        custom_shader_.set_uniform("point_size", 100.0f); // point_size_);
+        custom_shader_.set_uniform("show_texture_layout", false);
+
+#ifndef __EMSCRIPTEN__
+        glEnable(GL_PROGRAM_POINT_SIZE);
+#endif
+        glBindBuffer(GL_ARRAY_BUFFER, background_vertex_buffer_);
+        glDrawArrays(GL_POINTS, 0, n_quad_);
+        glDrawArrays(GL_TRIANGLES, 0, n_quad_);
+
+        glBindVertexArray(0);
+        glBindVertexArray(vertex_array_object_);
     }
 
     else if (draw_mode == "Smooth Shading")

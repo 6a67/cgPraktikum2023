@@ -249,10 +249,13 @@ void Viewer::do_processing()
                 set_face_color(f, hsv_to_rgb((int)(v * 360 + 270) % 360, state, 1));
             }
         }
-
         // redraw new state
         renderer_.update_opengl_buffers();
     }
+
+    // TODO: DELETE THIS? CHANGE REDRAW BEHAVIOUR TO UPDATE FOR SHADERS
+    //  redraw new state
+    renderer_.update_opengl_buffers();
 }
 
 pmp::Color Viewer::hsv_to_rgb(float h, float s, float v)
