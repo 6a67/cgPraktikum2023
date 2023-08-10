@@ -248,6 +248,8 @@ void Renderer::set_crease_angle(Scalar ca)
 
 void Renderer::update_opengl_buffers()
 {
+    glfwGetWindowSize(window_, &wsize_, &hsize_);
+
     // are buffers already initialized?
     if (!vertex_array_object_)
     {
@@ -676,18 +678,53 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         // https://stackoverflow.com/a/59739538
         custom_shader_.use();
 
-        int wsize = 800;
-        int hsize = 600;
+        // set resolution
+        custom_shader_.set_uniform("window_height", hsize_);
+        custom_shader_.set_uniform("window_width", wsize_);
 
-        glfwGetWindowSize(window_, &wsize, &hsize);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray(vertex_array_object_);
+    }
+    else if (draw_mode == "Fractal Mode With Mesh")
+    {
+        // SEE: https://stackoverflow.com/a/21652955
+        glBindVertexArray(background_array_object);
+        // https://stackoverflow.com/a/59739538
+        custom_shader_.use();
 
         // set resolution
-        custom_shader_.set_uniform("window_height", hsize);
-        custom_shader_.set_uniform("window_width", wsize);
+        custom_shader_.set_uniform("window_height", hsize_);
+        custom_shader_.set_uniform("window_width", wsize_);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
+        // setup shader
+        phong_shader_.use();
+        phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
+        phong_shader_.set_uniform("modelview_matrix", mv_matrix);
+        phong_shader_.set_uniform("normal_matrix", n_matrix);
+        phong_shader_.set_uniform("point_size", point_size_);
+        phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
+        phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
+        phong_shader_.set_uniform("front_color", front_color_);
+        phong_shader_.set_uniform("back_color", back_color_);
+        phong_shader_.set_uniform("ambient", ambient_);
+        phong_shader_.set_uniform("diffuse", diffuse_);
+        phong_shader_.set_uniform("specular", specular_);
+        phong_shader_.set_uniform("shininess", shininess_);
+        phong_shader_.set_uniform("alpha", alpha_);
+        phong_shader_.set_uniform("use_lighting", true);
+        phong_shader_.set_uniform("use_texture", false);
+        phong_shader_.set_uniform("use_srgb", false);
+        phong_shader_.set_uniform("show_texture_layout", false);
+        phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
+
         glBindVertexArray(vertex_array_object_);
+
+        if (mesh_.n_faces())
+        {
+            glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
+        }
     }
 
     else if (draw_mode == "Smooth Shading")

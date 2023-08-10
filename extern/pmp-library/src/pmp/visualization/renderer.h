@@ -230,6 +230,9 @@ class Renderer
     GLsizei n_quad_;
     std::vector<vec3> quad_vertices;
 
+    int wsize_ = 800;
+    int hsize_ = 600;
+
     // buffer sizes
     GLsizei n_vertices_;
     GLsizei n_edges_;
