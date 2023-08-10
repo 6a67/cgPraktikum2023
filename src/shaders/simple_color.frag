@@ -16,6 +16,7 @@ uniform int window_height;
 
 uniform float iTime;                 // shader playback time (in seconds)
 
+// Other forms: https://iquilezles.org/articles/distfunctions/
 float GetDist(vec3 p) {
     vec4 s = vec4(0, 1, 6, 1);
 
