@@ -246,6 +246,14 @@ void Renderer::set_crease_angle(Scalar ca)
     }
 }
 
+void Renderer::reload_shaders()
+{
+    custom_shader_.disable();
+    glDeleteShader(custom_shader_.id());
+
+    load_custom_shader();
+}
+
 void Renderer::update_opengl_buffers()
 {
     glfwGetWindowSize(window_, &wsize_, &hsize_);

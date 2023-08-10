@@ -53,6 +53,11 @@ class Shader
     //! Bind attribute to location.
     void bind_attribute(const char* name, GLuint index);
 
+    inline GLint id() const
+    {
+        return pid_;
+    }
+
     //! Upload float uniform.
     //! \param name string of the uniform name
     //! \param value the value for the uniform

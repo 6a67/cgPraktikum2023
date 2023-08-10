@@ -48,6 +48,8 @@ class Viewer : public pmp::MeshViewer
 
     void set_mesh_properties();
 
+    void reload_shader();
+
   protected:
     /// thandles mouse button presses
     void mouse(int button, int action, int mods) override;

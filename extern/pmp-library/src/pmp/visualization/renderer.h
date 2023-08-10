@@ -148,6 +148,7 @@ class Renderer
     //! Use checkerboard texture.
     void use_checkerboard_texture();
 
+    void reload_shaders();
     //! Load texture from file.
     //! \param filename the location and name of the texture
     //! \param format internal format (GL_RGB, GL_RGBA, GL_SRGB8, etc.)

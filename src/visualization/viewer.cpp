@@ -51,6 +51,7 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     add_help_item("R", "Load random state");
     add_help_item("S", "Step once in simulation");
     add_help_item("D", "Select face and retrieve debug info");
+    add_help_item("O", "Reload custom shader from file");
 
     clock_last = std::chrono::high_resolution_clock::now();
 }
@@ -103,6 +104,11 @@ void Viewer::stop_simulation()
         simulation_thread.join();
 }
 
+void Viewer::reload_shader()
+{
+    renderer_.reload_shaders();
+}
+
 void Viewer::set_mesh_properties()
 {
     if (!mesh_.has_face_property("f:color"))
@@ -152,6 +158,9 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
             stop_simulation();
         else
             start_simulation();
+        break;
+    case GLFW_KEY_O:
+        reload_shader();
         break;
     // num keys: load simple primitive meshes
     case GLFW_KEY_0:
