@@ -10,6 +10,8 @@
 #include "pmp/visualization/gl.h"
 #include "pmp/visualization/shader.h"
 
+#include <GLFW/glfw3.h>
+
 namespace pmp
 {
 
@@ -21,7 +23,7 @@ class Renderer
 {
   public:
     //! Constructor
-    explicit Renderer(const SurfaceMesh& mesh);
+    explicit Renderer(const SurfaceMesh& mesh, GLFWwindow* window);
 
     //! Default destructor, deletes all OpenGL buffers.
     ~Renderer();
@@ -169,6 +171,8 @@ class Renderer
 
   private:
     const SurfaceMesh& mesh_;
+
+    GLFWwindow* window_;
 
     // helpers for computing triangulation of a polygon
     struct Triangulation

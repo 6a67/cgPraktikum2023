@@ -16,7 +16,7 @@ namespace pmp
 {
 
 MeshViewer::MeshViewer(const char* title, int width, int height, bool showgui)
-    : TrackballViewer(title, width, height, showgui), renderer_(mesh_)
+    : TrackballViewer(title, width, height, showgui), renderer_(mesh_, window_)
 {
     // setup draw modes
     clear_draw_modes();

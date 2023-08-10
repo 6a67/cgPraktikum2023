@@ -164,6 +164,10 @@ class Window
         return shift_pressed_;
     }
 
+  protected:
+    // GLFW window pointer
+    GLFWwindow* window_;
+
   private:
     static void glfw_error(int error, const char* description);
     static void glfw_keyboard(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -177,9 +181,6 @@ class Window
     static void render_frame();
 
     static Window* instance_;
-
-    // GLFW window pointer
-    GLFWwindow* window_;
 
     // window title
     std::string title_;

@@ -14,7 +14,7 @@
 namespace pmp
 {
 
-Renderer::Renderer(const SurfaceMesh& mesh) : mesh_(mesh)
+Renderer::Renderer(const SurfaceMesh& mesh, GLFWwindow* window) : mesh_(mesh), window_(window)
 {
     // initialize GL buffers to zero
     vertex_array_object_ = 0;
@@ -675,6 +675,16 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         glBindVertexArray(background_array_object);
         // https://stackoverflow.com/a/59739538
         custom_shader_.use();
+
+        int wsize = 800;
+        int hsize = 600;
+
+        glfwGetWindowSize(window_, &wsize, &hsize);
+
+        // set resolution
+        custom_shader_.set_uniform("window_height", hsize);
+        custom_shader_.set_uniform("window_width", wsize);
+
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glBindVertexArray(vertex_array_object_);
