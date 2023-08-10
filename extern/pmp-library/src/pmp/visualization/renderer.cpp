@@ -29,7 +29,6 @@ Renderer::Renderer(const SurfaceMesh& mesh) : mesh_(mesh)
     background_vertex_buffer_ = 0;
 
     // initialize buffer sizes
-    n_quad_ = 0;
     n_vertices_ = 0;
 
     n_edges_ = 0;
@@ -265,8 +264,6 @@ void Renderer::update_opengl_buffers()
     if (!background_array_object)
     {
         glGenVertexArrays(1, &background_array_object);
-        glBindVertexArray(background_array_object);
-        glGenBuffers(1, &background_vertex_buffer_);
     }
 
     // activate VAO
@@ -557,34 +554,6 @@ void Renderer::update_opengl_buffers()
 
     glBindVertexArray(background_array_object);
 
-    // load background vertices
-    // TODO: Set correct background quad vertices
-    // quad_vertices = {
-    //     vec3(0.0f, 0.0f, 0.0f),
-    //     vec3(1.0f, 0.0f, 0.0f),
-    //     vec3(1.0f, 1.0f, 0.0f),
-
-    //     vec3(0.0f, 0.0f, 0.0f),
-    //     vec3(1.0f, 1.0f, 0.0f),
-    //     vec3(0.0f, 1.0f, 0.0f),
-    // };
-    quad_vertices = {
-        vec3(0.0f, 0.0f, 0.0f),
-        vec3(1.0f, 0.0f, 0.0f),
-        vec3(1.0f, 1.0f, 0.0f),
-
-        vec3(0.0f, 0.0f, 0.0f),
-        vec3(1.0f, 1.0f, 0.0f),
-        vec3(0.0f, 1.0f, 0.0f),
-    };
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, background_vertex_buffer_);
-    glBufferData(
-        GL_ELEMENT_ARRAY_BUFFER, quad_vertices.size() * 3 * sizeof(float), quad_vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(0);
-    n_quad_ = quad_vertices.size();
-
     // unbind object
     glBindVertexArray(0);
 }
@@ -704,60 +673,10 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     {
         // SEE: https://stackoverflow.com/a/21652955
         glBindVertexArray(background_array_object);
-        // TODO: Set correct modelview and projection matrices to show it as "background" face
-        // clang-format off
-        // mat4 model_matrix2 = mat4(
-        //     1.0, 0.0, 0.0, 0.0, 
-        //     0.0, 1.0, 0.0, 0.0,
-        //     0.0, 0.0, 1.0, -15.0,
-        //     0.0, 0.0, 0.0, 1.0
-        // );
-        // mat4 view_matrix2 = mat4(
-        //     1.0, 0.0, 0.0, 0.0, 
-        //     0.0, 1.0, 0.0, 0.0,
-        //     0.0, 0.0, 1.0, 0.0,
-        //     0.0, 0.0, 0.0, 1.0
-        // );
-        // mat4 projection_matrix2 = mat4(
-        //     1.0, 0.0, 0.0, 0.0,
-        //     0.0, 1.0, 0.0, 0.0,
-        //     0.0, 0.0, 1.0, 0.0,
-        //     0.0, 0.0, -1.0, 0.0
-        // );
-        // clang-format on
-
-        // std::cout << "MVP Matrix:\n" << mvp_matrix << std::endl;
-
-        // mat4 mv_matrix2 = modelview_matrix2;
-        // mat4 mvp_matrix2 = projection_matrix2 * view_matrix2 * model_matrix2;
-        // std::cout << "MVP Matrix2:\n" << mvp_matrix2 << std::endl;
-        // mat3 n_matrix2 = inverse(transpose(linear_part(mv_matrix)));
-        // mat4 ortho_projection = ortho_matrix(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
-        // std::cout << "Ortho Matrix:\n" << ortho_projection << std::endl;
-        // for (int i = 0; i < n_quad_; i++)
-        // {
-        //     vec4 point = vec4(quad_vertices[i], 1.0);
-        //     std::cout << i << ". Point Matrix:\n" << point << std::endl;
-        //     std::cout << "Point * Ortho:\n" << (ortho_projection * point) << std::endl;
-        // }
-
-        // custom_shader_.set_uniform("modelview_projection_matrix", ortho_projection);
-
+        // https://stackoverflow.com/a/59739538
         custom_shader_.use();
-        custom_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-        // custom_shader_.set_uniform("modelview_matrix", mv_matrix);
-        // custom_shader_.set_uniform("normal_matrix", n_matrix);
-        custom_shader_.set_uniform("point_size", 100.0f); // point_size_);
-        custom_shader_.set_uniform("show_texture_layout", false);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
-#ifndef __EMSCRIPTEN__
-        glEnable(GL_PROGRAM_POINT_SIZE);
-#endif
-        glBindBuffer(GL_ARRAY_BUFFER, background_vertex_buffer_);
-        glDrawArrays(GL_POINTS, 0, n_quad_);
-        glDrawArrays(GL_TRIANGLES, 0, n_quad_);
-
-        glBindVertexArray(0);
         glBindVertexArray(vertex_array_object_);
     }
 
