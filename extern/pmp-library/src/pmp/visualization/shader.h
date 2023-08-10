@@ -91,7 +91,7 @@ class Shader
     void load(const char* filename, std::string& source);
 
     // compile a vertex/fragment shader
-    GLint compile(const char* source, GLenum type);
+    GLint compile(const char* filename, const char* source, GLenum type);
 
     // loads a vertex/fragment shader from a file and compiles it
     GLint load_and_compile(const char* filename, GLenum type);
@@ -101,6 +101,8 @@ class Shader
 
     // get OpenGL program info log
     std::string get_info_log() const;
+
+    std::string get_shader_log(GLint id) const;
 
     // id of the linked shader program
     GLint pid_{0};

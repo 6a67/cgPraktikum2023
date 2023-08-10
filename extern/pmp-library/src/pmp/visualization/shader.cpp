@@ -42,12 +42,12 @@ void Shader::source(const char* vshader, const char* fshader)
     pid_ = glCreateProgram();
 
     // vertex shader
-    id = compile(vshader, GL_VERTEX_SHADER);
+    id = compile("[NO FILE]", vshader, GL_VERTEX_SHADER);
     glAttachShader(pid_, id);
     shaders_.push_back(id);
 
     // fragment shader
-    id = compile(fshader, GL_FRAGMENT_SHADER);
+    id = compile("[NO FILE]", fshader, GL_FRAGMENT_SHADER);
     glAttachShader(pid_, id);
     shaders_.push_back(id);
 
@@ -134,7 +134,7 @@ void Shader::load(const char* filename, std::string& source)
     ifs.close();
 }
 
-GLint Shader::compile(const char* source, GLenum type)
+GLint Shader::compile(const char* filename, const char* source, GLenum type)
 {
     // create shader
     GLint id = glCreateShader(type);
@@ -155,9 +155,10 @@ GLint Shader::compile(const char* source, GLenum type)
     if (status == GL_FALSE)
     {
         auto info = get_info_log();
-        auto what = "Shader: Cannot compile shader:" + info + "\n" + source;
+        std::stringstream what;
+        what << "Shader: Cannot compile " << filename << " shader:" + info + "\n" << get_shader_log(id);
         cleanup();
-        throw GLException(what);
+        throw GLException(what.str());
     }
 
     return id;
@@ -167,7 +168,7 @@ GLint Shader::load_and_compile(const char* filename, GLenum type)
 {
     std::string source;
     load(filename, source);
-    return compile(source.c_str(), type);
+    return compile(filename, source.c_str(), type);
 }
 
 void Shader::use()
@@ -274,6 +275,17 @@ std::string Shader::get_info_log() const
     auto info = std::vector<GLchar>(length + 1);
     glGetProgramInfoLog(pid_, length, nullptr, info.data());
     return {info.data()};
+}
+
+std::string Shader::get_shader_log(GLint id) const
+{
+    GLint max_length = 0;
+    glGetShaderiv(id, GL_INFO_LOG_LENGTH, &max_length);
+
+    // The maxLength includes the NULL character
+    std::vector<GLchar> error_log(max_length);
+    glGetShaderInfoLog(id, max_length, &max_length, error_log.data());
+    return {error_log.data()};
 }
 
 } // namespace pmp
