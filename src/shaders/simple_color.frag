@@ -14,7 +14,7 @@ uniform int window_height;
 // out vec4 f_color;
 // in vec2 fragCoord;
 
-// uniform float iTime;                 // shader playback time (in seconds)
+uniform float iTime;                 // shader playback time (in seconds)
 
 float GetDist(vec3 p) {
     vec4 s = vec4(0, 1, 6, 1);
@@ -51,8 +51,8 @@ vec3 GetNormal(vec3 p) {
 
 float GetLight(vec3 p) {
     vec3 lightPos = vec3(0, 5, 6);
-    // lightPos.xz += vec2(sin(iTime), cos(iTime)) * 2.;
-    lightPos.xz = vec2(sin(2), cos(2)) * 2.;
+    lightPos.xz += vec2(sin(iTime), cos(iTime)) * 2.;
+    // lightPos.xz = vec2(sin(2), cos(2)) * 2.;
     vec3 l = normalize(lightPos - p);
     vec3 n = GetNormal(p);
 

@@ -233,6 +233,8 @@ class Renderer
     int wsize_ = 800;
     int hsize_ = 600;
 
+    float itime = 0;
+
     // buffer sizes
     GLsizei n_vertices_;
     GLsizei n_edges_;

@@ -250,6 +250,9 @@ void Renderer::update_opengl_buffers()
 {
     glfwGetWindowSize(window_, &wsize_, &hsize_);
 
+    // get time in seconds
+    itime = glfwGetTime();
+
     // are buffers already initialized?
     if (!vertex_array_object_)
     {
@@ -681,6 +684,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         // set resolution
         custom_shader_.set_uniform("window_height", hsize_);
         custom_shader_.set_uniform("window_width", wsize_);
+        custom_shader_.set_uniform("iTime", itime);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(vertex_array_object_);
