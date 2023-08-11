@@ -715,6 +715,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         // set resolution
         custom_shader_.set_uniform("window_height", hsize_);
         custom_shader_.set_uniform("window_width", wsize_);
+        custom_shader_.set_uniform("iTime", itime);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -826,6 +827,13 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
 
     glBindVertexArray(0);
     glCheckError();
+
+    auto time_now = std::chrono::high_resolution_clock::now();
+
+    /* Getting number of milliseconds as an integer. */
+    auto ms_delta = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - last_time);
+    last_time = time_now;
+    framerate = 1000.0 / ms_delta.count();
 }
 
 void Renderer::tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles)

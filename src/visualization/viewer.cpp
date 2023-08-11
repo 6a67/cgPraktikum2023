@@ -831,7 +831,8 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
-    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Text("Calculated FPS: %.0f", renderer_.framerate);
 }
 
 void Viewer::set_face_color(pmp::Face& face, pmp::Color color)

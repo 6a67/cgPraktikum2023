@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <limits>
 
 #include "pmp/mat_vec.h"
@@ -27,6 +28,8 @@ class Renderer
 
     //! Default destructor, deletes all OpenGL buffers.
     ~Renderer();
+
+    double framerate = 0;
 
     //! get front color
     const vec3& front_color() const
@@ -238,6 +241,7 @@ class Renderer
     int hsize_ = 600;
 
     float itime = 0;
+    std::chrono::high_resolution_clock::time_point last_time;
 
     // buffer sizes
     GLsizei n_vertices_;
