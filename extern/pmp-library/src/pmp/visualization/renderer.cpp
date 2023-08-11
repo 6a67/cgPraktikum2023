@@ -225,15 +225,22 @@ void Renderer::use_checkerboard_texture()
 
 void Renderer::load_custom_shader()
 {
-    try
+    if (custom_shader_path_vertex_ == "" || custom_shader_path_fragment_ == "")
     {
-        // TODO: Fix relative paths
-        custom_shader_.load("../src/shaders/simple_color.vert", "../src/shaders/simple_color.frag");
+
+        std::cerr << "Error: No shader path provided. Did you call Renderer::reload_shaders?" << std::endl;
     }
-    catch (GLException& e)
+    else
     {
-        std::cerr << "Error: loading shader failed" << std::endl;
-        std::cerr << e.what() << std::endl;
+        try
+        {
+            custom_shader_.load(custom_shader_path_vertex_.c_str(), custom_shader_path_fragment_.c_str());
+        }
+        catch (GLException& e)
+        {
+            std::cerr << "Error: loading shader failed" << std::endl;
+            std::cerr << e.what() << std::endl;
+        }
     }
 }
 
@@ -246,11 +253,12 @@ void Renderer::set_crease_angle(Scalar ca)
     }
 }
 
-void Renderer::reload_shaders()
+void Renderer::reload_shaders(std::string custom_shader_path_vertex, std::string custom_shader_path_fragment)
 {
-    custom_shader_.disable();
-    glDeleteShader(custom_shader_.id());
+    custom_shader_path_fragment_ = custom_shader_path_fragment;
+    custom_shader_path_vertex_ = custom_shader_path_vertex;
 
+    // load automatically cleans up the old shader
     load_custom_shader();
 }
 

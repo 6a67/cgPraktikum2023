@@ -54,11 +54,55 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     add_help_item("O", "Reload custom shader from file");
 
     clock_last = std::chrono::high_resolution_clock::now();
+
+    selected_shader_path_vertex_ = std::string(PATH_CUSTOM_SHADER_VERTEX);
+    selected_shader_path_fragment_ = std::string(PATH_CUSTOM_SHADER_FRAGMENT);
+
+    last_modified_shader_file_vertex_ = std::filesystem::last_write_time(selected_shader_path_vertex_);
+    last_modified_shader_file_fragment_ = std::filesystem::last_write_time(selected_shader_path_fragment_);
+
+    reload_shader();
+
+    // TODO: Disable for release
+    file_watcher_enable();
 }
 
 Viewer::~Viewer()
 {
     delete modelpath_buf;
+}
+
+void Viewer::file_watcher_func()
+{
+    while (watch_shader_file_)
+    {
+        std::filesystem::file_time_type current_shader_file_vertex_last_modified
+            = std::filesystem::last_write_time(selected_shader_path_vertex_);
+        std::filesystem::file_time_type current_shader_file_fragment_last_modified
+            = std::filesystem::last_write_time(selected_shader_path_fragment_);
+
+        if (current_shader_file_fragment_last_modified > last_modified_shader_file_fragment_
+            || current_shader_file_vertex_last_modified > last_modified_shader_file_vertex_)
+        {
+            last_modified_shader_file_vertex_ = current_shader_file_vertex_last_modified;
+            last_modified_shader_file_fragment_ = current_shader_file_fragment_last_modified;
+
+            reload_shader();
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+}
+
+void Viewer::file_watcher_enable()
+{
+    watch_shader_file_ = true;
+    file_watcher_thread = std::thread(&Viewer::file_watcher_func, this);
+}
+
+void Viewer::file_watcher_disable()
+{
+    watch_shader_file_ = false;
+    file_watcher_thread.join();
 }
 
 void Viewer::start_simulation(bool single_step)
@@ -106,7 +150,7 @@ void Viewer::stop_simulation()
 
 void Viewer::reload_shader()
 {
-    renderer_.reload_shaders();
+    renderer_.reload_shaders(selected_shader_path_vertex_, selected_shader_path_fragment_);
 }
 
 void Viewer::set_mesh_properties()

@@ -20,6 +20,9 @@ struct DebugData
     pmp::Face face;
 };
 
+const char* PATH_CUSTOM_SHADER_VERTEX = "../src/shaders/simple_color.vert";
+const char* PATH_CUSTOM_SHADER_FRAGMENT = "../src/shaders/simple_color.frag";
+
 /// pmp::MeshViewer extension to handle visualization of implemented algorithms
 class Viewer : public pmp::MeshViewer
 {
@@ -97,6 +100,19 @@ class Viewer : public pmp::MeshViewer
 
     void start_simulation(bool single_step = false);
     void stop_simulation();
+
+    void file_watcher_func();
+    std::thread file_watcher_thread;
+
+    bool watch_shader_file_ = false;
+    void file_watcher_enable();
+    void file_watcher_disable();
+
+    std::string selected_shader_path_vertex_;
+    std::string selected_shader_path_fragment_;
+
+    std::filesystem::file_time_type last_modified_shader_file_vertex_;
+    std::filesystem::file_time_type last_modified_shader_file_fragment_;
 };
 
 } // namespace meshlife

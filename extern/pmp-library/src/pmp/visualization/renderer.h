@@ -148,7 +148,7 @@ class Renderer
     //! Use checkerboard texture.
     void use_checkerboard_texture();
 
-    void reload_shaders();
+    void reload_shaders(std::string custom_shader_path_vertex, std::string custom_shader_path_fragment);
     //! Load texture from file.
     //! \param filename the location and name of the texture
     //! \param format internal format (GL_RGB, GL_RGBA, GL_SRGB8, etc.)
@@ -230,6 +230,9 @@ class Renderer
     Shader custom_shader_;
     GLsizei n_quad_;
     std::vector<vec3> quad_vertices;
+
+    std::string custom_shader_path_vertex_;
+    std::string custom_shader_path_fragment_;
 
     int wsize_ = 800;
     int hsize_ = 600;
