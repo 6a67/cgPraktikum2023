@@ -61,6 +61,7 @@ float GetDist(vec3 p) {
 	d = max(d, backplane);
 
 	// draw everying after the z=2 plane
+	d = max(d, -p.z + 2.);
 	return d;
 }
 
