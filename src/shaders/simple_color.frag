@@ -16,6 +16,10 @@ uniform int window_height;
 
 uniform float iTime;                 // shader playback time (in seconds)
 
+vec3 rangeMod(vec3 x, float start, float end) {
+    return mod(mod(x - start, end - start) + end - start, end - start) + start;
+}
+
 // Other forms: https://iquilezles.org/articles/distfunctions/
 float GetDist(vec3 p) {
     vec4 s = vec4(0, 1, 6, 1);
