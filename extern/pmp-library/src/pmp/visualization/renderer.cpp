@@ -3,6 +3,7 @@
 
 #include "pmp/visualization/renderer.h"
 
+#include <numbers>
 #include <stb_image.h>
 
 #include "pmp/algorithms/normals.h"
@@ -58,14 +59,16 @@ Renderer::Renderer(const SurfaceMesh& mesh, GLFWwindow* window) : mesh_(mesh), w
 Renderer::~Renderer()
 {
     // delete OpenGL buffers
-    glDeleteBuffers(1, &vertex_buffer_);
-    glDeleteBuffers(1, &color_buffer_);
-    glDeleteBuffers(1, &normal_buffer_);
-    glDeleteBuffers(1, &tex_coord_buffer_);
-    glDeleteBuffers(1, &edge_buffer_);
-    glDeleteBuffers(1, &feature_buffer_);
-    glDeleteVertexArrays(1, &background_array_object);
-    glDeleteVertexArrays(1, &vertex_array_object_);
+    GL_CHECK(glDeleteBuffers(1, &vertex_buffer_));
+    GL_CHECK(glDeleteBuffers(1, &color_buffer_));
+    GL_CHECK(glDeleteBuffers(1, &normal_buffer_));
+    GL_CHECK(glDeleteBuffers(1, &tex_coord_buffer_));
+    GL_CHECK(glDeleteBuffers(1, &edge_buffer_));
+    GL_CHECK(glDeleteBuffers(1, &feature_buffer_));
+    GL_CHECK(glDeleteVertexArrays(1, &background_array_object));
+    GL_CHECK(glDeleteVertexArrays(1, &vertex_array_object_));
+
+    GL_CHECK(glDeleteFramebuffers(1, &FramebufferNames_));
 }
 
 void Renderer::load_texture(const char* filename, GLint format, GLint min_filter, GLint mag_filter, GLint wrap)
@@ -265,30 +268,40 @@ void Renderer::reload_shaders(std::string custom_shader_path_vertex, std::string
 void Renderer::update_opengl_buffers()
 {
     glfwGetWindowSize(window_, &wsize_, &hsize_);
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &oldFBO);
 
     // get time in seconds
     itime = glfwGetTime();
 
+    if (!FramebufferNames_)
+    {
+        std::cout << "Creating Framebuffer" << std::endl;
+        GL_CHECK(glGenFramebuffers(1, &FramebufferNames_));
+        std::cout << "ID : " << FramebufferNames_ << std::endl;
+
+        GL_CHECK(glGenTextures(6, renderedTexture_));
+    }
+
     // are buffers already initialized?
     if (!vertex_array_object_)
     {
-        glGenVertexArrays(1, &vertex_array_object_);
-        glBindVertexArray(vertex_array_object_);
-        glGenBuffers(1, &vertex_buffer_);
-        glGenBuffers(1, &color_buffer_);
-        glGenBuffers(1, &normal_buffer_);
-        glGenBuffers(1, &tex_coord_buffer_);
-        glGenBuffers(1, &edge_buffer_);
-        glGenBuffers(1, &feature_buffer_);
+        GL_CHECK(glGenVertexArrays(1, &vertex_array_object_));
+        GL_CHECK(glBindVertexArray(vertex_array_object_));
+        GL_CHECK(glGenBuffers(1, &vertex_buffer_));
+        GL_CHECK(glGenBuffers(1, &color_buffer_));
+        GL_CHECK(glGenBuffers(1, &normal_buffer_));
+        GL_CHECK(glGenBuffers(1, &tex_coord_buffer_));
+        GL_CHECK(glGenBuffers(1, &edge_buffer_));
+        GL_CHECK(glGenBuffers(1, &feature_buffer_));
     }
 
     if (!background_array_object)
     {
-        glGenVertexArrays(1, &background_array_object);
+        GL_CHECK(glGenVertexArrays(1, &background_array_object));
     }
 
     // activate VAO
-    glBindVertexArray(vertex_array_object_);
+    GL_CHECK(glBindVertexArray(vertex_array_object_));
 
     // get properties
     auto vpos = mesh_.get_vertex_property<Point>("v:point");
@@ -470,58 +483,61 @@ void Renderer::update_opengl_buffers()
     // upload vertices
     if (!position_array.empty())
     {
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-        glBufferData(GL_ARRAY_BUFFER, position_array.size() * 3 * sizeof(float), position_array.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-        glEnableVertexAttribArray(0);
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+        GL_CHECK(glBufferData(
+            GL_ARRAY_BUFFER, position_array.size() * 3 * sizeof(float), position_array.data(), GL_STATIC_DRAW));
+        GL_CHECK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
+        GL_CHECK(glEnableVertexAttribArray(0));
         n_vertices_ = position_array.size();
     }
     else
     {
-        glDisableVertexAttribArray(0);
+        GL_CHECK(glDisableVertexAttribArray(0));
         n_vertices_ = 0;
     }
 
     // upload normals
     if (!normal_array.empty())
     {
-        glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_);
-        glBufferData(GL_ARRAY_BUFFER, normal_array.size() * 3 * sizeof(float), normal_array.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-        glEnableVertexAttribArray(1);
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_));
+        GL_CHECK(glBufferData(
+            GL_ARRAY_BUFFER, normal_array.size() * 3 * sizeof(float), normal_array.data(), GL_STATIC_DRAW));
+        GL_CHECK(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
+        GL_CHECK(glEnableVertexAttribArray(1));
     }
     else
     {
-        glDisableVertexAttribArray(1);
+        GL_CHECK(glDisableVertexAttribArray(1));
     }
 
     // upload texture coordinates
     if (!tex_array.empty())
     {
-        glBindBuffer(GL_ARRAY_BUFFER, tex_coord_buffer_);
-        glBufferData(GL_ARRAY_BUFFER, tex_array.size() * 2 * sizeof(float), tex_array.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-        glEnableVertexAttribArray(2);
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, tex_coord_buffer_));
+        GL_CHECK(glBufferData(GL_ARRAY_BUFFER, tex_array.size() * 2 * sizeof(float), tex_array.data(), GL_STATIC_DRAW));
+        GL_CHECK(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr));
+        GL_CHECK(glEnableVertexAttribArray(2));
         has_texcoords_ = true;
     }
     else
     {
-        glDisableVertexAttribArray(2);
+        GL_CHECK(glDisableVertexAttribArray(2));
         has_texcoords_ = false;
     }
 
     // upload colors of vertices
     if (!color_array.empty())
     {
-        glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
-        glBufferData(GL_ARRAY_BUFFER, color_array.size() * 3 * sizeof(float), color_array.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-        glEnableVertexAttribArray(3);
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, color_buffer_));
+        GL_CHECK(
+            glBufferData(GL_ARRAY_BUFFER, color_array.size() * 3 * sizeof(float), color_array.data(), GL_STATIC_DRAW));
+        GL_CHECK(glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
+        GL_CHECK(glEnableVertexAttribArray(3));
         has_vertex_colors_ = true;
     }
     else
     {
-        glDisableVertexAttribArray(3);
+        GL_CHECK(glDisableVertexAttribArray(3));
         has_vertex_colors_ = false;
     }
 
@@ -539,9 +555,9 @@ void Renderer::update_opengl_buffers()
             edge_indices.push_back(vertex_indices[v1]);
         }
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_);
-        glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, edge_indices.size() * sizeof(unsigned int), edge_indices.data(), GL_STATIC_DRAW);
+        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
+        GL_CHECK(glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER, edge_indices.size() * sizeof(unsigned int), edge_indices.data(), GL_STATIC_DRAW));
         n_edges_ = edge_indices.size();
     }
     else
@@ -564,23 +580,45 @@ void Renderer::update_opengl_buffers()
             }
         }
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, features.size() * sizeof(unsigned int), features.data(), GL_STATIC_DRAW);
+        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_));
+        GL_CHECK(glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER, features.size() * sizeof(unsigned int), features.data(), GL_STATIC_DRAW));
         n_features_ = features.size();
     }
     else
         n_features_ = 0;
 
-    glBindVertexArray(0);
+    GL_CHECK(glBindVertexArray(0));
 
-    glBindVertexArray(background_array_object);
+    GL_CHECK(glBindVertexArray(background_array_object));
 
     // unbind object
-    glBindVertexArray(0);
+    GL_CHECK(glBindVertexArray(0));
+}
+
+float degree_to_rad(float degree)
+{
+    return degree * (M_PI / 180.0);
+}
+
+void Renderer::keyboard(int key, int action)
+{
+    if (action != GLFW_PRESS && action != GLFW_REPEAT)
+        return;
+
+    switch (key)
+
+    {
+    case GLFW_KEY_C:
+        counter_++;
+        counter_ = counter_ % 6;
+        std::cout << counter_ << " - " << view_directions_[counter_] << std::endl;
+    }
 }
 
 void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix, const std::string& draw_mode)
 {
+    // GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, oldFBO));
     // did we generate buffers already?
     if (!vertex_array_object_ || !background_array_object)
     {
@@ -626,12 +664,82 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         use_checkerboard_texture();
     }
 
+    std::vector<unsigned char*> faces;
+
+    view_directions_ = {
+        vec3(0, degree_to_rad(90), 0),
+        vec3(0, degree_to_rad(-90), 0),
+        vec3(degree_to_rad(90), 0, 0),
+        vec3(degree_to_rad(-90), 0, 0),
+        vec3(0, degree_to_rad(0), 0),
+        vec3(0, degree_to_rad(180), 0),
+    };
+    //
+
+    vec3 origin = vec3(0, 0, 0);
+
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FramebufferNames_));
+    for (int i = 0; i < 6; i++)
+    {
+        // "Bind" the newly created texture : all future texture functions will modify this texture
+        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, renderedTexture_[i]));
+
+        // Give an empty image to OpenGL ( the last "0" )
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1000, 1000, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
+
+        // Poor filtering. Needed !
+        GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+
+        // // The depth buffer
+        // GLuint depthrenderbuffer;
+        // glGenRenderbuffers(1, &depthrenderbuffer);
+        // glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+        // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1000, 1000);
+        // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+
+        // Set "renderedTexture" as our colour attachement #0
+        GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTexture_[i], 0));
+
+        // Set the list of draw buffers.
+        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+        GL_CHECK(glDrawBuffers(1, DrawBuffers)); // "1" is the size of DrawBuffer)
+
+        // Always check that our framebuffer is ok
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            std::cerr << "Error: Framebuffer invalid" << std::endl;
+            return;
+        }
+
+        custom_shader_.use();
+        custom_shader_.set_uniform("viewRotation", view_directions_[i]);
+        custom_shader_.set_uniform("origin", origin);
+        GL_CHECK(glViewport(
+            0, 0, 1000, 1000)); // Render on the whole framebuffer, complete from the lower left corner to the upp
+    }
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, oldFBO));
+
+    GL_CHECK(glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X, renderedTexture_[0], 0));
+    GL_CHECK(glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, renderedTexture_[1], 0));
+    GL_CHECK(glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, renderedTexture_[2], 0));
+    GL_CHECK(glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, renderedTexture_[3], 0));
+    GL_CHECK(glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, renderedTexture_[4], 0));
+    GL_CHECK(glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, renderedTexture_[5], 0));
+
+    // GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
     // empty mesh?
     if (mesh_.is_empty())
         return;
 
     // allow for transparent objects
-    glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+    GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
 
     // setup matrices
     mat4 mv_matrix = modelview_matrix;
@@ -659,14 +767,28 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     phong_shader_.set_uniform("show_texture_layout", false);
     phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
 
-    glBindVertexArray(vertex_array_object_);
+    GL_CHECK(glBindVertexArray(vertex_array_object_));
+
+    // glPushMatrix();
+    // glFrustum(-1, 1, -1, 1, 0.002, 10000);
+    // glTranslatef(100, 0, 0);
+
+    // vec3 camera_origin = vec3(
+    //     modelview_matrix.data()[3 + 4 * 0], modelview_matrix.data()[3 + 4 * 2], modelview_matrix.data()[3 + 4 * 3]);
+
+    // vec3 camera_direction = vec3(
+    //     modelview_matrix.data()[0 + 4 * 2], modelview_matrix.data()[1 + 4 * 2], modelview_matrix.data()[1 + 4 * 3]);
+    // std::cout << "Modelview matrix:\n" << modelview_matrix << std::endl;
+    // std::cout << "Projection matrix:\n" << projection_matrix << std::endl;
+    // std::cout << "camera_origin: " << camera_origin << std::endl;
+    // std::cout << "camera_direction: " << camera_direction << std::endl;
 
     if (draw_mode == "Points")
     {
 #ifndef __EMSCRIPTEN__
         glEnable(GL_PROGRAM_POINT_SIZE);
 #endif
-        glDrawArrays(GL_POINTS, 0, n_vertices_);
+        GL_CHECK(glDrawArrays(GL_POINTS, 0, n_vertices_));
     }
 
     else if (draw_mode == "Hidden Line")
@@ -674,26 +796,26 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         if (mesh_.n_faces())
         {
             // draw faces
-            glDepthRange(0.01, 1.0);
-            glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
-            glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+            GL_CHECK(glDepthRange(0.01, 1.0));
+            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+            GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
 
             // overlay edges
-            glDepthRange(0.0, 1.0);
-            glDepthFunc(GL_LEQUAL);
+            GL_CHECK(glDepthRange(0.0, 1.0));
+            GL_CHECK(glDepthFunc(GL_LEQUAL));
             phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
             phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
             phong_shader_.set_uniform("use_lighting", false);
             phong_shader_.set_uniform("use_vertex_color", false);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_);
-            glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr);
-            glDepthFunc(GL_LESS);
+            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
+            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
+            GL_CHECK(glDepthFunc(GL_LESS));
         }
     }
     else if (draw_mode == "Fractal Mode")
     {
         // SEE: https://stackoverflow.com/a/21652955
-        glBindVertexArray(background_array_object);
+        GL_CHECK(glBindVertexArray(background_array_object));
         // https://stackoverflow.com/a/59739538
         custom_shader_.use();
 
@@ -701,23 +823,33 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         custom_shader_.set_uniform("window_height", hsize_);
         custom_shader_.set_uniform("window_width", wsize_);
         custom_shader_.set_uniform("iTime", itime);
+        custom_shader_.set_uniform("viewRotation", view_directions_[counter_]);
+        custom_shader_.set_uniform("origin", origin);
+        // custom_shader_.set_uniform("camera_origin", camera_origin);
+        // custom_shader_.set_uniform("camera_direction", camera_direction);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        glBindVertexArray(vertex_array_object_);
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+        GL_CHECK(glBindVertexArray(vertex_array_object_));
     }
     else if (draw_mode == "Fractal Mode With Mesh")
     {
         // SEE: https://stackoverflow.com/a/21652955
-        glBindVertexArray(background_array_object);
+        GL_CHECK(glBindVertexArray(background_array_object));
         // https://stackoverflow.com/a/59739538
         custom_shader_.use();
 
         // set resolution
         custom_shader_.set_uniform("window_height", hsize_);
         custom_shader_.set_uniform("window_width", wsize_);
+        custom_shader_.set_uniform("viewRotation", view_directions_[counter_]);
+        custom_shader_.set_uniform("origin", origin);
+
         custom_shader_.set_uniform("iTime", itime);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // custom_shader_.set_uniform("camera_origin", camera_origin);
+        // custom_shader_.set_uniform("camera_direction", camera_direction);
+
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 
         // setup shader
         phong_shader_.use();
@@ -740,11 +872,11 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         phong_shader_.set_uniform("show_texture_layout", false);
         phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
 
-        glBindVertexArray(vertex_array_object_);
+        GL_CHECK(glBindVertexArray(vertex_array_object_));
 
         if (mesh_.n_faces())
         {
-            glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
+            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
         }
     }
 
@@ -752,7 +884,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     {
         if (mesh_.n_faces())
         {
-            glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
+            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
         }
     }
 
@@ -766,8 +898,8 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
                 matcap_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
                 matcap_shader_.set_uniform("normal_matrix", n_matrix);
                 matcap_shader_.set_uniform("alpha", alpha_);
-                glBindTexture(GL_TEXTURE_2D, texture_);
-                glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
+                GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_));
+                GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
             }
             else
             {
@@ -776,8 +908,8 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
                 phong_shader_.set_uniform("use_texture", true);
                 phong_shader_.set_uniform("use_vertex_color", false);
                 phong_shader_.set_uniform("use_srgb", use_srgb_);
-                glBindTexture(GL_TEXTURE_2D, texture_);
-                glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
+                GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_));
+                GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
             }
         }
     }
@@ -793,17 +925,17 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
             // draw faces
             phong_shader_.set_uniform("front_color", vec3(0.8, 0.8, 0.8));
             phong_shader_.set_uniform("back_color", vec3(0.9, 0.0, 0.0));
-            glDepthRange(0.01, 1.0);
-            glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
+            GL_CHECK(glDepthRange(0.01, 1.0));
+            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
 
             // overlay edges
-            glDepthRange(0.0, 1.0);
-            glDepthFunc(GL_LEQUAL);
+            GL_CHECK(glDepthRange(0.0, 1.0));
+            GL_CHECK(glDepthFunc(GL_LEQUAL));
             phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
             phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_);
-            glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr);
-            glDepthFunc(GL_LESS);
+            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
+            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
+            GL_CHECK(glDepthFunc(GL_LESS));
         }
     }
 
@@ -814,19 +946,19 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         phong_shader_.set_uniform("back_color", vec3(0, 1, 0));
         phong_shader_.set_uniform("use_vertex_color", false);
         phong_shader_.set_uniform("use_lighting", false);
-        glDepthRange(0.0, 1.0);
-        glDepthFunc(GL_LEQUAL);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_);
-        glDrawElements(GL_LINES, n_features_, GL_UNSIGNED_INT, nullptr);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glDepthFunc(GL_LESS);
+        GL_CHECK(glDepthRange(0.0, 1.0));
+        GL_CHECK(glDepthFunc(GL_LEQUAL));
+        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_));
+        GL_CHECK(glDrawElements(GL_LINES, n_features_, GL_UNSIGNED_INT, nullptr));
+        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+        GL_CHECK(glDepthFunc(GL_LESS));
     }
 
     // disable transparency (doesn't work well with imgui)
-    glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+    GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
 
-    glBindVertexArray(0);
-    glCheckError();
+    GL_CHECK(glBindVertexArray(0));
+    GL_CHECK(glCheckError());
 
     auto time_now = std::chrono::high_resolution_clock::now();
 
@@ -834,6 +966,8 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     auto ms_delta = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - last_time);
     last_time = time_now;
     framerate = 1000.0 / ms_delta.count();
+
+    // glPopMatrix();
 }
 
 void Renderer::tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles)

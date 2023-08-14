@@ -3,10 +3,15 @@
 #define MAX_STEPS 100
 #define MAX_DIST 100.
 #define SURF_DIST .01
+#define PI 3.1415926535897932384626433832795
 
 precision mediump float;
 
 in vec2 texcoords;
+
+uniform vec3 cam_origin;
+uniform vec3 cam_direction;
+
 
 uniform int window_width;
 uniform int window_height;
@@ -51,11 +56,16 @@ float GetDist(vec3 p) {
 	sphereDist = length(rangeModWithOffset(p,s.xyz, vec3(4, 4, 5)) - s.xyz) - s.w;
 	d = max(-p.z + 5., sphereDist);
 
-	//float boxDist = sdBox(p - vec3(0,1,0), vec3(1.2,1.2, 1000));
-	// d = max(d, -boxDist);
+//  float boxDist = sdBox(p - vec3(0,1,0), vec3(1.2,1.2, 1000));
+//  d = max(d, -boxDist);
 
-	d = min(d, planeDist);
+	
 
+// 	d = min(d, planeDist);
+
+	float rotatedPlane  = dot(p - vec3(2, 10, 100), vec3(1,-2,1));
+	d = max(d, rotatedPlane);
+	
 
 	float backplane = p.z - 100.;
 	d = max(d, backplane);
@@ -103,13 +113,39 @@ float GetLight(vec3 p) {
 	return dif;
 }
 
+
+mat3 rot(float roll, float pitch, float yaw) {
+	float cr = cos(roll);
+	float sr = sin(roll);
+	float cp = cos(pitch);
+	float sp = sin(pitch);
+	float cy = cos(yaw);
+	float sy = sin(yaw);
+
+	return mat3(cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr, sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr, -sp, cp * sr, cp * cr);
+}
+
+// rotate around a given point
+mat4 rot(float roll, float pitch, float yaw, vec3 point) {
+	mat3 r = rot(roll, pitch, yaw);
+	vec3 p = point - r * point;
+	return mat4(r[0], 0, r[1], 0, r[2], 0, p, 1);
+}
+
+
+in vec3 v2f_viewRotation;
+in vec3 v2f_origin;
+
+layout(location = 0) out vec4 color;
+
+
 void main() {
 	vec2 uv = (texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5) / window_height;
 
 	vec3 col = vec3(0);
 
-	vec3 ro = vec3(sin(iTime * 1) * 12.5, (cos(iTime*2.)+0.5) * 10 + 20.5, 0);
-	vec3 rd = normalize(vec3(uv.x, uv.y, 1));
+	vec3 ro = v2f_origin + vec3(12.5, 2, 0);
+	vec3 rd = normalize(( rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 1, 0)).xyz);
 
 	float d = RayMarch(ro, rd);
 
@@ -121,6 +157,8 @@ void main() {
 	col = pow(col, vec3(.4545));	// gamma correction
 	
 	gl_FragDepth = d / MAX_DIST;
-	gl_FragColor = vec4(col, 1.0);
+	// gl_FragColor = vec4(col, 1.0);
 	//gl_FragColor = vec4(uv.xy,0.0, 1.0);
+	color = vec4(col, 1.0);
+
 }

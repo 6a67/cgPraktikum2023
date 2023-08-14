@@ -173,6 +173,10 @@ class Renderer
     //! \throw IOException in case of failure to load texture from file
     void load_matcap(const char* filename);
 
+    unsigned int loadCubemap(int width, int height, std::vector<unsigned char*> faces);
+
+    void keyboard(int key, int action);
+
   private:
     const SurfaceMesh& mesh_;
 
@@ -217,6 +221,13 @@ class Renderer
     // triangulate a polygon such that the sum of squared triangle areas is minimized.
     // this prevents overlapping/folding triangles for non-convex polygons.
     void tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles);
+
+    int counter_ = 0;
+    std::vector<vec3> view_directions_;
+
+    GLint oldFBO;
+    GLuint FramebufferNames_ = 0;
+    GLuint renderedTexture_[6] = {0};
 
     // OpenGL buffers
     GLuint vertex_array_object_;
@@ -273,5 +284,25 @@ class Renderer
         Other
     } texture_mode_;
 };
+
+inline void CheckOpenGLError(const char* stat, const char* fname, int line)
+{
+    GLenum err = glGetError();
+
+    if (err != GL_NO_ERROR)
+    {
+
+        std::cerr << "OpenGL error: " << glewGetErrorString(err) << " in " << fname << ":" << line << " " << stat
+                  << std::endl;
+        exit(1);
+    }
+}
+
+#define GL_CHECK(stat)                                                                                                 \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        stat;                                                                                                          \
+        CheckOpenGLError(#stat, __FILE__, __LINE__);                                                                   \
+    } while (0)
 
 } // namespace pmp

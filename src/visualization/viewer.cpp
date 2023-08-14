@@ -268,6 +268,7 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     default:
     {
         MeshViewer::keyboard(key, scancode, action, mods);
+        renderer_.keyboard(key, action);
         break;
     }
     }
