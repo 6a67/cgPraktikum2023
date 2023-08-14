@@ -8,6 +8,7 @@
 
 #include "pmp/algorithms/normals.h"
 #include "pmp/exceptions.h"
+#include "pmp/mat_vec.h"
 #include "pmp/visualization/cold_warm_texture.h"
 #include "pmp/visualization/mat_cap_shader.h"
 #include "pmp/visualization/phong_shader.h"
@@ -54,6 +55,15 @@ Renderer::Renderer(const SurfaceMesh& mesh, GLFWwindow* window) : mesh_(mesh), w
     // initialize texture
     texture_ = 0;
     texture_mode_ = TextureMode::Other;
+
+    view_directions_ = {
+        vec3(0, degree_to_rad(90), 0),
+        vec3(0, degree_to_rad(-90), 0),
+        vec3(degree_to_rad(90), 0, 0),
+        vec3(degree_to_rad(-90), 0, 0),
+        vec3(0, degree_to_rad(0), 0),
+        vec3(0, degree_to_rad(180), 0),
+    };
 }
 
 Renderer::~Renderer()
@@ -68,7 +78,8 @@ Renderer::~Renderer()
     GL_CHECK(glDeleteVertexArrays(1, &background_array_object));
     GL_CHECK(glDeleteVertexArrays(1, &vertex_array_object_));
 
-    GL_CHECK(glDeleteFramebuffers(1, &FramebufferNames_));
+    GL_CHECK(glDeleteFramebuffers(1, &g_framebuffer));
+    GL_CHECK(glDeleteBuffers(1, &g_depthbuffer));
 }
 
 void Renderer::load_texture(const char* filename, GLint format, GLint min_filter, GLint mag_filter, GLint wrap)
@@ -241,9 +252,22 @@ void Renderer::load_custom_shader()
         }
         catch (GLException& e)
         {
-            std::cerr << "Error: loading shader failed" << std::endl;
+            std::cerr << "Error: loading custom shader failed" << std::endl;
             std::cerr << e.what() << std::endl;
         }
+    }
+}
+
+void Renderer::load_texture_shader()
+{
+    try
+    {
+        texture_shader_.load("../src/shaders/passthrough.vert", "../src/shaders/texture.frag");
+    }
+    catch (GLException& e)
+    {
+        std::cerr << "Error: loading texture shader failed" << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 }
 
@@ -273,13 +297,14 @@ void Renderer::update_opengl_buffers()
     // get time in seconds
     itime = glfwGetTime();
 
-    if (!FramebufferNames_)
+    if (!g_framebuffer)
     {
         std::cout << "Creating Framebuffer" << std::endl;
-        GL_CHECK(glGenFramebuffers(1, &FramebufferNames_));
-        std::cout << "ID : " << FramebufferNames_ << std::endl;
+        GL_CHECK(glGenFramebuffers(1, &g_framebuffer));
+        // GL_CHECK(glGenBuffers(1, &g_depthbuffer));
+        // std::cout << "ID : " << FramebufferNames_ << std::endl;
 
-        GL_CHECK(glGenTextures(6, renderedTexture_));
+        // GL_CHECK(glGenTextures(6, renderedTexture_));
     }
 
     // are buffers already initialized?
@@ -596,11 +621,6 @@ void Renderer::update_opengl_buffers()
     GL_CHECK(glBindVertexArray(0));
 }
 
-float degree_to_rad(float degree)
-{
-    return degree * (M_PI / 180.0);
-}
-
 void Renderer::keyboard(int key, int action)
 {
     if (action != GLFW_PRESS && action != GLFW_REPEAT)
@@ -616,9 +636,148 @@ void Renderer::keyboard(int key, int action)
     }
 }
 
+void Renderer::CreateCubeTexture()
+{
+    if (g_cubeTexture)
+    {
+        return;
+    }
+
+    GL_CHECK(glGenTextures(1, &g_cubeTexture));
+    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
+
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+
+    int CUBE_TEXTURE_SIZE = 1000;
+    std::vector<GLubyte> testData(CUBE_TEXTURE_SIZE * CUBE_TEXTURE_SIZE * 256, 128);
+    std::vector<GLubyte> xData(CUBE_TEXTURE_SIZE * CUBE_TEXTURE_SIZE * 256, 255);
+
+    for (int loop = 0; loop < 6; ++loop)
+    {
+        if (loop)
+        {
+            GL_CHECK(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + loop,
+                                  0,
+                                  GL_RGBA8,
+                                  CUBE_TEXTURE_SIZE,
+                                  CUBE_TEXTURE_SIZE,
+                                  0,
+                                  GL_RGBA,
+                                  GL_UNSIGNED_BYTE,
+                                  &testData[0]));
+        }
+        else
+        {
+            GL_CHECK(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + loop,
+                                  0,
+                                  GL_RGBA8,
+                                  CUBE_TEXTURE_SIZE,
+                                  CUBE_TEXTURE_SIZE,
+                                  0,
+                                  GL_RGBA,
+                                  GL_UNSIGNED_BYTE,
+                                  &xData[0]));
+        }
+    }
+
+    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
+}
+
+void Screendump(const char* tga_file, GLuint framebuffer, short W, short H)
+{
+    FILE* out = fopen(tga_file, "w");
+    char pixel_data[3 * W * H];
+    short TGAhead[] = {0, 2, 0, 0, 0, 0, W, H, 24};
+
+    glNamedFramebufferReadBuffer(framebuffer, GL_COLOR_ATTACHMENT0);
+    glReadPixels(0, 0, W, H, GL_BGR, GL_UNSIGNED_BYTE, pixel_data);
+    fwrite(&TGAhead, sizeof(TGAhead), 1, out);
+    fwrite(pixel_data, 3 * W * H, 1, out);
+    fclose(out);
+}
+
+void Renderer::drawFace(int face_side)
+{
+    GL_CHECK(glFramebufferTexture2D(
+        GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face_side, g_cubeTexture, 0));
+
+    GLenum status = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+        printf("Status error: %08x\n", status);
+
+    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+    GL_CHECK(glClearDepth(1.0f));
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+    // Render on the whole framebuffer, complete from the lower left corner to the upper right corner
+    GL_CHECK(glViewport(0, 0, 1000, 1000));
+
+    custom_shader_.use();
+    custom_shader_.set_uniform("window_height", 1000);
+    custom_shader_.set_uniform("window_width", 1000);
+    custom_shader_.set_uniform("iTime", itime);
+    custom_shader_.set_uniform("viewRotation", view_directions_[counter_]);
+
+    vec3 origin = vec3(0, 0, 0);
+    custom_shader_.set_uniform("origin", origin);
+
+    GLuint empty_vao = 0;
+    GL_CHECK(glGenVertexArrays(1, &empty_vao));
+    GL_CHECK(glBindVertexArray(empty_vao));
+
+    GL_CHECK(glActiveTexture(GL_TEXTURE0 + g_cubeTexUnit));
+    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
+
+    GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+
+    // doesnt seem to work as expected
+    // std::stringstream ss;
+    // ss << "test_img_" << face_side << ".tga";
+    // Screendump(ss.str().c_str(), g_framebuffer, 1000, 1000);
+
+    custom_shader_.disable();
+
+    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
+    GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
+}
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char* data = stbi_load(("../" + faces[i]).c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
 void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix, const std::string& draw_mode)
 {
-    // GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, oldFBO));
+
     // did we generate buffers already?
     if (!vertex_array_object_ || !background_array_object)
     {
@@ -644,6 +803,11 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         load_custom_shader();
     }
 
+    if (!texture_shader_.is_valid())
+    {
+        load_texture_shader();
+    }
+
     // load shader?
     if (!matcap_shader_.is_valid())
     {
@@ -664,298 +828,329 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         use_checkerboard_texture();
     }
 
-    std::vector<unsigned char*> faces;
+    float skyboxVertices[] = {// positions
+                              -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
+                              1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f,
 
-    view_directions_ = {
-        vec3(0, degree_to_rad(90), 0),
-        vec3(0, degree_to_rad(-90), 0),
-        vec3(degree_to_rad(90), 0, 0),
-        vec3(degree_to_rad(-90), 0, 0),
-        vec3(0, degree_to_rad(0), 0),
-        vec3(0, degree_to_rad(180), 0),
-    };
-    //
+                              -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f,
+                              -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,
 
-    vec3 origin = vec3(0, 0, 0);
+                              1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,
+                              1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f,
 
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FramebufferNames_));
-    for (int i = 0; i < 6; i++)
-    {
-        // "Bind" the newly created texture : all future texture functions will modify this texture
-        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, renderedTexture_[i]));
+                              -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
+                              1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,
 
-        // Give an empty image to OpenGL ( the last "0" )
-        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1000, 1000, 0, GL_RGB, GL_UNSIGNED_BYTE, 0));
+                              -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,
+                              1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f,
 
-        // Poor filtering. Needed !
-        GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+                              -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
+                              1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f};
 
-        // // The depth buffer
-        // GLuint depthrenderbuffer;
-        // glGenRenderbuffers(1, &depthrenderbuffer);
-        // glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-        // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1000, 1000);
-        // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+    std::vector<std::string> faces = {"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
+    unsigned int cubemap_texture = loadCubemap(faces);
 
-        // Set "renderedTexture" as our colour attachement #0
-        GL_CHECK(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTexture_[i], 0));
-
-        // Set the list of draw buffers.
-        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-        GL_CHECK(glDrawBuffers(1, DrawBuffers)); // "1" is the size of DrawBuffer)
-
-        // Always check that our framebuffer is ok
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            std::cerr << "Error: Framebuffer invalid" << std::endl;
-            return;
-        }
-
-        custom_shader_.use();
-        custom_shader_.set_uniform("viewRotation", view_directions_[i]);
-        custom_shader_.set_uniform("origin", origin);
-        GL_CHECK(glViewport(
-            0, 0, 1000, 1000)); // Render on the whole framebuffer, complete from the lower left corner to the upp
-    }
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, oldFBO));
 
-    GL_CHECK(glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X, renderedTexture_[0], 0));
-    GL_CHECK(glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, renderedTexture_[1], 0));
-    GL_CHECK(glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, renderedTexture_[2], 0));
-    GL_CHECK(glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, renderedTexture_[3], 0));
-    GL_CHECK(glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_Z, renderedTexture_[4], 0));
-    GL_CHECK(glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, renderedTexture_[5], 0));
-
-    // GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
-    // empty mesh?
-    if (mesh_.is_empty())
-        return;
-
-    // allow for transparent objects
-    GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
-
-    // setup matrices
     mat4 mv_matrix = modelview_matrix;
     mat4 mvp_matrix = projection_matrix * modelview_matrix;
     mat3 n_matrix = inverse(transpose(linear_part(mv_matrix)));
 
-    // setup shader
-    phong_shader_.use();
-    phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-    phong_shader_.set_uniform("modelview_matrix", mv_matrix);
-    phong_shader_.set_uniform("normal_matrix", n_matrix);
-    phong_shader_.set_uniform("point_size", point_size_);
-    phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
-    phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
-    phong_shader_.set_uniform("front_color", front_color_);
-    phong_shader_.set_uniform("back_color", back_color_);
-    phong_shader_.set_uniform("ambient", ambient_);
-    phong_shader_.set_uniform("diffuse", diffuse_);
-    phong_shader_.set_uniform("specular", specular_);
-    phong_shader_.set_uniform("shininess", shininess_);
-    phong_shader_.set_uniform("alpha", alpha_);
-    phong_shader_.set_uniform("use_lighting", true);
-    phong_shader_.set_uniform("use_texture", false);
-    phong_shader_.set_uniform("use_srgb", false);
-    phong_shader_.set_uniform("show_texture_layout", false);
-    phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
-
     GL_CHECK(glBindVertexArray(vertex_array_object_));
 
-    // glPushMatrix();
-    // glFrustum(-1, 1, -1, 1, 0.002, 10000);
-    // glTranslatef(100, 0, 0);
-
-    // vec3 camera_origin = vec3(
-    //     modelview_matrix.data()[3 + 4 * 0], modelview_matrix.data()[3 + 4 * 2], modelview_matrix.data()[3 + 4 * 3]);
-
-    // vec3 camera_direction = vec3(
-    //     modelview_matrix.data()[0 + 4 * 2], modelview_matrix.data()[1 + 4 * 2], modelview_matrix.data()[1 + 4 * 3]);
-    // std::cout << "Modelview matrix:\n" << modelview_matrix << std::endl;
-    // std::cout << "Projection matrix:\n" << projection_matrix << std::endl;
-    // std::cout << "camera_origin: " << camera_origin << std::endl;
-    // std::cout << "camera_direction: " << camera_direction << std::endl;
-
-    if (draw_mode == "Points")
+    static GLuint skyboxVAO = 0;
+    static GLuint skyboxVBO = 0;
+    if (!skyboxVAO)
     {
-#ifndef __EMSCRIPTEN__
-        glEnable(GL_PROGRAM_POINT_SIZE);
-#endif
-        GL_CHECK(glDrawArrays(GL_POINTS, 0, n_vertices_));
+        glGenVertexArrays(1, &skyboxVAO);
+        glGenBuffers(1, &skyboxVBO);
+        glBindVertexArray(skyboxVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     }
 
-    else if (draw_mode == "Hidden Line")
-    {
-        if (mesh_.n_faces())
-        {
-            // draw faces
-            GL_CHECK(glDepthRange(0.01, 1.0));
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-            GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+    GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
-            // overlay edges
-            GL_CHECK(glDepthRange(0.0, 1.0));
-            GL_CHECK(glDepthFunc(GL_LEQUAL));
-            phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
-            phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
-            phong_shader_.set_uniform("use_lighting", false);
-            phong_shader_.set_uniform("use_vertex_color", false);
-            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
-            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
-            GL_CHECK(glDepthFunc(GL_LESS));
-        }
-    }
-    else if (draw_mode == "Fractal Mode")
-    {
-        // SEE: https://stackoverflow.com/a/21652955
-        GL_CHECK(glBindVertexArray(background_array_object));
-        // https://stackoverflow.com/a/59739538
-        custom_shader_.use();
+    mat4 pro = pmp::perspective_matrix(90.0f, (float)wsize_ / (float)hsize_, 0.01f, 100.f);
+    pro = pmp::mat4::identity();
+    mat4 view = pmp::mat4::identity();
 
-        // set resolution
-        custom_shader_.set_uniform("window_height", hsize_);
-        custom_shader_.set_uniform("window_width", wsize_);
-        custom_shader_.set_uniform("iTime", itime);
-        custom_shader_.set_uniform("viewRotation", view_directions_[counter_]);
-        custom_shader_.set_uniform("origin", origin);
-        // custom_shader_.set_uniform("camera_origin", camera_origin);
-        // custom_shader_.set_uniform("camera_direction", camera_direction);
+    texture_shader_.use();
 
-        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
-        GL_CHECK(glBindVertexArray(vertex_array_object_));
-    }
-    else if (draw_mode == "Fractal Mode With Mesh")
-    {
-        // SEE: https://stackoverflow.com/a/21652955
-        GL_CHECK(glBindVertexArray(background_array_object));
-        // https://stackoverflow.com/a/59739538
-        custom_shader_.use();
+    // std::cout << "Projection: \n" << pro << std::endl;
+    // std::cout << "View: \n" << view << std::endl;
 
-        // set resolution
-        custom_shader_.set_uniform("window_height", hsize_);
-        custom_shader_.set_uniform("window_width", wsize_);
-        custom_shader_.set_uniform("viewRotation", view_directions_[counter_]);
-        custom_shader_.set_uniform("origin", origin);
+    texture_shader_.set_uniform("projection", pro);
+    texture_shader_.set_uniform("view", view);
 
-        custom_shader_.set_uniform("iTime", itime);
+    // CreateCubeTexture();
+    // // Draw the cubemap.
+    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_framebuffer));
+    // GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthbuffer));
+    // for (int i = 0; i < 6; i++)
+    // {
+    //     drawFace(i);
+    // }
+    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+    // GL_CHECK(glBindVertexArray(0));
 
-        // custom_shader_.set_uniform("camera_origin", camera_origin);
-        // custom_shader_.set_uniform("camera_direction", camera_direction);
+    // allow for transparent objects
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+    GL_CHECK(glViewport(0, 0, wsize_, hsize_));
+    // CODE from:
+    // https://learnopengl.com/code_viewer_gh.php?code=src/4.advanced_opengl/6.1.cubemaps_skybox/cubemaps_skybox.cpphttps://learnopengl.com/code_viewer_gh.php?code=src/4.advanced_opengl/6.1.cubemaps_skybox/cubemaps_skybox.cpp
 
-        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+    GL_CHECK(glDepthMask(GL_FALSE));
+    GL_CHECK(glBindVertexArray(skyboxVAO));
+    GL_CHECK(glActiveTexture(GL_TEXTURE0));
 
-        // setup shader
-        phong_shader_.use();
-        phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-        phong_shader_.set_uniform("modelview_matrix", mv_matrix);
-        phong_shader_.set_uniform("normal_matrix", n_matrix);
-        phong_shader_.set_uniform("point_size", point_size_);
-        phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
-        phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
-        phong_shader_.set_uniform("front_color", front_color_);
-        phong_shader_.set_uniform("back_color", back_color_);
-        phong_shader_.set_uniform("ambient", ambient_);
-        phong_shader_.set_uniform("diffuse", diffuse_);
-        phong_shader_.set_uniform("specular", specular_);
-        phong_shader_.set_uniform("shininess", shininess_);
-        phong_shader_.set_uniform("alpha", alpha_);
-        phong_shader_.set_uniform("use_lighting", true);
-        phong_shader_.set_uniform("use_texture", false);
-        phong_shader_.set_uniform("use_srgb", false);
-        phong_shader_.set_uniform("show_texture_layout", false);
-        phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
+    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_texture));
+    // GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
 
-        GL_CHECK(glBindVertexArray(vertex_array_object_));
+    GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 36));
+    GL_CHECK(glBindVertexArray(0));
 
-        if (mesh_.n_faces())
-        {
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-        }
-    }
+    GL_CHECK(glDepthMask(GL_TRUE));
 
-    else if (draw_mode == "Smooth Shading")
-    {
-        if (mesh_.n_faces())
-        {
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-        }
-    }
+    // if (mesh_.n_faces())
+    // {
+    //     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+    // }
 
-    else if (draw_mode == "Texture")
-    {
-        if (mesh_.n_faces())
-        {
-            if (texture_mode_ == TextureMode::MatCap)
-            {
-                matcap_shader_.use();
-                matcap_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-                matcap_shader_.set_uniform("normal_matrix", n_matrix);
-                matcap_shader_.set_uniform("alpha", alpha_);
-                GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_));
-                GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-            }
-            else
-            {
-                phong_shader_.set_uniform("front_color", vec3(0.9, 0.9, 0.9));
-                phong_shader_.set_uniform("back_color", vec3(0.3, 0.3, 0.3));
-                phong_shader_.set_uniform("use_texture", true);
-                phong_shader_.set_uniform("use_vertex_color", false);
-                phong_shader_.set_uniform("use_srgb", use_srgb_);
-                GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_));
-                GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-            }
-        }
-    }
+    // GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
 
-    else if (draw_mode == "Texture Layout")
-    {
-        if (mesh_.n_faces() && has_texcoords_)
-        {
-            phong_shader_.set_uniform("show_texture_layout", true);
-            phong_shader_.set_uniform("use_vertex_color", false);
-            phong_shader_.set_uniform("use_lighting", false);
+    // // Always check that our framebuffer is ok
+    // if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    // {
+    //     std::cerr << "Error: Framebuffer invalid" << std::endl;
+    //     std::cerr << "This means you're missing something in the framebuffer! See: "
+    //                  "https://learnopengl.com/Advanced-OpenGL/Framebuffers"
+    //               << std::endl;
+    //     std::cerr << glCheckFramebufferStatus(GL_FRAMEBUFFER) << std::endl;
+    //     return;
+    // }
 
-            // draw faces
-            phong_shader_.set_uniform("front_color", vec3(0.8, 0.8, 0.8));
-            phong_shader_.set_uniform("back_color", vec3(0.9, 0.0, 0.0));
-            GL_CHECK(glDepthRange(0.01, 1.0));
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
 
-            // overlay edges
-            GL_CHECK(glDepthRange(0.0, 1.0));
-            GL_CHECK(glDepthFunc(GL_LEQUAL));
-            phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
-            phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
-            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
-            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
-            GL_CHECK(glDepthFunc(GL_LESS));
-        }
-    }
+    // empty mesh?
+    // if (mesh_.is_empty())
+    //     return;
 
-    // draw feature edges
-    if (n_features_)
-    {
-        phong_shader_.set_uniform("front_color", vec3(0, 1, 0));
-        phong_shader_.set_uniform("back_color", vec3(0, 1, 0));
-        phong_shader_.set_uniform("use_vertex_color", false);
-        phong_shader_.set_uniform("use_lighting", false);
-        GL_CHECK(glDepthRange(0.0, 1.0));
-        GL_CHECK(glDepthFunc(GL_LEQUAL));
-        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_));
-        GL_CHECK(glDrawElements(GL_LINES, n_features_, GL_UNSIGNED_INT, nullptr));
-        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-        GL_CHECK(glDepthFunc(GL_LESS));
-    }
+    // // setup matrices
+
+    // // setup shader
+    // phong_shader_.use();
+    // phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
+    // phong_shader_.set_uniform("modelview_matrix", mv_matrix);
+    // phong_shader_.set_uniform("normal_matrix", n_matrix);
+    // phong_shader_.set_uniform("point_size", point_size_);
+    // phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
+    // phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
+    // phong_shader_.set_uniform("front_color", front_color_);
+    // phong_shader_.set_uniform("back_color", back_color_);
+    // phong_shader_.set_uniform("ambient", ambient_);
+    // phong_shader_.set_uniform("diffuse", diffuse_);
+    // phong_shader_.set_uniform("specular", specular_);
+    // phong_shader_.set_uniform("shininess", shininess_);
+    // phong_shader_.set_uniform("alpha", alpha_);
+    // phong_shader_.set_uniform("use_lighting", true);
+    // phong_shader_.set_uniform("use_texture", false);
+    // phong_shader_.set_uniform("use_srgb", false);
+    // phong_shader_.set_uniform("show_texture_layout", false);
+    // phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
+
+    // GL_CHECK(glBindVertexArray(vertex_array_object_));
+    // texture_shader_.use();
+
+    // glActiveTexture(GL_TEXTURE0 + g_cubeTexUnit);
+    // glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture);
+
+    // if (mesh_.n_faces())
+    // {
+    //     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+    // }
+
+    //     if (draw_mode == "Points")
+    //     {
+    // #ifndef __EMSCRIPTEN__
+    //         glEnable(GL_PROGRAM_POINT_SIZE);
+    // #endif
+    //         GL_CHECK(glDrawArrays(GL_POINTS, 0, n_vertices_));
+    //     }
+
+    //     else if (draw_mode == "Hidden Line")
+    //     {
+    //         if (mesh_.n_faces())
+    //         {
+    //             // draw faces
+    //             GL_CHECK(glDepthRange(0.01, 1.0));
+    //             GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+    //             GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+
+    //             // overlay edges
+    //             GL_CHECK(glDepthRange(0.0, 1.0));
+    //             GL_CHECK(glDepthFunc(GL_LEQUAL));
+    //             phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
+    //             phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
+    //             phong_shader_.set_uniform("use_lighting", false);
+    //             phong_shader_.set_uniform("use_vertex_color", false);
+    //             GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
+    //             GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
+    //             GL_CHECK(glDepthFunc(GL_LESS));
+    //         }
+    //     }
+    //     else if (draw_mode == "Fractal Mode")
+    //     {
+    //         // SEE: https://stackoverflow.com/a/21652955
+    //         GL_CHECK(glBindVertexArray(background_array_object));
+    //         // https://stackoverflow.com/a/59739538
+    //         custom_shader_.use();
+
+    //         // set resolution
+    //         custom_shader_.set_uniform("window_height", hsize_);
+    //         custom_shader_.set_uniform("window_width", wsize_);
+    //         custom_shader_.set_uniform("iTime", itime);
+    //         custom_shader_.set_uniform("viewRotation", view_directions_[counter_]);
+    //         vec3 origin = vec3(0, 0, 0);
+    //         custom_shader_.set_uniform("origin", origin);
+    //         // custom_shader_.set_uniform("camera_origin", camera_origin);
+    //         // custom_shader_.set_uniform("camera_direction", camera_direction);
+
+    //         GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+    //         GL_CHECK(glBindVertexArray(vertex_array_object_));
+    //     }
+    //     else if (draw_mode == "Fractal Mode With Mesh")
+    //     {
+    //         // SEE: https://stackoverflow.com/a/21652955
+    //         // GL_CHECK(glBindVertexArray(background_array_object));
+    //         // // https://stackoverflow.com/a/59739538
+    //         // custom_shader_.use();
+
+    //         // // set resolution
+    //         // custom_shader_.set_uniform("window_height", hsize_);
+    //         // custom_shader_.set_uniform("window_width", wsize_);
+    //         // custom_shader_.set_uniform("viewRotation", view_directions_[counter_]);
+    //         // custom_shader_.set_uniform("origin", origin);
+
+    //         // custom_shader_.set_uniform("iTime", itime);
+
+    //         // // custom_shader_.set_uniform("camera_origin", camera_origin);
+    //         // // custom_shader_.set_uniform("camera_direction", camera_direction);
+
+    //         // GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+
+    //         // setup shader
+    //         phong_shader_.use();
+    //         phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
+    //         phong_shader_.set_uniform("modelview_matrix", mv_matrix);
+    //         phong_shader_.set_uniform("normal_matrix", n_matrix);
+    //         phong_shader_.set_uniform("point_size", point_size_);
+    //         phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
+    //         phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
+    //         phong_shader_.set_uniform("front_color", front_color_);
+    //         phong_shader_.set_uniform("back_color", back_color_);
+    //         phong_shader_.set_uniform("ambient", ambient_);
+    //         phong_shader_.set_uniform("diffuse", diffuse_);
+    //         phong_shader_.set_uniform("specular", specular_);
+    //         phong_shader_.set_uniform("shininess", shininess_);
+    //         phong_shader_.set_uniform("alpha", alpha_);
+    //         phong_shader_.set_uniform("use_lighting", true);
+    //         phong_shader_.set_uniform("use_texture", false);
+    //         phong_shader_.set_uniform("use_srgb", false);
+    //         phong_shader_.set_uniform("show_texture_layout", false);
+    //         phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
+
+    //         GL_CHECK(glBindVertexArray(vertex_array_object_));
+
+    //         glActiveTexture(GL_TEXTURE0 + g_cubeTexUnit);
+    //         glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture);
+
+    //         if (mesh_.n_faces())
+    //         {
+    //             GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+    //         }
+    //     }
+
+    //     else if (draw_mode == "Smooth Shading")
+    //     {
+    //         if (mesh_.n_faces())
+    //         {
+    //             GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+    //         }
+    //     }
+
+    //     else if (draw_mode == "Texture")
+    //     {
+    //         if (mesh_.n_faces())
+    //         {
+    //             if (texture_mode_ == TextureMode::MatCap)
+    //             {
+    //                 matcap_shader_.use();
+    //                 matcap_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
+    //                 matcap_shader_.set_uniform("normal_matrix", n_matrix);
+    //                 matcap_shader_.set_uniform("alpha", alpha_);
+    //                 GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_));
+    //                 GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+    //             }
+    //             else
+    //             {
+    //                 phong_shader_.set_uniform("front_color", vec3(0.9, 0.9, 0.9));
+    //                 phong_shader_.set_uniform("back_color", vec3(0.3, 0.3, 0.3));
+    //                 phong_shader_.set_uniform("use_texture", true);
+    //                 phong_shader_.set_uniform("use_vertex_color", false);
+    //                 phong_shader_.set_uniform("use_srgb", use_srgb_);
+    //                 GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_));
+    //                 GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+    //             }
+    //         }
+    //     }
+
+    //     else if (draw_mode == "Texture Layout")
+    //     {
+    //         if (mesh_.n_faces() && has_texcoords_)
+    //         {
+    //             phong_shader_.set_uniform("show_texture_layout", true);
+    //             phong_shader_.set_uniform("use_vertex_color", false);
+    //             phong_shader_.set_uniform("use_lighting", false);
+
+    //             // draw faces
+    //             phong_shader_.set_uniform("front_color", vec3(0.8, 0.8, 0.8));
+    //             phong_shader_.set_uniform("back_color", vec3(0.9, 0.0, 0.0));
+    //             GL_CHECK(glDepthRange(0.01, 1.0));
+    //             GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+
+    //             // overlay edges
+    //             GL_CHECK(glDepthRange(0.0, 1.0));
+    //             GL_CHECK(glDepthFunc(GL_LEQUAL));
+    //             phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
+    //             phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
+    //             GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
+    //             GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
+    //             GL_CHECK(glDepthFunc(GL_LESS));
+    //         }
+    //     }
+
+    //     // draw feature edges
+    //     if (n_features_)
+    //     {
+    //         phong_shader_.set_uniform("front_color", vec3(0, 1, 0));
+    //         phong_shader_.set_uniform("back_color", vec3(0, 1, 0));
+    //         phong_shader_.set_uniform("use_vertex_color", false);
+    //         phong_shader_.set_uniform("use_lighting", false);
+    //         GL_CHECK(glDepthRange(0.0, 1.0));
+    //         GL_CHECK(glDepthFunc(GL_LEQUAL));
+    //         GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_));
+    //         GL_CHECK(glDrawElements(GL_LINES, n_features_, GL_UNSIGNED_INT, nullptr));
+    //         GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+    //         GL_CHECK(glDepthFunc(GL_LESS));
+    //     }
 
     // disable transparency (doesn't work well with imgui)
-    GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+    // GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
 
     GL_CHECK(glBindVertexArray(0));
     GL_CHECK(glCheckError());
@@ -966,8 +1161,6 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     auto ms_delta = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - last_time);
     last_time = time_now;
     framerate = 1000.0 / ms_delta.count();
-
-    // glPopMatrix();
 }
 
 void Renderer::tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles)

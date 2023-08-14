@@ -157,8 +157,6 @@ void main() {
 	col = pow(col, vec3(.4545));	// gamma correction
 	
 	gl_FragDepth = d / MAX_DIST;
-	// gl_FragColor = vec4(col, 1.0);
-	//gl_FragColor = vec4(uv.xy,0.0, 1.0);
 	color = vec4(col, 1.0);
 
 }

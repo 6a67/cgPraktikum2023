@@ -16,6 +16,11 @@
 namespace pmp
 {
 
+inline float degree_to_rad(float degree)
+{
+    return degree * (M_PI / 180.0);
+}
+
 class SurfaceMesh;
 
 //! Class for rendering surface meshes using OpenGL
@@ -173,7 +178,7 @@ class Renderer
     //! \throw IOException in case of failure to load texture from file
     void load_matcap(const char* filename);
 
-    unsigned int loadCubemap(int width, int height, std::vector<unsigned char*> faces);
+    // unsigned int loadCubemap(int width, int height, std::vector<unsigned char*> faces);
 
     void keyboard(int key, int action);
 
@@ -226,8 +231,7 @@ class Renderer
     std::vector<vec3> view_directions_;
 
     GLint oldFBO;
-    GLuint FramebufferNames_ = 0;
-    GLuint renderedTexture_[6] = {0};
+    // GLuint renderedTexture_[6] = {0};
 
     // OpenGL buffers
     GLuint vertex_array_object_;
@@ -244,6 +248,16 @@ class Renderer
     Shader custom_shader_;
     GLsizei n_quad_;
     std::vector<vec3> quad_vertices;
+
+    void drawFace(int faceSide);
+    void CreateCubeTexture();
+    GLuint g_cubeTexture = 0;
+    GLuint g_depthbuffer = 0;
+    GLuint g_framebuffer = 0;
+    int g_cubeTexUnit = 0;
+
+    void load_texture_shader();
+    Shader texture_shader_;
 
     std::string custom_shader_path_vertex_;
     std::string custom_shader_path_fragment_;
@@ -292,8 +306,8 @@ inline void CheckOpenGLError(const char* stat, const char* fname, int line)
     if (err != GL_NO_ERROR)
     {
 
-        std::cerr << "OpenGL error: " << glewGetErrorString(err) << " in " << fname << ":" << line << " " << stat
-                  << std::endl;
+        std::cerr << "ERROR (OPENGL): " << gluErrorString(err) << " '" << stat << "'"
+                  << " in " << fname << ":" << line << std::endl;
         exit(1);
     }
 }
