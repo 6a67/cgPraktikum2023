@@ -65,6 +65,17 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
 
     // TODO: Disable for release
     file_watcher_enable();
+
+    // list all files in src/shaders folder
+    for (const auto& entry : std::filesystem::directory_iterator("./../src/shaders/"))
+    {
+        std::string path = entry.path().string();
+        if (path.find(".frag") != std::string::npos)
+        {
+            std::cout << "Found fragment shader: " << path << std::endl;
+            shader_files_fragment_.push_back(path);
+        }
+    }
 }
 
 Viewer::~Viewer()
@@ -830,6 +841,20 @@ void Viewer::process_imgui()
 
     ImGui::Spacing();
     ImGui::Spacing();
+
+    // select shader from file
+    if (ImGui::CollapsingHeader("Shaders"))
+    {
+        for(auto sh: shader_files_fragment_)
+        {
+            std::string name = sh.substr(sh.find_last_of("/\\") + 1);
+            if (ImGui::Button(name.c_str()))
+            {
+                selected_shader_path_fragment_ = sh;
+                reload_shader();
+            }
+        }
+    }
 
     ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate);
     ImGui::Text("Calculated FPS: %.0f", renderer_.framerate);

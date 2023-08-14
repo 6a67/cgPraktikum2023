@@ -113,6 +113,9 @@ class Viewer : public pmp::MeshViewer
 
     std::filesystem::file_time_type last_modified_shader_file_vertex_;
     std::filesystem::file_time_type last_modified_shader_file_fragment_;
+
+    // list of shader files
+    std::vector<std::string> shader_files_fragment_;
 };
 
 } // namespace meshlife
