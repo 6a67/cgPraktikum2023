@@ -29,6 +29,18 @@ class SurfaceMesh;
 class Renderer
 {
   public:
+    enum class CamDirection
+    {
+        Right,
+        Left,
+        Top,
+        Bottom,
+        Front,
+        Back,
+        COUNT
+    };
+
+  public:
     //! Constructor
     explicit Renderer(const SurfaceMesh& mesh, GLFWwindow* window);
 
@@ -198,6 +210,40 @@ class Renderer
 
     void itime_toggle_pause();
 
+    CamDirection get_cam_direction();
+
+    void set_cam_direction(CamDirection direction);
+
+    // TODO: Implement these with proper functions or something
+    bool use_picture_cubemap_ = false;
+
+    const std::vector<std::string> direction_names_ = {
+        "right",
+        "left",
+        "top",
+        "bottom",
+        "front",
+        "back",
+
+    };
+    const std::vector<vec3> view_rotations_ = {
+        vec3(0, degree_to_rad(90), degree_to_rad(180)),
+        vec3(0, degree_to_rad(-90), degree_to_rad(180)),
+        vec3(degree_to_rad(90), 0, degree_to_rad(180)),
+        vec3(degree_to_rad(-90), 0, degree_to_rad(180)),
+        vec3(0, degree_to_rad(0), degree_to_rad(180)),
+        vec3(0, degree_to_rad(180), degree_to_rad(180)),
+    };
+
+    const std::vector<vec3> colors_ = {
+        vec3(1.0, 0.0, 0.0),
+        vec3(0.0, 1.0, 0.0),
+        vec3(0.0, 0.0, 1.0),
+        vec3(1.0, 1.0, 0.0),
+        vec3(0.0, 1.0, 1.0),
+        vec3(1.0, 0.0, 1.0),
+    };
+
   private:
     const SurfaceMesh& mesh_;
 
@@ -243,10 +289,7 @@ class Renderer
     // this prevents overlapping/folding triangles for non-convex polygons.
     void tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles);
 
-    int counter_ = 4; // start at direction facing forward
-    std::vector<vec3> view_rotations_;
-    std::vector<std::string> direction_names_;
-    std::vector<vec3> colors_;
+    CamDirection cam_direction_ = CamDirection::Front; // start at direction facing forward
 
     // OpenGL buffers
     GLuint vertex_array_object_;

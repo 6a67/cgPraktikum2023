@@ -55,33 +55,6 @@ Renderer::Renderer(const SurfaceMesh& mesh, GLFWwindow* window) : mesh_(mesh), w
     // initialize texture
     texture_ = 0;
     texture_mode_ = TextureMode::Other;
-
-    direction_names_ = {
-        "right",
-        "left",
-        "top",
-        "bottom",
-        "front",
-        "back",
-
-    };
-    view_rotations_ = {
-        vec3(0, degree_to_rad(90), degree_to_rad(180)),
-        vec3(0, degree_to_rad(-90), degree_to_rad(180)),
-        vec3(degree_to_rad(90), 0, degree_to_rad(180)),
-        vec3(degree_to_rad(-90), 0, degree_to_rad(180)),
-        vec3(0, degree_to_rad(0), degree_to_rad(180)),
-        vec3(0, degree_to_rad(180), degree_to_rad(180)),
-    };
-
-    colors_ = {
-        vec3(1.0, 0.0, 0.0),
-        vec3(0.0, 1.0, 0.0),
-        vec3(0.0, 0.0, 1.0),
-        vec3(1.0, 1.0, 0.0),
-        vec3(0.0, 1.0, 1.0),
-        vec3(1.0, 0.0, 1.0),
-    };
 }
 
 Renderer::~Renderer()
@@ -701,20 +674,25 @@ void Renderer::update_opengl_buffers()
     GL_CHECK(glBindVertexArray(0));
 }
 
+Renderer::CamDirection Renderer::get_cam_direction()
+{
+    return cam_direction_;
+}
+
+void Renderer::set_cam_direction(Renderer::CamDirection direction)
+{
+    if (direction > CamDirection::COUNT)
+        throw std::runtime_error("Invalid camera direction");
+    cam_direction_ = direction;
+}
+
 void Renderer::keyboard(int key, int action)
 {
     if (action != GLFW_PRESS && action != GLFW_REPEAT)
         return;
 
     switch (key)
-
     {
-    case GLFW_KEY_C:
-        counter_++;
-        counter_ = counter_ % 6;
-        std::cout << counter_ << " - " << direction_names_[counter_];
-        std::cout << " - View Direction" << view_rotations_[counter_] << std::endl;
-        std::cout << " - Color" << colors_[counter_] << std::endl;
     }
 }
 
@@ -767,7 +745,7 @@ void Renderer::drawSkybox(mat4 projection_matrix, mat4 view_matrix)
     GL_CHECK(glBindVertexArray(skyboxVAO));
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
 
-    if (counter_ % 2 == 0)
+    if (use_picture_cubemap_)
         GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_texture));
     else
         GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
@@ -1168,7 +1146,10 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         custom_shader_.set_uniform("window_height", hsize_);
         custom_shader_.set_uniform("iTime", (float)itime_);
 
-        vec3 rotation = view_rotations_[counter_];
+        vec3 rotation = view_rotations_[(int)cam_direction_];
+
+        // TODO: Inverting this will also "flip" left/right view direction,
+        // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
         rotation[2] = 0; // set z rotation to 0 so we don't flip the image
         custom_shader_.set_uniform("viewRotation", rotation);
 

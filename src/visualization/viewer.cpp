@@ -238,6 +238,13 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     case GLFW_KEY_O:
         reload_shader();
         break;
+
+    case GLFW_KEY_C:
+        renderer_.set_cam_direction((pmp::Renderer::CamDirection)(((int)renderer_.get_cam_direction() + 1)
+                                                                  % (int)pmp::Renderer::CamDirection::COUNT));
+        std::cout << (int)renderer_.get_cam_direction() << " - "
+                  << renderer_.direction_names_[(int)renderer_.get_cam_direction()];
+        break;
     // num keys: load simple primitive meshes
     case GLFW_KEY_0:
     case GLFW_KEY_1:
@@ -443,7 +450,11 @@ void Viewer::process_imgui()
     ImGui::Text("Calculated FPS: %.0f", renderer_.framerate);
     ImGui::Separator();
     ImGui::Text("Current UPS (Simulation): %.0f", current_UPS_);
+    ImGui::Separator();
     ImGui::Text("iTime (Shader): %.2f", renderer_.get_itime());
+    ImGui::Text("Current Draw Mode: %s", draw_mode_names_[draw_mode_].c_str());
+    ImGui::Text("Last Cam-Direction: %s", renderer_.direction_names_[(int)renderer_.get_cam_direction()].c_str());
+    ImGui::Separator();
 
     // Show mesh info in GUI via parent class
     pmp::MeshViewer::process_imgui();
@@ -462,6 +473,31 @@ void Viewer::process_imgui()
         {
             renderer_.itime_toggle_pause();
         }
+
+        ImGui::Separator();
+
+        for (size_t i = 0; i < n_draw_modes_; i++)
+        {
+            std::stringstream label;
+            label << "Draw Mode: " << draw_mode_names_[i];
+            if (ImGui::Button(label.str().c_str()))
+            {
+                draw_mode_ = i;
+            }
+        }
+        ImGui::Separator();
+
+        int direction_max = (int)pmp::Renderer::CamDirection::COUNT;
+        for (size_t i = 0; i < direction_max; i++)
+        {
+            std::stringstream label;
+            label << "Direction: " << renderer_.direction_names_[i];
+            if (ImGui::Button(label.str().c_str()))
+            {
+                renderer_.set_cam_direction((pmp::Renderer::CamDirection)(i));
+            }
+        }
+        ImGui::Separator();
     }
 
     ImGui::Spacing();
