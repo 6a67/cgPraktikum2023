@@ -182,7 +182,7 @@ void Viewer::stop_simulation()
 void Viewer::reload_shader()
 {
     renderer_.reload_shaders(selected_shader_path_vertex_, selected_shader_path_fragment_);
-    renderer_.set_texture_shader_files(shaders_path_ / "passthrough.vert", shaders_path_ / "texture.frag");
+    renderer_.set_skybox_shader_files(shaders_path_ / "skybox.vert", shaders_path_ / "skybox.frag");
 }
 
 void Viewer::set_mesh_properties()

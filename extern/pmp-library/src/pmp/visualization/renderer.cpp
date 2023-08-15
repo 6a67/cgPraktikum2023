@@ -276,20 +276,20 @@ void Renderer::load_custom_shader()
     }
 }
 
-void Renderer::set_texture_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path)
+void Renderer::set_skybox_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path)
 {
     // std::cout << "Loading texture shader: " << vertex_shader_file_path << " | " << fragment_shader_file_path
     //           << std::endl;
-    texture_vertex_shader_file_path_ = vertex_shader_file_path;
-    texture_fragment_shader_file_path_ = fragment_shader_file_path;
-    load_texture_shader();
+    skybox_vertex_shader_file_path_ = vertex_shader_file_path;
+    skybox_fragment_shader_file_path_ = fragment_shader_file_path;
+    load_skybox_shader();
 }
 
-void Renderer::load_texture_shader()
+void Renderer::load_skybox_shader()
 {
     try
     {
-        texture_shader_.load(texture_vertex_shader_file_path_.c_str(), texture_fragment_shader_file_path_.c_str());
+        skybox_shader_.load(skybox_vertex_shader_file_path_.c_str(), skybox_fragment_shader_file_path_.c_str());
     }
     catch (GLException& e)
     {
@@ -718,9 +718,9 @@ void Renderer::drawSkybox(mat4 projection_matrix, mat4 view_matrix)
     // Cubemap reference:
     // https://learnopengl.com/code_viewer_gh.php?code=src/4.advanced_opengl/6.1.cubemaps_skybox/cubemaps_skybox.cpphttps://learnopengl.com/code_viewer_gh.php?code=src/4.advanced_opengl/6.1.cubemaps_skybox/cubemaps_skybox.cpp
 
-    texture_shader_.use();
-    texture_shader_.set_uniform("projection", projection_matrix);
-    texture_shader_.set_uniform("view", view_matrix);
+    skybox_shader_.use();
+    skybox_shader_.set_uniform("projection", projection_matrix);
+    skybox_shader_.set_uniform("view", view_matrix);
     GL_CHECK(glDepthFunc(GL_LEQUAL));
     GL_CHECK(glBindVertexArray(skyboxVAO));
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
@@ -734,7 +734,7 @@ void Renderer::drawSkybox(mat4 projection_matrix, mat4 view_matrix)
     GL_CHECK(glBindVertexArray(0));
 
     GL_CHECK(glDepthFunc(GL_LESS));
-    texture_shader_.disable();
+    skybox_shader_.disable();
 }
 
 void Renderer::drawFace(int face_side)
@@ -834,9 +834,9 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         load_custom_shader();
     }
 
-    if (!texture_shader_.is_valid())
+    if (!skybox_shader_.is_valid())
     {
-        load_texture_shader();
+        load_skybox_shader();
     }
 
     if (!matcap_shader_.is_valid())

@@ -159,7 +159,7 @@ class Renderer
 
     void reload_shaders(std::string custom_shader_path_vertex, std::string custom_shader_path_fragment);
 
-    void set_texture_shader_files(std::string vertex_shader_file_path_, std::string fragment_shader_file_path_);
+    void set_skybox_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path);
 
     //! Load texture from file.
     //! \param filename the location and name of the texture
@@ -259,11 +259,11 @@ class Renderer
     GLuint g_framebuffer = 0;
     int g_cubeTexUnit = 0;
 
-    void load_texture_shader();
-    std::string texture_vertex_shader_file_path_;
-    std::string texture_fragment_shader_file_path_;
+    void load_skybox_shader();
+    std::string skybox_vertex_shader_file_path_;
+    std::string skybox_fragment_shader_file_path_;
 
-    Shader texture_shader_;
+    Shader skybox_shader_;
     GLuint skyboxVAO = 0;
     GLuint skyboxVBO = 0;
     unsigned int cubemap_texture = 0;
