@@ -474,6 +474,11 @@ void Viewer::process_imgui()
             renderer_.itime_toggle_pause();
         }
 
+        if (ImGui::Button(renderer_.use_picture_cubemap_ ? "Swap cubemap: Picture" : "Swap cubemap: Shader cubemap"))
+        {
+            renderer_.use_picture_cubemap_ = !renderer_.use_picture_cubemap_;
+        }
+
         ImGui::Separator();
 
         for (size_t i = 0; i < n_draw_modes_; i++)
