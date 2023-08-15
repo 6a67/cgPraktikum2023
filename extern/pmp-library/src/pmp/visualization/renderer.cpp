@@ -276,11 +276,20 @@ void Renderer::load_custom_shader()
     }
 }
 
+void Renderer::set_texture_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path)
+{
+    // std::cout << "Loading texture shader: " << vertex_shader_file_path << " | " << fragment_shader_file_path
+    //           << std::endl;
+    texture_vertex_shader_file_path_ = vertex_shader_file_path;
+    texture_fragment_shader_file_path_ = fragment_shader_file_path;
+    load_texture_shader();
+}
+
 void Renderer::load_texture_shader()
 {
     try
     {
-        texture_shader_.load("../src/shaders/passthrough.vert", "../src/shaders/texture.frag");
+        texture_shader_.load(texture_vertex_shader_file_path_.c_str(), texture_fragment_shader_file_path_.c_str());
     }
     catch (GLException& e)
     {

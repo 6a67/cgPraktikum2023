@@ -47,6 +47,17 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     std::string("./../assets/monkey.obj").copy(modelpath_buf, 299);
     modelpath_buf[299] = '\0';
 
+    shaders_path_ = std::filesystem::current_path() / "shaders";
+    if (!std::filesystem::exists(shaders_path_))
+    {
+        std::cout << "Could not find shaders folder in current directory! Using ../src/shaders" << std::endl;
+        shaders_path_ = std::filesystem::current_path() / ".." / "src" / "shaders";
+    }
+    else
+    {
+        std::cout << "Found shaders folder in current directory! Using ./shaders" << std::endl;
+    }
+
     peak_string = new char[300];
 
     add_help_item("T", "Toggle Simulation");
@@ -57,8 +68,8 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
 
     clock_last = std::chrono::high_resolution_clock::now();
 
-    selected_shader_path_vertex_ = std::string(PATH_CUSTOM_SHADER_VERTEX);
-    selected_shader_path_fragment_ = std::string(PATH_CUSTOM_SHADER_FRAGMENT);
+    selected_shader_path_vertex_ = shaders_path_ / PATH_CUSTOM_SHADER_VERTEX;
+    selected_shader_path_fragment_ = shaders_path_ / PATH_CUSTOM_SHADER_FRAGMENT;
 
     last_modified_shader_file_vertex_ = std::filesystem::last_write_time(selected_shader_path_vertex_);
     last_modified_shader_file_fragment_ = std::filesystem::last_write_time(selected_shader_path_fragment_);
@@ -69,7 +80,8 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     file_watcher_enable();
 
     // list all files in src/shaders folder
-    for (const auto& entry : std::filesystem::directory_iterator("./../src/shaders/"))
+
+    for (const auto& entry : std::filesystem::directory_iterator(shaders_path_))
     {
         std::string path = entry.path().string();
         if (path.find(".frag") != std::string::npos)
@@ -170,6 +182,7 @@ void Viewer::stop_simulation()
 void Viewer::reload_shader()
 {
     renderer_.reload_shaders(selected_shader_path_vertex_, selected_shader_path_fragment_);
+    renderer_.set_texture_shader_files(shaders_path_ / "passthrough.vert", shaders_path_ / "texture.frag");
 }
 
 void Viewer::set_mesh_properties()

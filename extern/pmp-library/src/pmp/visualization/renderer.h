@@ -4,6 +4,7 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 #include <limits>
 
 #include "pmp/mat_vec.h"
@@ -157,6 +158,9 @@ class Renderer
     void use_checkerboard_texture();
 
     void reload_shaders(std::string custom_shader_path_vertex, std::string custom_shader_path_fragment);
+
+    void set_texture_shader_files(std::string vertex_shader_file_path_, std::string fragment_shader_file_path_);
+
     //! Load texture from file.
     //! \param filename the location and name of the texture
     //! \param format internal format (GL_RGB, GL_RGBA, GL_SRGB8, etc.)
@@ -256,6 +260,9 @@ class Renderer
     int g_cubeTexUnit = 0;
 
     void load_texture_shader();
+    std::string texture_vertex_shader_file_path_;
+    std::string texture_fragment_shader_file_path_;
+
     Shader texture_shader_;
     GLuint skyboxVAO = 0;
     GLuint skyboxVBO = 0;
