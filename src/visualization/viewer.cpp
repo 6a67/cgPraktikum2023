@@ -85,6 +85,12 @@ Viewer::~Viewer()
     delete modelpath_buf;
 }
 
+void Viewer::on_close_callback()
+{
+    stop_simulation();
+    file_watcher_disable();
+}
+
 void Viewer::file_watcher_func()
 {
     while (watch_shader_file_)

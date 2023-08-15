@@ -340,6 +340,8 @@ int Window::run()
     {
         Window::render_frame();
     }
+
+    on_close_callback();
 #endif
     return EXIT_SUCCESS;
 }

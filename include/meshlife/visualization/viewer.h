@@ -53,6 +53,8 @@ class Viewer : public pmp::MeshViewer
 
     void reload_shader();
 
+    void on_shutdown();
+
   protected:
     /// thandles mouse button presses
     void mouse(int button, int action, int mods) override;
@@ -71,6 +73,8 @@ class Viewer : public pmp::MeshViewer
     void set_face_gol_alive(pmp::Face& face, bool alive);
 
     void read_mesh_from_file(std::string path);
+
+    void on_close_callback() override;
 
   private:
     MeshAutomaton* automaton = nullptr;

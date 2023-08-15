@@ -74,6 +74,10 @@ class Window
     {
     }
 
+    virtual void on_close_callback()
+    {
+    }
+
     //! setup ImGUI user interface
     void init_imgui();
 
