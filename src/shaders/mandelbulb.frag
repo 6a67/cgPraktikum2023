@@ -223,6 +223,9 @@ void main() {
 
 	float time = iTime * .1;
 
+	// TODO: Somehow maybe add this??? (otherwise cube map wont work)
+	//vec3 rd = normalize(( rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0)).xyz);
+
     // camera
 	float di = 1.4 + 0.1 * cos(.29 * time);
 	vec3 ro = di * vec3(cos(.33 * time), 0.8 * sin(.37 * time), sin(.31 * time));

@@ -244,18 +244,22 @@ vec3 cameraRotate(in vec3 center, in vec3 viewIn) {
 	return viewIn;
 }
 
+in vec3 v2f_viewRotation;
+in vec3 v2f_origin;
+
 void main() {
 	vec2 uv = (texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5) / window_height;
 
-	vec3 col = vec3(0);
 
 	// vec3 ro = vec3(0, 10, (sin(iTime * 0.2)) * 10 + 10);
 
-	vec3 ro = vec3(0, 10, 0);
-	vec3 rd = normalize(vec3(uv.x, uv.y, 1));
-	// vec3 viewOut;
-	// vec3 ro = cameraMovement(rd, viewOut);
-	// rd = normalize(viewOut);
+	vec3 ro = vec3(0, 0, 0);
+
+	vec3 rd = normalize(rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	vec3 viewOut;
+	ro = cameraMovement(rd, viewOut);
+	rd = normalize(viewOut);
+
 	// rd = cameraRotate(vec3(0, 10, 20), rd);
 
 	// rd = rot(0, iTime, 0) * rd;

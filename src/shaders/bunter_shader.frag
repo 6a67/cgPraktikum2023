@@ -202,6 +202,10 @@ vec3 GetLight(vec3 p) {
 	return result * res * objColor;
 }
 
+
+in vec3 v2f_viewRotation;
+in vec3 v2f_origin;
+
 void main() {
 	vec2 uv = (texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5) / window_height;
 
@@ -209,7 +213,7 @@ void main() {
 
 	vec3 ro = vec3(0, 10, (sin(iTime * 0.2)) * 10 + 10);
 	// vec3 ro = vec3(0, 10, 0);
-	vec3 rd = normalize(vec3(uv.x, uv.y, 1));
+	vec3 rd = normalize(( rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0)).xyz);
 
 	// rd = rot(0, iTime, 0) * rd;
 

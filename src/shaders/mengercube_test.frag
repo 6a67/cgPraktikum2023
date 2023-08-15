@@ -153,7 +153,7 @@ void main() {
 
 	// vec3 ro = vec3(sin(iTime * 1) * 12.5, (cos(iTime*2.)+0.5) * 10 + 20.5, 0);
 	vec3 ro = vec3(0, (cos(iTime * 0.5) + 0.5) * 10 + 10, 0);
-	vec3 rd = normalize(vec3(uv.x, uv.y, 1));
+	vec3 rd = normalize(( rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0)).xyz);
 
 	float d = RayMarch(ro, rd);
 
