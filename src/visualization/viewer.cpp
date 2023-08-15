@@ -32,6 +32,7 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     set_scene((pmp::vec3)bb.center(), 0.5 * bb.size());
     set_draw_mode("Hidden Line");
     set_draw_mode("Skybox only");
+    set_draw_mode("Custom Shader");
 
     set_mesh_properties();
 
@@ -847,7 +848,7 @@ void Viewer::process_imgui()
     // select shader from file
     if (ImGui::CollapsingHeader("Shaders"))
     {
-        for(auto sh: shader_files_fragment_)
+        for (auto sh : shader_files_fragment_)
         {
             std::string name = sh.substr(sh.find_last_of("/\\") + 1);
             if (ImGui::Button(name.c_str()))

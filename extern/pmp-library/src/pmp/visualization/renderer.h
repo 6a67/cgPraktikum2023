@@ -232,9 +232,6 @@ class Renderer
     std::vector<std::string> direction_names_;
     std::vector<vec3> colors_;
 
-    GLint oldFBO;
-    // GLuint renderedTexture_[6] = {0};
-
     // OpenGL buffers
     GLuint vertex_array_object_;
     GLuint vertex_buffer_;
@@ -252,7 +249,7 @@ class Renderer
     std::vector<vec3> quad_vertices;
 
     void drawFace(int faceSide);
-    void CreateCubeTexture();
+    void CreateCubeTextureIfNotExist();
     GLuint g_cubeTexture = 0;
     GLuint g_depthbuffer = 0;
     GLuint g_framebuffer = 0;
@@ -266,7 +263,29 @@ class Renderer
 
     int cubemap_size = 256;
 
-    void drawSkybox();
+    void drawSkybox(mat4 projection_matrix, mat4 view_matrix);
+    unsigned int loadCubemap(std::vector<std::string> faces);
+
+    std::vector<std::string> faces = {"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
+
+    float skyboxVertices[108] = { // positions
+        -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
+        1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f,
+
+        -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f,
+        -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,
+
+        1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f,
+
+        -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,
+
+        -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f,
+
+        -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
+        1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f};
 
     std::string custom_shader_path_vertex_;
     std::string custom_shader_path_fragment_;

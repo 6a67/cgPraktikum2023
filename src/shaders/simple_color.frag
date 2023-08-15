@@ -156,7 +156,6 @@ mat4 rot(float roll, float pitch, float yaw, vec3 point) {
 
 
 in vec3 v2f_viewRotation;
-in vec3 v2f_origin;
 
 layout(location = 0) out vec4 color;
 
@@ -167,7 +166,7 @@ void main() {
 
 	vec3 col = vec3(0);
 
-	vec3 ro = v2f_origin + vec3(0,1,0);
+	vec3 ro = vec3(0,1,0);
 	vec3 rd = normalize(( rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0)).xyz);
 
 	float d = RayMarch(ro, rd);
