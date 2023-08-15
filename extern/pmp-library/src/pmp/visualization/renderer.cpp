@@ -712,8 +712,6 @@ void Renderer::drawSkybox(mat4 projection_matrix, mat4 view_matrix)
     texture_shader_.use();
     texture_shader_.set_uniform("projection", projection_matrix);
     texture_shader_.set_uniform("view", view_matrix);
-
-    GL_CHECK(glDepthMask(GL_FALSE));
     GL_CHECK(glDepthFunc(GL_LEQUAL));
     GL_CHECK(glBindVertexArray(skyboxVAO));
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
@@ -726,7 +724,6 @@ void Renderer::drawSkybox(mat4 projection_matrix, mat4 view_matrix)
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 36));
     GL_CHECK(glBindVertexArray(0));
 
-    GL_CHECK(glDepthMask(GL_TRUE));
     GL_CHECK(glDepthFunc(GL_LESS));
     texture_shader_.disable();
 }
@@ -852,6 +849,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         use_checkerboard_texture();
     }
 
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
     // Draw the cubemap.
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_framebuffer));
     // bind depth buffer, idk if we even need this
@@ -881,8 +879,8 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
 
     // setup frame
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    // glClearDepth(1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClearDepth(1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
     GL_CHECK(glViewport(0, 0, wsize_, hsize_));
 
@@ -891,83 +889,6 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     view(0, 3) = 0.0f;
     view(1, 3) = 0.0f;
     view(2, 3) = 0.0f;
-
-    if (draw_mode == "Skybox only")
-    {
-        drawSkybox(projection_matrix, view);
-    }
-    else if (draw_mode == "Skybox with model")
-    {
-        drawSkybox(projection_matrix, view);
-
-        // // setup shader
-        phong_shader_.use();
-        phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-        phong_shader_.set_uniform("modelview_matrix", mv_matrix);
-        phong_shader_.set_uniform("normal_matrix", n_matrix);
-        phong_shader_.set_uniform("point_size", point_size_);
-        phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
-        phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
-        phong_shader_.set_uniform("front_color", front_color_);
-        phong_shader_.set_uniform("back_color", back_color_);
-        phong_shader_.set_uniform("ambient", ambient_);
-        phong_shader_.set_uniform("diffuse", diffuse_);
-        phong_shader_.set_uniform("specular", specular_);
-        phong_shader_.set_uniform("shininess", shininess_);
-        phong_shader_.set_uniform("alpha", alpha_);
-        phong_shader_.set_uniform("use_lighting", true);
-        phong_shader_.set_uniform("use_texture", false);
-        phong_shader_.set_uniform("use_srgb", false);
-        phong_shader_.set_uniform("show_texture_layout", false);
-        phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
-
-        GL_CHECK(glBindVertexArray(vertex_array_object_));
-        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
-
-        if (mesh_.n_faces())
-        {
-            // draw faces
-            GL_CHECK(glDepthRange(0.01, 1.0));
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-            GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
-
-            // overlay edges
-            GL_CHECK(glDepthRange(0.0, 1.0));
-            GL_CHECK(glDepthFunc(GL_LEQUAL));
-            phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
-            phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
-            phong_shader_.set_uniform("use_lighting", false);
-            phong_shader_.set_uniform("use_vertex_color", false);
-            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
-            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
-            GL_CHECK(glDepthFunc(GL_LESS));
-        }
-    }
-    else if (draw_mode == "Custom Shader")
-    {
-        GL_CHECK(glClearColor(1.0f, 0.2f, 0.2f, 1.0f));
-        GL_CHECK(glClearDepth(1.0f));
-        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
-        custom_shader_.use();
-        custom_shader_.set_uniform("window_width", wsize_);
-        custom_shader_.set_uniform("window_height", hsize_);
-        custom_shader_.set_uniform("iTime", itime);
-
-        vec3 rotation = view_rotations_[counter_];
-        rotation[2] = 0; // set z rotation to 0 so we don't flip the image
-        custom_shader_.set_uniform("viewRotation", rotation);
-
-        GLuint empty_vao = 0;
-        GL_CHECK(glGenVertexArrays(1, &empty_vao));
-        GL_CHECK(glBindVertexArray(empty_vao));
-        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
-
-        custom_shader_.disable();
-
-        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
-        GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
-    }
 
     GL_CHECK(glBindVertexArray(vertex_array_object_));
 
@@ -1128,6 +1049,87 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         GL_CHECK(glDrawElements(GL_LINES, n_features_, GL_UNSIGNED_INT, nullptr));
         GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
         GL_CHECK(glDepthFunc(GL_LESS));
+    }
+
+    GL_CHECK(glBindVertexArray(0));
+
+    // Draw skybox last (saves performance because it only needs to be drawn for every pixel thats not occluded by the
+    // model aka. the background pixels)
+    if (draw_mode == "Skybox only")
+    {
+        drawSkybox(projection_matrix, view);
+    }
+    else if (draw_mode == "Skybox with model")
+    {
+        drawSkybox(projection_matrix, view);
+
+        // // setup shader
+        phong_shader_.use();
+        phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
+        phong_shader_.set_uniform("modelview_matrix", mv_matrix);
+        phong_shader_.set_uniform("normal_matrix", n_matrix);
+        phong_shader_.set_uniform("point_size", point_size_);
+        phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
+        phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
+        phong_shader_.set_uniform("front_color", front_color_);
+        phong_shader_.set_uniform("back_color", back_color_);
+        phong_shader_.set_uniform("ambient", ambient_);
+        phong_shader_.set_uniform("diffuse", diffuse_);
+        phong_shader_.set_uniform("specular", specular_);
+        phong_shader_.set_uniform("shininess", shininess_);
+        phong_shader_.set_uniform("alpha", alpha_);
+        phong_shader_.set_uniform("use_lighting", true);
+        phong_shader_.set_uniform("use_texture", false);
+        phong_shader_.set_uniform("use_srgb", false);
+        phong_shader_.set_uniform("show_texture_layout", false);
+        phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
+
+        GL_CHECK(glBindVertexArray(vertex_array_object_));
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+
+        if (mesh_.n_faces())
+        {
+            // draw faces
+            GL_CHECK(glDepthRange(0.01, 1.0));
+            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+            GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+
+            // overlay edges
+            GL_CHECK(glDepthRange(0.0, 1.0));
+            GL_CHECK(glDepthFunc(GL_LEQUAL));
+            phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
+            phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
+            phong_shader_.set_uniform("use_lighting", false);
+            phong_shader_.set_uniform("use_vertex_color", false);
+            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
+            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
+            GL_CHECK(glDepthFunc(GL_LESS));
+        }
+    }
+    else if (draw_mode == "Custom Shader")
+    {
+        GL_CHECK(glClearColor(1.0f, 0.2f, 0.2f, 1.0f));
+        GL_CHECK(glClearDepth(1.0f));
+        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+        custom_shader_.use();
+        custom_shader_.set_uniform("window_width", wsize_);
+        custom_shader_.set_uniform("window_height", hsize_);
+        custom_shader_.set_uniform("iTime", itime);
+
+        vec3 rotation = view_rotations_[counter_];
+        rotation[2] = 0; // set z rotation to 0 so we don't flip the image
+        custom_shader_.set_uniform("viewRotation", rotation);
+
+        GLuint empty_vao = 0;
+        GL_CHECK(glGenVertexArrays(1, &empty_vao));
+        GL_CHECK(glBindVertexArray(empty_vao));
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+
+        custom_shader_.disable();
+
+        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
+        GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
     }
 
     // disable transparency (doesn't work well with imgui)
