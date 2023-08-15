@@ -227,7 +227,7 @@ class Renderer
     // this prevents overlapping/folding triangles for non-convex polygons.
     void tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles);
 
-    int counter_ = 0;
+    int counter_ = 4; // start at direction facing forward
     std::vector<vec3> view_rotations_;
     std::vector<std::string> direction_names_;
     std::vector<vec3> colors_;

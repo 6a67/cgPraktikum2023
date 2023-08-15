@@ -164,6 +164,8 @@ vec3 GetLight(vec3 p) {
 	return result;
 }
 
+in vec3 v2f_viewRotation;
+
 void main() {
 	vec2 uv = (texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5) / window_height;
 

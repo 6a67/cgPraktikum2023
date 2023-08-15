@@ -218,17 +218,38 @@ vec3 render(in vec2 p, in mat4 cam) {
 	return col;
 }
 
+mat3 rot(float roll, float pitch, float yaw) {
+	float cr = cos(roll);
+	float sr = sin(roll);
+	float cp = cos(pitch);
+	float sp = sin(pitch);
+	float cy = cos(yaw);
+	float sy = sin(yaw);
+
+	return mat3(cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr, sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr, -sp, cp * sr, cp * cr);
+}
+
+// rotate around a given point
+mat4 rot(float roll, float pitch, float yaw, vec3 point) {
+	mat3 r = rot(roll, pitch, yaw);
+	vec3 p = point - r * point;
+	return mat4(r[0], 0, r[1], 0, r[2], 0, p, 1);
+}
+
+in vec3 v2f_viewRotation;
+
 void main() {
 	vec2 fragCoord = texcoords * vec2(window_width, window_height);
 
 	float time = iTime * .1;
 
 	// TODO: Somehow maybe add this??? (otherwise cube map wont work)
-	//vec3 rd = normalize(( rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0)).xyz);
+	//vec3 rd = normalize((  * vec4(uv.x, uv.y, 0.5, 0)).xyz);
 
     // camera
 	float di = 1.4 + 0.1 * cos(.29 * time);
 	vec3 ro = di * vec3(cos(.33 * time), 0.8 * sin(.37 * time), sin(.31 * time));
+	ro = (rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(ro, 0.0)).xyz;
 	vec3 ta = vec3(0.0, 0.1, 0.0);
 	float cr = 0.5 * cos(0.1 * time);
 
