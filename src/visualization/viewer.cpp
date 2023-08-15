@@ -439,6 +439,11 @@ void Viewer::select_debug_info_face(size_t face_idx)
 
 void Viewer::process_imgui()
 {
+    ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Text("Calculated FPS: %.0f", renderer_.framerate);
+    ImGui::Separator();
+    ImGui::Text("Current UPS (Simulation): %.0f", current_UPS_);
+    ImGui::Text("iTime (Shader): %.2f", renderer_.get_itime());
 
     // Show mesh info in GUI via parent class
     pmp::MeshViewer::process_imgui();
@@ -446,27 +451,47 @@ void Viewer::process_imgui()
     ImGui::Spacing();
     ImGui::Spacing();
 
-    ImGui::Text("Current UPS: %.0f", current_UPS_);
+    if (ImGui::CollapsingHeader("Shader Settings"))
     {
-        std::stringstream label;
-        label << "Unrestricted render updates (allows visual  update mid-calculation): "
-              << (uncomplete_updates ? "ON" : "OFF") << ")";
-        if (ImGui::Button(label.str().c_str()))
+        if (ImGui::Button("Reset iTime"))
         {
-            uncomplete_updates = !uncomplete_updates;
-        }
-    }
-    {
-
-        std::stringstream limit_ups_text;
-        limit_ups_text << "Unlimited UPS (Current: " << (unlimited_limit_UPS_ ? "ON" : "OFF") << ")";
-        if (ImGui::Button(limit_ups_text.str().c_str()))
-        {
-            unlimited_limit_UPS_ = !unlimited_limit_UPS_;
+            renderer_.set_itime();
         }
 
-        ImGui::SliderInt("UPS", &UPS_, 1, 1000);
+        if (ImGui::Button(renderer_.get_itime_paused() ? "Continue iTime" : "Pause iTime"))
+        {
+            renderer_.itime_toggle_pause();
+        }
     }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("UPS Settings (for simulation)"))
+    {
+        {
+            std::stringstream label;
+            label << "Unrestricted render updates (allows visual  update mid-calculation): "
+                  << (uncomplete_updates ? "ON" : "OFF") << ")";
+            if (ImGui::Button(label.str().c_str()))
+            {
+                uncomplete_updates = !uncomplete_updates;
+            }
+        }
+        {
+
+            std::stringstream limit_ups_text;
+            limit_ups_text << "Unlimited UPS (Current: " << (unlimited_limit_UPS_ ? "ON" : "OFF") << ")";
+            if (ImGui::Button(limit_ups_text.str().c_str()))
+            {
+                unlimited_limit_UPS_ = !unlimited_limit_UPS_;
+            }
+
+            ImGui::SliderInt("UPS", &UPS_, 1, 1000);
+        }
+    }
+
+    ImGui::Spacing();
     ImGui::Spacing();
 
     if (ImGui::CollapsingHeader("Debug Info (Press D on a face)"))
@@ -543,6 +568,10 @@ void Viewer::process_imgui()
             select_debug_info_face(debug_data.selected_face_idx);
         }
     }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
     // Some functionality from pmp::MeshProcessingViewer to edit mesh
     if (ImGui::CollapsingHeader("Decimation"))
     {
@@ -720,148 +749,160 @@ void Viewer::process_imgui()
             set_mesh_properties();
         }
     }
+    ImGui::Spacing();
+    ImGui::Spacing();
 
-    ImGui::InputText("Path: ", modelpath_buf, 300);
-
-    if (ImGui::Button("Load model from path"))
+    if (ImGui::CollapsingHeader("Load custom model file"))
     {
-        read_mesh_from_file(std::string(modelpath_buf));
+        ImGui::InputText("Path: ", modelpath_buf, 300);
+        if (ImGui::Button("Load model from path"))
+        {
+            read_mesh_from_file(std::string(modelpath_buf));
+        }
     }
 
     if (auto* lenia = dynamic_cast<MeshLenia*>(automaton))
     {
-        ImGui::SliderFloat("Mu", &lenia->p_mu, 0, 1);
-        ImGui::SliderFloat("Sigma", &lenia->p_sigma, 0, 1);
-        ImGui::SliderInt("T", &lenia->p_T, 1, 50);
-
-        // TODO: recalculate neighbors
-        float neighborhood_radius = lenia->p_neighborhood_radius / lenia->average_edge_length;
-        ImGui::SliderFloat("Neighborhood Radius", &neighborhood_radius, 0, 20);
-        lenia->p_neighborhood_radius = neighborhood_radius * lenia->average_edge_length;
-        if (ImGui::Button("Recalculate Neighborhood"))
+        ImGui::Spacing();
+        ImGui::Spacing();
+        if (ImGui::CollapsingHeader("Lenia Parameters"))
         {
-            // TODO: move a_gol to a better place
-            stop_simulation();
-            lenia->allocate_needed_properties();
-        }
-        ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighbor_count_avg);
+            ImGui::SliderFloat("Mu", &lenia->p_mu, 0, 1);
+            ImGui::SliderFloat("Sigma", &lenia->p_sigma, 0, 1);
+            ImGui::SliderInt("T", &lenia->p_T, 1, 50);
 
-        if (ImGui::Button("Visualize Kernel Shell"))
-        {
-            lenia->visualize_kernel_shell();
-        }
-
-        if (ImGui::Button("Visualize Kernel Skeleton"))
-        {
-            lenia->visualize_kernel_skeleton();
-        }
-
-        ImGui::InputText("Peaks: ", peak_string, 300);
-        if (ImGui::Button("Update Peaks"))
-        {
-            std::cout << peak_string << std::endl;
-            lenia->p_beta_peaks.clear();
-            std::string s(peak_string);
-            std::stringstream ss(s);
-            std::string item;
-            while (std::getline(ss, item, ','))
+            // TODO: recalculate neighbors
+            float neighborhood_radius = lenia->p_neighborhood_radius / lenia->average_edge_length;
+            ImGui::SliderFloat("Neighborhood Radius", &neighborhood_radius, 0, 20);
+            lenia->p_neighborhood_radius = neighborhood_radius * lenia->average_edge_length;
+            if (ImGui::Button("Recalculate Neighborhood"))
             {
-                lenia->p_beta_peaks.push_back(std::stof(item));
-                std::cout << std::stof(item) << std::endl;
+                // TODO: move a_gol to a better place
+                stop_simulation();
+                lenia->allocate_needed_properties();
+            }
+            ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighbor_count_avg);
+
+            if (ImGui::Button("Visualize Kernel Shell"))
+            {
+                lenia->visualize_kernel_shell();
             }
 
-            std::string s2;
-            for (auto peak : lenia->p_beta_peaks)
+            if (ImGui::Button("Visualize Kernel Skeleton"))
             {
-                s2 += std::to_string(peak) + ",";
-            }
-            strcpy(peak_string, s2.c_str());
-        }
-
-        static stamps::Shapes stamp;
-        std::stringstream label;
-        label << "Stamp: " << stamps::shape_to_str(stamp);
-        if (ImGui::BeginMenu(label.str().c_str()))
-        {
-            if (ImGui::MenuItem("Orbium"))
-                stamp = stamps::s_orbium;
-            else if (ImGui::MenuItem("Smiley"))
-                stamp = stamps::s_smiley;
-            else if (ImGui::MenuItem("Debug"))
-                stamp = stamps::s_debug;
-            else if (ImGui::MenuItem("Geminium"))
-                stamp = stamps::s_geminium;
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::Button("Place Stamp (Select startface with 'D')"))
-        {
-            pmp::Face f;
-            if (debug_data.face.is_valid())
-                f = debug_data.face;
-            switch (stamp)
-            {
-            case stamps::Shapes::s_none:
-                break;
-            case stamps::Shapes::s_orbium:
-                lenia->place_stamp(f, stamps::orbium);
-                break;
-            case stamps::Shapes::s_smiley:
-                lenia->place_stamp(f, stamps::smiley);
-                break;
-            case stamps::Shapes::s_debug:
-                lenia->place_stamp(f, stamps::debug);
-                break;
-            case stamps::Shapes::s_geminium:
-                lenia->place_stamp(f, stamps::geminium);
-                break;
-            }
-            // cause the render to redraw the next draw frame
-            ready_for_display = true;
-        }
-
-        if (ImGui::Button("Check if normalised"))
-        {
-            std::cout << lenia->norm_check() << std::endl;
-        }
-
-        // list from where presets can be selected
-        static const char* items[] = {"Glider Settings", "Geminium Settings"};
-        static int item_current = 1;
-        if (ImGui::BeginCombo("Presets", items[item_current]))
-        {
-            for (int n = 0; n < IM_ARRAYSIZE(items); n++)
-            {
-                bool is_selected = (item_current == n);
-                if (ImGui::Selectable(items[n], is_selected))
-                    item_current = n;
-                if (is_selected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-
-        if (ImGui::Button("Load preset"))
-        {
-            switch (item_current)
-            {
-            case 0:
-                lenia->p_mu = 0.15;
-                lenia->p_sigma = 0.017;
-                lenia->p_beta_peaks = {1};
-                lenia->p_T = 10;
-                lenia->p_neighborhood_radius = 13 * lenia->average_edge_length;
-                break;
-            case 1:
-                lenia->p_mu = 0.26;
-                lenia->p_sigma = 0.036;
-                lenia->p_beta_peaks = {0.5, 1, 0.667};
-                lenia->p_T = 10;
-                lenia->p_neighborhood_radius = 18 * lenia->average_edge_length;
-                break;
+                lenia->visualize_kernel_skeleton();
             }
 
-            lenia->allocate_needed_properties();
+            ImGui::InputText("Peaks: ", peak_string, 300);
+            if (ImGui::Button("Update Peaks"))
+            {
+                std::cout << peak_string << std::endl;
+                lenia->p_beta_peaks.clear();
+                std::string s(peak_string);
+                std::stringstream ss(s);
+                std::string item;
+                while (std::getline(ss, item, ','))
+                {
+                    lenia->p_beta_peaks.push_back(std::stof(item));
+                    std::cout << std::stof(item) << std::endl;
+                }
+
+                std::string s2;
+                for (auto peak : lenia->p_beta_peaks)
+                {
+                    s2 += std::to_string(peak) + ",";
+                }
+                strcpy(peak_string, s2.c_str());
+            }
+
+            if (ImGui::CollapsingHeader("Stamps"))
+            {
+                static stamps::Shapes stamp;
+                std::stringstream label;
+                label << "Stamp: " << stamps::shape_to_str(stamp);
+                if (ImGui::BeginMenu(label.str().c_str()))
+                {
+                    if (ImGui::MenuItem("Orbium"))
+                        stamp = stamps::s_orbium;
+                    else if (ImGui::MenuItem("Smiley"))
+                        stamp = stamps::s_smiley;
+                    else if (ImGui::MenuItem("Debug"))
+                        stamp = stamps::s_debug;
+                    else if (ImGui::MenuItem("Geminium"))
+                        stamp = stamps::s_geminium;
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::Button("Place Stamp (Select startface with 'D')"))
+                {
+                    pmp::Face f;
+                    if (debug_data.face.is_valid())
+                        f = debug_data.face;
+                    switch (stamp)
+                    {
+                    case stamps::Shapes::s_none:
+                        break;
+                    case stamps::Shapes::s_orbium:
+                        lenia->place_stamp(f, stamps::orbium);
+                        break;
+                    case stamps::Shapes::s_smiley:
+                        lenia->place_stamp(f, stamps::smiley);
+                        break;
+                    case stamps::Shapes::s_debug:
+                        lenia->place_stamp(f, stamps::debug);
+                        break;
+                    case stamps::Shapes::s_geminium:
+                        lenia->place_stamp(f, stamps::geminium);
+                        break;
+                    }
+                    // cause the render to redraw the next draw frame
+                    ready_for_display = true;
+                }
+            }
+
+            if (ImGui::Button("Check if normalised"))
+            {
+                std::cout << lenia->norm_check() << std::endl;
+            }
+
+            // list from where presets can be selected
+            static const char* items[] = {"Glider Settings", "Geminium Settings"};
+            static int item_current = 1;
+            if (ImGui::BeginCombo("Presets", items[item_current]))
+            {
+                for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+                {
+                    bool is_selected = (item_current == n);
+                    if (ImGui::Selectable(items[n], is_selected))
+                        item_current = n;
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+
+            if (ImGui::Button("Load preset"))
+            {
+                switch (item_current)
+                {
+                case 0:
+                    lenia->p_mu = 0.15;
+                    lenia->p_sigma = 0.017;
+                    lenia->p_beta_peaks = {1};
+                    lenia->p_T = 10;
+                    lenia->p_neighborhood_radius = 13 * lenia->average_edge_length;
+                    break;
+                case 1:
+                    lenia->p_mu = 0.26;
+                    lenia->p_sigma = 0.036;
+                    lenia->p_beta_peaks = {0.5, 1, 0.667};
+                    lenia->p_T = 10;
+                    lenia->p_neighborhood_radius = 18 * lenia->average_edge_length;
+                    break;
+                }
+
+                lenia->allocate_needed_properties();
+            }
         }
     }
 
@@ -881,9 +922,6 @@ void Viewer::process_imgui()
             }
         }
     }
-
-    ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate);
-    ImGui::Text("Calculated FPS: %.0f", renderer_.framerate);
 }
 
 void Viewer::set_face_color(pmp::Face& face, pmp::Color color)

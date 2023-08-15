@@ -307,6 +307,45 @@ void Renderer::set_crease_angle(Scalar ca)
     }
 }
 
+double Renderer::get_itime()
+{
+    return itime_;
+}
+
+void Renderer::set_itime(double itime)
+{
+    glfwSetTime(itime);
+    itime_ = glfwGetTime();
+}
+
+bool Renderer::get_itime_paused()
+{
+    return itime_paused;
+}
+
+void Renderer::itime_pause()
+{
+    itime_paused = true;
+}
+
+void Renderer::itime_continue()
+{
+    set_itime(itime_);
+    itime_paused = false;
+}
+
+void Renderer::itime_toggle_pause()
+{
+    if (itime_paused)
+    {
+        itime_continue();
+    }
+    else
+    {
+        itime_pause();
+    }
+}
+
 void Renderer::reload_shaders(std::string custom_shader_path_vertex, std::string custom_shader_path_fragment)
 {
     custom_shader_path_fragment_ = custom_shader_path_fragment;
@@ -321,7 +360,10 @@ void Renderer::update_opengl_buffers()
     glfwGetWindowSize(window_, &wsize_, &hsize_);
 
     // get time in seconds
-    itime = glfwGetTime();
+    if (!itime_paused)
+    {
+        itime_ = glfwGetTime();
+    }
 
     if (!g_framebuffer)
     {
@@ -757,7 +799,7 @@ void Renderer::drawFace(int face_side)
     custom_shader_.use();
     custom_shader_.set_uniform("window_height", cubemap_size);
     custom_shader_.set_uniform("window_width", cubemap_size);
-    custom_shader_.set_uniform("iTime", itime);
+    custom_shader_.set_uniform("iTime", (float)itime_);
     custom_shader_.set_uniform("viewRotation", view_rotations_[face_side]);
 
     // Render on the whole framebuffer, complete from the lower left corner to the upper right corner
@@ -1124,7 +1166,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         custom_shader_.use();
         custom_shader_.set_uniform("window_width", wsize_);
         custom_shader_.set_uniform("window_height", hsize_);
-        custom_shader_.set_uniform("iTime", itime);
+        custom_shader_.set_uniform("iTime", (float)itime_);
 
         vec3 rotation = view_rotations_[counter_];
         rotation[2] = 0; // set z rotation to 0 so we don't flip the image

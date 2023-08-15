@@ -186,6 +186,18 @@ class Renderer
 
     void keyboard(int key, int action);
 
+    double get_itime();
+
+    void set_itime(double itime = 0.0);
+
+    bool get_itime_paused();
+
+    void itime_pause();
+
+    void itime_continue();
+
+    void itime_toggle_pause();
+
   private:
     const SurfaceMesh& mesh_;
 
@@ -300,7 +312,8 @@ class Renderer
     int wsize_ = 800;
     int hsize_ = 600;
 
-    float itime = 0;
+    double itime_ = 0;
+    bool itime_paused = false;
     std::chrono::high_resolution_clock::time_point last_time;
 
     // buffer sizes
