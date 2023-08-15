@@ -56,13 +56,31 @@ Renderer::Renderer(const SurfaceMesh& mesh, GLFWwindow* window) : mesh_(mesh), w
     texture_ = 0;
     texture_mode_ = TextureMode::Other;
 
-    view_directions_ = {
-        vec3(0, degree_to_rad(90), 0),
-        vec3(0, degree_to_rad(-90), 0),
-        vec3(degree_to_rad(90), 0, 0),
-        vec3(degree_to_rad(-90), 0, 0),
-        vec3(0, degree_to_rad(0), 0),
-        vec3(0, degree_to_rad(180), 0),
+    direction_names_ = {
+        "right",
+        "left",
+        "top",
+        "bottom",
+        "front",
+        "back",
+
+    };
+    view_rotations_ = {
+        vec3(0, degree_to_rad(90), degree_to_rad(180)),
+        vec3(0, degree_to_rad(-90), degree_to_rad(180)),
+        vec3(degree_to_rad(90), 0, degree_to_rad(180)),
+        vec3(degree_to_rad(-90), 0, degree_to_rad(180)),
+        vec3(0, degree_to_rad(0), degree_to_rad(180)),
+        vec3(0, degree_to_rad(180), degree_to_rad(180)),
+    };
+
+    colors_ = {
+        vec3(1.0, 0.0, 0.0),
+        vec3(0.0, 1.0, 0.0),
+        vec3(0.0, 0.0, 1.0),
+        vec3(1.0, 1.0, 0.0),
+        vec3(0.0, 1.0, 1.0),
+        vec3(1.0, 0.0, 1.0),
     };
 }
 
@@ -632,7 +650,9 @@ void Renderer::keyboard(int key, int action)
     case GLFW_KEY_C:
         counter_++;
         counter_ = counter_ % 6;
-        std::cout << counter_ << " - " << view_directions_[counter_] << std::endl;
+        std::cout << counter_ << " - " << direction_names_[counter_];
+        std::cout << " - View Direction" << view_rotations_[counter_] << std::endl;
+        std::cout << " - Color" << colors_[counter_] << std::endl;
     }
 }
 
@@ -651,9 +671,12 @@ void Renderer::CreateCubeTexture()
     GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
     GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 
-    int CUBE_TEXTURE_SIZE = 1000;
-    std::vector<GLubyte> testData(CUBE_TEXTURE_SIZE * CUBE_TEXTURE_SIZE * 256, 128);
-    std::vector<GLubyte> xData(CUBE_TEXTURE_SIZE * CUBE_TEXTURE_SIZE * 256, 255);
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+
+    std::vector<GLubyte> testData(cubemap_size * cubemap_size * 256, 128);
+    std::vector<GLubyte> xData(cubemap_size * cubemap_size * 256, 255);
 
     for (int loop = 0; loop < 6; ++loop)
     {
@@ -662,8 +685,8 @@ void Renderer::CreateCubeTexture()
             GL_CHECK(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + loop,
                                   0,
                                   GL_RGBA8,
-                                  CUBE_TEXTURE_SIZE,
-                                  CUBE_TEXTURE_SIZE,
+                                  cubemap_size,
+                                  cubemap_size,
                                   0,
                                   GL_RGBA,
                                   GL_UNSIGNED_BYTE,
@@ -674,8 +697,8 @@ void Renderer::CreateCubeTexture()
             GL_CHECK(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + loop,
                                   0,
                                   GL_RGBA8,
-                                  CUBE_TEXTURE_SIZE,
-                                  CUBE_TEXTURE_SIZE,
+                                  cubemap_size,
+                                  cubemap_size,
                                   0,
                                   GL_RGBA,
                                   GL_UNSIGNED_BYTE,
@@ -684,6 +707,25 @@ void Renderer::CreateCubeTexture()
     }
 
     GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
+}
+
+void Renderer::drawSkybox()
+{
+    GL_CHECK(glDepthMask(GL_FALSE));
+    GL_CHECK(glDepthFunc(GL_LEQUAL));
+    GL_CHECK(glBindVertexArray(skyboxVAO));
+    GL_CHECK(glActiveTexture(GL_TEXTURE0));
+
+    if (counter_ % 2 == 0)
+        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_texture));
+    else
+        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
+
+    GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 36));
+    GL_CHECK(glBindVertexArray(0));
+
+    GL_CHECK(glDepthMask(GL_TRUE));
+    GL_CHECK(glDepthFunc(GL_LESS));
 }
 
 void Screendump(const char* tga_file, GLuint framebuffer, short W, short H)
@@ -713,13 +755,14 @@ void Renderer::drawFace(int face_side)
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     // Render on the whole framebuffer, complete from the lower left corner to the upper right corner
-    GL_CHECK(glViewport(0, 0, 1000, 1000));
+    GL_CHECK(glViewport(0, 0, cubemap_size, cubemap_size));
 
     custom_shader_.use();
-    custom_shader_.set_uniform("window_height", 1000);
-    custom_shader_.set_uniform("window_width", 1000);
+    custom_shader_.set_uniform("window_height", cubemap_size);
+    custom_shader_.set_uniform("window_width", cubemap_size);
     custom_shader_.set_uniform("iTime", itime);
-    custom_shader_.set_uniform("viewRotation", view_directions_[counter_]);
+    custom_shader_.set_uniform("viewRotation", view_rotations_[face_side]);
+    // custom_shader_.set_uniform("this_color", colors_[face_side]);
 
     vec3 origin = vec3(0, 0, 0);
     custom_shader_.set_uniform("origin", origin);
@@ -728,8 +771,8 @@ void Renderer::drawFace(int face_side)
     GL_CHECK(glGenVertexArrays(1, &empty_vao));
     GL_CHECK(glBindVertexArray(empty_vao));
 
-    GL_CHECK(glActiveTexture(GL_TEXTURE0 + g_cubeTexUnit));
-    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
+    // GL_CHECK(glActiveTexture(GL_TEXTURE0 + g_cubeTexUnit));
+    // GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
 
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 
@@ -848,7 +891,9 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
                               1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f};
 
     std::vector<std::string> faces = {"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
-    unsigned int cubemap_texture = loadCubemap(faces);
+
+    if (!cubemap_texture)
+        cubemap_texture = loadCubemap(faces);
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, oldFBO));
 
@@ -858,8 +903,6 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
 
     GL_CHECK(glBindVertexArray(vertex_array_object_));
 
-    static GLuint skyboxVAO = 0;
-    static GLuint skyboxVBO = 0;
     if (!skyboxVAO)
     {
         glGenVertexArrays(1, &skyboxVAO);
@@ -873,53 +916,141 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
-    mat4 pro = pmp::perspective_matrix(90.0f, (float)wsize_ / (float)hsize_, 0.01f, 100.f);
-    pro = pmp::mat4::identity();
-    mat4 view = pmp::mat4::identity();
+    // mat4 pro = pmp::perspective_matrix(90.0f, (float)wsize_ / (float)hsize_, 1.0f, 100.f);
+    // pro = pmp::ortho_matrix(-1.0f, 1.0f, -1.0f, -1.0f, 0.0001f, 100.0f);
+    // pro = pmp::mat4::identity();
+    mat4 view = mv_matrix; // pmp::mat4::identity();
 
-    texture_shader_.use();
+    view(0, 3) = 0.0f;
+    view(1, 3) = 0.0f;
+    view(2, 3) = 0.0f;
 
-    // std::cout << "Projection: \n" << pro << std::endl;
+    mat4 scaling = pmp::mat4::identity();
+    scaling(0, 0) = 1.1f;
+    scaling(1, 1) = 1.1f;
+    scaling(2, 2) = 1.1f;
+
+    // std::cout << "Projection: \n" << projection_matrix << std::endl;
     // std::cout << "View: \n" << view << std::endl;
 
-    texture_shader_.set_uniform("projection", pro);
-    texture_shader_.set_uniform("view", view);
+    CreateCubeTexture();
 
-    // CreateCubeTexture();
     // // Draw the cubemap.
-    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_framebuffer));
-    // GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthbuffer));
-    // for (int i = 0; i < 6; i++)
-    // {
-    //     drawFace(i);
-    // }
-    // GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
-    // GL_CHECK(glBindVertexArray(0));
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_framebuffer));
+    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthbuffer));
+    for (int i = 0; i < 6; i++)
+    {
+        drawFace(i);
+    }
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+    GL_CHECK(glBindVertexArray(0));
+
+    texture_shader_.use();
+    texture_shader_.set_uniform("projection", projection_matrix);
+    texture_shader_.set_uniform("view", view);
+    texture_shader_.set_uniform("scaling", scaling);
 
     // allow for transparent objects
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.8f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
     GL_CHECK(glViewport(0, 0, wsize_, hsize_));
     // CODE from:
     // https://learnopengl.com/code_viewer_gh.php?code=src/4.advanced_opengl/6.1.cubemaps_skybox/cubemaps_skybox.cpphttps://learnopengl.com/code_viewer_gh.php?code=src/4.advanced_opengl/6.1.cubemaps_skybox/cubemaps_skybox.cpp
 
-    GL_CHECK(glDepthMask(GL_FALSE));
-    GL_CHECK(glBindVertexArray(skyboxVAO));
-    GL_CHECK(glActiveTexture(GL_TEXTURE0));
+    if (draw_mode == "Skybox only")
+    {
+        drawSkybox();
+    }
 
-    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_texture));
-    // GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
+    else if (draw_mode == "Skybox with model")
+    {
 
-    GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 36));
-    GL_CHECK(glBindVertexArray(0));
+        drawSkybox();
 
-    GL_CHECK(glDepthMask(GL_TRUE));
+        // // setup shader
+        phong_shader_.use();
+        phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
+        phong_shader_.set_uniform("modelview_matrix", mv_matrix);
+        phong_shader_.set_uniform("normal_matrix", n_matrix);
+        phong_shader_.set_uniform("point_size", point_size_);
+        phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
+        phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
+        phong_shader_.set_uniform("front_color", front_color_);
+        phong_shader_.set_uniform("back_color", back_color_);
+        phong_shader_.set_uniform("ambient", ambient_);
+        phong_shader_.set_uniform("diffuse", diffuse_);
+        phong_shader_.set_uniform("specular", specular_);
+        phong_shader_.set_uniform("shininess", shininess_);
+        phong_shader_.set_uniform("alpha", alpha_);
+        phong_shader_.set_uniform("use_lighting", true);
+        phong_shader_.set_uniform("use_texture", false);
+        phong_shader_.set_uniform("use_srgb", false);
+        phong_shader_.set_uniform("show_texture_layout", false);
+        phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
 
-    // if (mesh_.n_faces())
-    // {
-    //     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-    // }
+        GL_CHECK(glBindVertexArray(vertex_array_object_));
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+
+        if (mesh_.n_faces())
+        {
+            // draw faces
+            GL_CHECK(glDepthRange(0.01, 1.0));
+            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+            GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+
+            // overlay edges
+            GL_CHECK(glDepthRange(0.0, 1.0));
+            GL_CHECK(glDepthFunc(GL_LEQUAL));
+            phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
+            phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
+            phong_shader_.set_uniform("use_lighting", false);
+            phong_shader_.set_uniform("use_vertex_color", false);
+            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
+            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
+            GL_CHECK(glDepthFunc(GL_LESS));
+        }
+    }
+    else if (draw_mode == "Custom Shader")
+    {
+        GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+        GL_CHECK(glClearDepth(1.0f));
+        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+        // Render on the whole framebuffer, complete from the lower left corner to the upper right corner
+        // GL_CHECK(glViewport(0, 0, 1000, 1000));
+        // GL_CHECK(glViewport(0, 0, wsize_, hsize_));
+
+        // std::cout << "Width: " << wsize_ << " Height: " << hsize_ << std::endl;
+        custom_shader_.use();
+        custom_shader_.set_uniform("window_height", wsize_);
+        custom_shader_.set_uniform("window_width", hsize_);
+        custom_shader_.set_uniform("iTime", itime);
+        custom_shader_.set_uniform("viewRotation", view_rotations_[counter_]);
+        // custom_shader_.set_uniform("this_color", colors_[counter_]);
+
+        vec3 origin = vec3(0, 0, 0);
+        custom_shader_.set_uniform("origin", origin);
+
+        GLuint empty_vao = 0;
+        GL_CHECK(glGenVertexArrays(1, &empty_vao));
+        GL_CHECK(glBindVertexArray(empty_vao));
+
+        // GL_CHECK(glActiveTexture(GL_TEXTURE0 + g_cubeTexUnit));
+        // GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
+
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+
+        // doesnt seem to work as expected
+        // std::stringstream ss;
+        // ss << "test_img_" << face_side << ".tga";
+        // Screendump(ss.str().c_str(), g_framebuffer, 1000, 1000);
+
+        custom_shader_.disable();
+
+        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
+        GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
+    }
 
     // GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
 
@@ -1066,7 +1197,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
 
     //         GL_CHECK(glBindVertexArray(vertex_array_object_));
 
-    //         glActiveTexture(GL_TEXTURE0 + g_cubeTexUnit);
+    //         glActiveTexture(GL_TEXTURE0 + _cubeTexUnit);
     //         glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture);
 
     //         if (mesh_.n_faces())

@@ -228,7 +228,9 @@ class Renderer
     void tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles);
 
     int counter_ = 0;
-    std::vector<vec3> view_directions_;
+    std::vector<vec3> view_rotations_;
+    std::vector<std::string> direction_names_;
+    std::vector<vec3> colors_;
 
     GLint oldFBO;
     // GLuint renderedTexture_[6] = {0};
@@ -258,6 +260,13 @@ class Renderer
 
     void load_texture_shader();
     Shader texture_shader_;
+    GLuint skyboxVAO = 0;
+    GLuint skyboxVBO = 0;
+    unsigned int cubemap_texture = 0;
+
+    int cubemap_size = 256;
+
+    void drawSkybox();
 
     std::string custom_shader_path_vertex_;
     std::string custom_shader_path_fragment_;

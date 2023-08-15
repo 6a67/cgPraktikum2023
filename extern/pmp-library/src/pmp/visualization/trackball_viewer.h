@@ -95,6 +95,8 @@ class TrackballViewer : public Window
     //! virtual trackball: map 2D screen point to unit sphere. used by rotate().
     bool map_to_sphere(const ivec2& point, vec3& result);
 
+    void rotate_to_point();
+
   protected:
     //! draw modes
     unsigned int draw_mode_;
@@ -116,6 +118,8 @@ class TrackballViewer : public Window
     ivec2 last_point_2d_;
     vec3 last_point_3d_;
     bool last_point_ok_;
+
+    int counter_ = 0;
 };
 
 } // namespace pmp

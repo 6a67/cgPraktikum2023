@@ -1,7 +1,7 @@
 #version 330
 
 #define MAX_STEPS 100
-#define MAX_DIST 100.
+#define MAX_DIST 1000.
 #define SURF_DIST .01
 #define PI 3.1415926535897932384626433832795
 
@@ -47,14 +47,36 @@ float sdBox( vec3 p, vec3 b )
 
 // Other forms: https://iquilezles.org/articles/distfunctions/
 float GetDist(vec3 p) {
-	vec4 s = vec4(0, 1, sin(iTime) * 6, 1);
 
 	float planeDist = p.y;
 	float sphereDist = 0;
 	float d = MAX_DIST;
 
-	sphereDist = length(rangeModWithOffset(p,s.xyz, vec3(4, 4, 5)) - s.xyz) - s.w;
-	d = max(-p.z + 5., sphereDist);
+	float radius = 15.0;
+	vec4 s = vec4( radius * cos(iTime * 0.5), 1, radius * sin(iTime * 0.5) , 1);
+	//sphereDist = length(rangeModWithOffset(p,s.xyz, vec3(4, 4, 5)) - s.xyz) - s.w;
+
+	//s = vec4(0, 1, 3, 1);
+	// sphereDist = length(p - s.xyz) - s.w;
+	d = planeDist;
+	//d = min(d, sphereDist);
+
+	// float box1 = sdBox(p - vec3(-7, 3, 0) - s.xyz, vec3(1,2,1));
+	float box1 = sdBox(p - s.xyz, vec3(1,2,1));
+	// float box2 = sdBox(p - vec3(10, 3, 0), vec3(1,2,1));
+	// float box3 = sdBox(p - vec3(0, -20, 0), vec3(2,1,1));
+	// float box4 = sdBox(p - vec3(0, 20, 0), vec3(4,1,1));
+	// float box5 = sdBox(p - vec3(0, -7, -40), vec3(12,0.8,12));
+	// float box6 = sdBox(p - vec3(0, 5, 20), vec3(1,1,10));
+
+	d = min(d, box1);
+	// d = min(d, box2);
+	// d = min(d, box3);
+	// d = min(d, box4);
+	// d = min(d, box5);
+	// d = min(d, box6);
+
+	//d = max(-p.z + 5., sphereDist);
 
 //  float boxDist = sdBox(p - vec3(0,1,0), vec3(1.2,1.2, 1000));
 //  d = max(d, -boxDist);
@@ -63,15 +85,15 @@ float GetDist(vec3 p) {
 
 // 	d = min(d, planeDist);
 
-	float rotatedPlane  = dot(p - vec3(2, 10, 100), vec3(1,-2,1));
-	d = max(d, rotatedPlane);
+	// float rotatedPlane  = dot(p - vec3(2, 10, 100), vec3(1,-2,1));
+	// d = max(d, rotatedPlane);
 	
 
-	float backplane = p.z - 100.;
-	d = max(d, backplane);
+	//float backplane = p.z - 100.;
+	// d = max(d, backplane);
 
 	// draw everying after the z=2 plane
-	d = max(d, -p.z + 2.);
+	// d = max(d, -p.z + 2.);
 	return d;
 }
 
@@ -138,14 +160,15 @@ in vec3 v2f_origin;
 
 layout(location = 0) out vec4 color;
 
+uniform vec3 this_color;
 
 void main() {
 	vec2 uv = (texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5) / window_height;
 
 	vec3 col = vec3(0);
 
-	vec3 ro = v2f_origin + vec3(12.5, 2, 0);
-	vec3 rd = normalize(( rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 1, 0)).xyz);
+	vec3 ro = v2f_origin + vec3(0,1,0);
+	vec3 rd = normalize(( rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0)).xyz);
 
 	float d = RayMarch(ro, rd);
 
@@ -157,6 +180,10 @@ void main() {
 	col = pow(col, vec3(.4545));	// gamma correction
 	
 	gl_FragDepth = d / MAX_DIST;
+	//gl_FragDepth = 0.999;
 	color = vec4(col, 1.0);
+	//color = vec4(0.0,uv.xy,1.0);
+	//color = vec4(0.0,texcoords.xy,1.0);
+	//color = vec4(this_color, 1.0);
 
 }

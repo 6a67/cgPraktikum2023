@@ -90,6 +90,15 @@ void TrackballViewer::keyboard(int key, int code, int action, int mods)
         rotate(vec3(1, 0, 0), 5.0);
         break;
     }
+    case GLFW_KEY_L:
+    {
+
+        counter_++;
+        counter_ = counter_ % 6;
+        rotate_to_point();
+
+        break;
+    }
 
     default:
     {
@@ -97,6 +106,49 @@ void TrackballViewer::keyboard(int key, int code, int action, int mods)
         break;
     }
     }
+}
+
+inline float degree_to_rad(float degree)
+{
+    return degree * (M_PI / 180.0);
+}
+
+void TrackballViewer::rotate_to_point()
+{
+  std::vector<vec3> view_directions = {
+        vec3(0, (90), 0),
+        vec3(0, (-90), 0),
+        vec3((90), 0, 0),
+        vec3((-90), 0, 0),
+        vec3(0, (0),0),
+        vec3(0, (180),0),
+    };
+
+  std::vector<vec3> view_positions = {
+        vec3(0, 0, 10),
+        vec3(0, 0, 10),
+        vec3(0, 0, 10),
+        vec3(0, 0, 10),
+        vec3(0, 0, 10),
+        vec3(0, 0, -10),
+    };
+
+    vec3 point = view_directions[counter_];
+    std::cout << "Counter: " << counter_ << "-  Looking in direction " << point << std::endl;
+
+	vec3 offset = view_positions[counter_] - center_;
+		
+
+
+    // center in eye coordinates
+    vec4 centerPos = vec4(center_, 1.0);
+    vec4 ec = centerPos;
+    vec3 c(ec[0] / ec[3], ec[1] / ec[3], ec[2] / ec[3]);
+	modelview_matrix_
+	  = translation_matrix(offset) 
+	  * rotation_matrix(vec3(1.,0.,0.), point[0])
+	  * rotation_matrix(vec3(0.,1.,0.), point[1])
+	  * rotation_matrix(vec3(0.,0.,1.), point[2]);
 }
 
 void TrackballViewer::resize(int width, int height)

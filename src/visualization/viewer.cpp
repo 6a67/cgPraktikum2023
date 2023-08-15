@@ -31,6 +31,7 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     pmp::BoundingBox bb = bounds(mesh_);
     set_scene((pmp::vec3)bb.center(), 0.5 * bb.size());
     set_draw_mode("Hidden Line");
+    set_draw_mode("Skybox only");
 
     set_mesh_properties();
 
