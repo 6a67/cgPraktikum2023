@@ -24,41 +24,44 @@ void MeshGOL::update_state(int num_steps)
 {
     // conway's game of life for the faces of the mesh
 
-    // make copy of state_ to last_state_
-    for (pmp::Face f : mesh_.faces())
+    for (int i = 0; i < num_steps; i++)
     {
-        last_state_[f] = state_[f];
-    }
-
-    for (auto f : mesh_.faces())
-    {
-        // get neighbored faces
-        auto neighbored_faces = helpers::get_neighbored_faces(mesh_, f);
-
-        // count number of alive neighbored faces
-        int num_alive = 0;
-        for (auto nf : neighbored_faces)
+        // make copy of state_ to last_state_
+        for (pmp::Face f : mesh_.faces())
         {
-            if (last_state_[nf] == 1.0f)
+            last_state_[f] = state_[f];
+        }
+
+        for (auto f : mesh_.faces())
+        {
+            // get neighbored faces
+            auto neighbored_faces = helpers::get_neighbored_faces(mesh_, f);
+
+            // count number of alive neighbored faces
+            int num_alive = 0;
+            for (auto nf : neighbored_faces)
             {
-                num_alive++;
+                if (last_state_[nf] == 1.0f)
+                {
+                    num_alive++;
+                }
             }
-        }
 
-        // Any live cell with two or three live neighbours survives
-        if (last_state_[f] == 1.0f && num_alive >= p_lower_threshold_ && num_alive <= p_upper_threshold_)
-        {
-            state_[f] = 1.0f;
-        }
-        // Any dead cell with three live neighbours becomes a live cell
-        else if (last_state_[f] == 0.0f && num_alive == p_upper_threshold_)
-        {
-            state_[f] = 1.0f;
-        }
-        // All other live cells die in the next generation. Similarly, all other dead cells stay dead
-        else
-        {
-            state_[f] = 0.0f;
+            // Any live cell with two or three live neighbours survives
+            if (last_state_[f] == 1.0f && num_alive >= p_lower_threshold_ && num_alive <= p_upper_threshold_)
+            {
+                state_[f] = 1.0f;
+            }
+            // Any dead cell with three live neighbours becomes a live cell
+            else if (last_state_[f] == 0.0f && num_alive == p_upper_threshold_)
+            {
+                state_[f] = 1.0f;
+            }
+            // All other live cells die in the next generation. Similarly, all other dead cells stay dead
+            else
+            {
+                state_[f] = 0.0f;
+            }
         }
     }
 }

@@ -354,7 +354,7 @@ void Renderer::update_opengl_buffers()
     }
 
     if (!cubemap_texture)
-        cubemap_texture = loadCubemap(faces);
+        cubemap_texture = loadCubemap(skybox_names);
 
     CreateCubeTextureIfNotExist();
 

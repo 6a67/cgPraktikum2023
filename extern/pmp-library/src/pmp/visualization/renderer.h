@@ -266,7 +266,7 @@ class Renderer
     void drawSkybox(mat4 projection_matrix, mat4 view_matrix);
     unsigned int loadCubemap(std::vector<std::string> faces);
 
-    std::vector<std::string> faces = {"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
+    std::vector<std::string> skybox_names = {"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
 
     float skyboxVertices[108] = { // positions
         -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,

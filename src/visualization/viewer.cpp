@@ -467,7 +467,11 @@ void Viewer::process_imgui()
                 int count = 0;
                 // TODO: Figure out a better way to count the edges
                 for (auto h : halfedges)
+                {
+                    // this ignores unused variable warning
+                    std::ignore = h;
                     count++;
+                }
                 std::stringstream title;
                 title << "Halfedges of face: " << count;
 
