@@ -1,8 +1,8 @@
 #version 330
 
-#define MAX_STEPS 50
+#define MAX_STEPS 100
 #define MAX_DIST 100.
-#define SURF_DIST .01
+#define SURF_DIST .001
 
 precision mediump float;
 
@@ -14,6 +14,8 @@ uniform int window_height;
 out vec4 out_Color;
 
 uniform float iTime;                 // shader playback time (in seconds)
+
+#define OBJ_ORIGIN vec3(0, 10, 20)
 
 float rangeMod(float x, float start, float end) {
 	float l = end - start;
@@ -56,9 +58,8 @@ mat4 rot(float roll, float pitch, float yaw, vec3 point) {
 	return mat4(r[0], 0, r[1], 0, r[2], 0, p, 1);
 }
 
-float sdSphere( vec3 p, float s )
-{
-  return length(p)-s;
+float sdSphere(vec3 p, float s) {
+	return length(p) - s;
 }
 
 float sdMenger(vec3 p, float size, int iterations) {
@@ -89,6 +90,35 @@ float sdMenger(vec3 p, float size, int iterations) {
 	return sdSphere(p, vec3(size).x);
 }
 
+float sdMandelBulb(in vec3 p) {
+	p.xyz = p.xzy;
+	vec3 z = p;
+	vec3 dz=vec3(0.0);
+	float power = 8.0;
+	float r, theta, phi;
+	float dr = 1.0;
+	
+	float t0 = 1.0;
+	for(int i = 0; i < 7; ++i) {
+		r = length(z);
+		if(r > 2.0) continue;
+		theta = atan(z.y / z.x);
+
+		phi = asin(z.z / r) + iTime*0.1;
+		
+		dr = pow(r, power - 1.0) * dr * power + 1.0;
+	
+		r = pow(r, power);
+		theta = theta * power;
+		phi = phi * power;
+		
+		z = r * vec3(cos(theta)*cos(phi), sin(theta)*cos(phi), sin(phi)) + p;
+		
+		t0 = min(t0, r);
+	}
+	return 0.5 * log(r) * r / dr;
+}
+
 float sdBoxFrame(vec3 p, vec3 b, float e) {
 	p = abs(p) - b;
 	vec3 q = abs(p + e) - e;
@@ -106,9 +136,10 @@ float GetDist(vec3 p) {
 
 	// p = rangeModWithOffset(p, mengerPos, 5.);
 
-	float mengerDist = sdMenger(p - mengerPos, 3., 7);
+	// float mengerDist = sdMenger(p - mengerPos, 3., 7);
+	float sdMandelBulb = sdMandelBulb(p - vec3(0, 10, 3));
 
-	d = min(d, mengerDist);
+	d = min(d, sdMandelBulb);
 
 	// sphereDist = length(rangeModWithOffset(p,s.xyz, vec3(4, 4, 5)) - s.xyz) - s.w;
 	// d = max(-p.z + 5., d);
@@ -148,14 +179,14 @@ vec3 GetNormal(vec3 p) {
 }
 
 vec3 GetLight(vec3 p) {
-	if (length(p) >= MAX_DIST - 1) {
-		return vec3(0,1,1);
+	if(length(p) >= MAX_DIST - 1) {
+		return vec3(0, 1, 1);
 	}
 
 	// phong lighting
-	vec3 lightPos = vec3(0, 100, 0);
-	// lightPos.xz += vec2(sin(iTime), cos(iTime)) * 2.;
-	lightPos.y += sin(iTime * 0.5) * 80.;
+	vec3 lightPos = vec3(0, 10, 0);
+	lightPos.xz += vec2(sin(iTime), cos(iTime)) * 0.5;
+	// lightPos.y += sin(iTime * 0.5) * 80.;
 
 	float red = 0.5 + (sin(iTime * 0.1) + 1) * 0.5;
 	float green = 0.5 + (cos(iTime * 0.1) + 1) * 0.5;
@@ -185,10 +216,8 @@ vec3 GetLight(vec3 p) {
 		t += clamp(h, 0.01, 0.2);
 	}
 
-	res = clamp(res, 0.1, 1.);
-
 	// object color
-	float objColRed = clamp(sin(p.x * 2/ MAX_DIST), 0., 1.);
+	float objColRed = clamp(sin(p.x * 2 / MAX_DIST), 0., 1.);
 	float objColGreen = clamp(cos(p.y / MAX_DIST), 0., 1.);
 	float objColBlue = clamp(sin(p.z / MAX_DIST), 0., 1.);
 	vec3 objColor = vec3(objColRed, objColGreen, objColBlue);
@@ -207,8 +236,8 @@ void main() {
 
 	vec3 col = vec3(0);
 
-	vec3 ro = vec3(0, 10, (sin(iTime * 0.2)) * 10 + 10);
-	// vec3 ro = vec3(0, 10, 0);
+	// vec3 ro = vec3(0, 10, (sin(iTime * 0.2)) * 10 + 10);
+	vec3 ro = vec3(0, 10, 0);
 	vec3 rd = normalize(vec3(uv.x, uv.y, 1));
 
 	// rd = rot(0, iTime, 0) * rd;
