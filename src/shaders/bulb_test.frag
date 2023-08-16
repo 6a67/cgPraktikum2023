@@ -252,7 +252,7 @@ void main() {
 
 	light = pow(light, vec3(.4545));	// gamma correction
 
-	gl_FragDepth = clamp(d / MAX_DIST, -0.999, 0.999);
+	gl_FragDepth = clamp(d / MAX_DIST, 0.0, 0.999);
 	// gl_FragColor = vec4(col, 1.0);
 	out_Color = vec4(light, 1.0);
 }

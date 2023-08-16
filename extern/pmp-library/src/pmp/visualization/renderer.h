@@ -173,6 +173,8 @@ class Renderer
 
     void set_skybox_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path);
 
+    void set_reflective_sphere_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path);
+
     //! Load texture from file.
     //! \param filename the location and name of the texture
     //! \param format internal format (GL_RGB, GL_RGBA, GL_SRGB8, etc.)
@@ -215,6 +217,12 @@ class Renderer
     void set_cam_direction(CamDirection direction);
 
     void render_skybox_faces_to_texture();
+
+    void load_custom_shader();
+
+    void load_skybox_shader();
+
+    void load_reflective_sphere_shader();
 
     // TODO: Implement these with proper functions or something
     bool use_picture_cubemap_ = false;
@@ -304,7 +312,6 @@ class Renderer
 
     GLuint background_array_object;
     GLuint background_vertex_buffer_;
-    void load_custom_shader();
     Shader custom_shader_;
     GLsizei n_quad_;
     std::vector<vec3> quad_vertices;
@@ -316,14 +323,18 @@ class Renderer
     GLuint g_framebuffer = 0;
     int g_cubeTexUnit = 0;
 
-    void load_skybox_shader();
     std::string skybox_vertex_shader_file_path_;
     std::string skybox_fragment_shader_file_path_;
+
+    std::string reflective_sphere_vertex_shader_file_path_;
+    std::string reflective_sphere_fragment_shader_file_path_;
 
     Shader skybox_shader_;
     GLuint skyboxVAO = 0;
     GLuint skyboxVBO = 0;
     unsigned int cubemap_texture = 0;
+
+    Shader reflective_sphere_shader_;
 
     int cubemap_size = 256;
 

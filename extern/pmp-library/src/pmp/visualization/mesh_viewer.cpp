@@ -28,6 +28,7 @@ MeshViewer::MeshViewer(const char* title, int width, int height, bool showgui)
     add_draw_mode("Skybox only");
     add_draw_mode("Skybox with model");
     add_draw_mode("Custom Shader");
+    add_draw_mode("Reflective Sphere");
 
     crease_angle_ = 180.0;
 

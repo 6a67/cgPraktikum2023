@@ -266,7 +266,30 @@ void Renderer::load_skybox_shader()
     }
     catch (GLException& e)
     {
-        std::cerr << "Error: loading texture shader failed" << std::endl;
+        std::cerr << "Error: loading skybox shader failed" << std::endl;
+        std::cerr << e.what() << std::endl;
+    }
+}
+
+void Renderer::set_reflective_sphere_shader_files(std::string vertex_shader_file_path,
+                                                  std::string fragment_shader_file_path)
+{
+    // std::cout << "Loading texture shader: " << vertex_shader_file_path << " | " << fragment_shader_file_path
+    //           << std::endl;
+    reflective_sphere_vertex_shader_file_path_ = vertex_shader_file_path;
+    reflective_sphere_fragment_shader_file_path_ = fragment_shader_file_path;
+    load_reflective_sphere_shader();
+}
+void Renderer::load_reflective_sphere_shader()
+{
+    try
+    {
+        reflective_sphere_shader_.load(reflective_sphere_vertex_shader_file_path_.c_str(),
+                                       reflective_sphere_fragment_shader_file_path_.c_str());
+    }
+    catch (GLException& e)
+    {
+        std::cerr << "Error: loading reflective sphere shader failed" << std::endl;
         std::cerr << e.what() << std::endl;
     }
 }
@@ -768,13 +791,13 @@ void Renderer::drawFace(int face_side)
     if (status != GL_FRAMEBUFFER_COMPLETE)
         printf("Status error: %08x\n", status);
 
-    // Setup frame for rendering
-    // Clear the color and depth buffers
-    GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+    GL_CHECK(glClearColor(1.0f, 0.0f, 0.0f, 1.0f));
     GL_CHECK(glClearDepth(1.0f));
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
     GL_CHECK(glViewport(0, 0, cubemap_size, cubemap_size));
 
+    // Setup frame for rendering
+    // Clear the color and depth buffers
     custom_shader_.use();
     custom_shader_.set_uniform("window_height", cubemap_size);
     custom_shader_.set_uniform("window_width", cubemap_size);
@@ -785,6 +808,7 @@ void Renderer::drawFace(int face_side)
     GLuint empty_vao = 0;
     GL_CHECK(glGenVertexArrays(1, &empty_vao));
     GL_CHECK(glBindVertexArray(empty_vao));
+
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 
     // cleanup
@@ -876,6 +900,11 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         load_skybox_shader();
     }
 
+    if (!reflective_sphere_shader_.is_valid())
+    {
+        load_reflective_sphere_shader();
+    }
+
     if (!matcap_shader_.is_valid())
     {
         try
@@ -895,9 +924,6 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         use_checkerboard_texture();
     }
 
-    // draw the rest of the scene (bind default framebuffer)
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
-
     // Always check that our framebuffer is ok
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -909,12 +935,15 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         return;
     }
 
+    // draw the rest of the scene (bind default framebuffer)
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+
     // empty mesh?
     if (mesh_.is_empty())
         return;
 
     // setup frame
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
@@ -1157,7 +1186,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
 
         vec3 rotation = view_rotations_[(int)cam_direction_];
 
-        // TODO: Inverting this will also "flip" left/right view direction,
+        // todo: inverting this will also "flip" left/right view direction,
         // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
         rotation[2] = 0; // set z rotation to 0 so we don't flip the image
         custom_shader_.set_uniform("viewRotation", rotation);
@@ -1171,6 +1200,76 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
 
         GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
         GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
+    }
+    else if (draw_mode == "Reflective Sphere")
+    {
+        render_skybox_faces_to_texture();
+
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearDepth(1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+        GL_CHECK(glViewport(0, 0, wsize_, hsize_));
+
+        // Draw model with reflection shader
+        reflective_sphere_shader_.use();
+        reflective_sphere_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
+        reflective_sphere_shader_.set_uniform("modelview_matrix", mv_matrix);
+        reflective_sphere_shader_.set_uniform("normal_matrix", n_matrix);
+        reflective_sphere_shader_.set_uniform("point_size", point_size_);
+
+        reflective_sphere_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
+        reflective_sphere_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
+        reflective_sphere_shader_.set_uniform("front_color", front_color_);
+        reflective_sphere_shader_.set_uniform("back_color", back_color_);
+        reflective_sphere_shader_.set_uniform("ambient", ambient_);
+        reflective_sphere_shader_.set_uniform("diffuse", diffuse_);
+        reflective_sphere_shader_.set_uniform("specular", specular_);
+        reflective_sphere_shader_.set_uniform("shininess", shininess_);
+        reflective_sphere_shader_.set_uniform("alpha", alpha_);
+        reflective_sphere_shader_.set_uniform("use_lighting", true);
+        // reflective_sphere_shader_.set_uniform("use_texture", false);
+        reflective_sphere_shader_.set_uniform("use_srgb", false);
+        reflective_sphere_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
+
+        reflective_sphere_shader_.set_uniform("show_texture_layout", false);
+
+        GL_CHECK(glBindVertexArray(vertex_array_object_));
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+
+        GL_CHECK(glActiveTexture(GL_TEXTURE0));
+        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
+
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+
+        reflective_sphere_shader_.disable();
+        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
+        GL_CHECK(glBindVertexArray(0));
+
+        // Draw the custom shader for background
+        GL_CHECK(glDepthFunc(GL_LEQUAL));
+        custom_shader_.use();
+        custom_shader_.set_uniform("window_width", wsize_);
+        custom_shader_.set_uniform("window_height", hsize_);
+        custom_shader_.set_uniform("iTime", (float)itime_);
+
+        vec3 rotation = vec3(0, 0, 0);
+        // todo: inverting this will also "flip" left/right view direction,
+        // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
+        rotation[2] = 0; // set z rotation to 0 so we don't flip the image
+        custom_shader_.set_uniform("viewRotation", rotation);
+
+        GLuint empty_vao = 0;
+        GL_CHECK(glGenVertexArrays(1, &empty_vao));
+        GL_CHECK(glBindVertexArray(empty_vao));
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+
+        custom_shader_.disable();
+
+        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
+        GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
+        GL_CHECK(glDepthFunc(GL_LESS));
+        // drawSkybox(projection_matrix, view);
     }
 
     // disable transparency (doesn't work well with imgui)

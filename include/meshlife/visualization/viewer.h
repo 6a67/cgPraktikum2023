@@ -117,8 +117,23 @@ class Viewer : public pmp::MeshViewer
     std::string selected_shader_path_vertex_;
     std::string selected_shader_path_fragment_;
 
-    std::filesystem::file_time_type last_modified_shader_file_vertex_;
-    std::filesystem::file_time_type last_modified_shader_file_fragment_;
+    enum class ShaderType
+    {
+        SimpleVert,
+        SimpleFrag,
+        SkyboxVert,
+        SkyboxFrag,
+        ReflectiveSphereVert,
+        ReflectiveSphereFrag,
+        COUNT
+    };
+
+    std::filesystem::path get_path_from_shader_type(Viewer::ShaderType shader_type);
+
+    // Stores a pair of the last modified time and the shader type (we dont store the
+    // file name because for our simple shader it changes, and for the Skybox and ReflectiveSphere shader its always the
+    // same file
+    std::vector<std::pair<std::filesystem::file_time_type, ShaderType>> last_modified_shader_files_;
 
     // list of shader files
     std::vector<std::string> shader_files_fragment_;

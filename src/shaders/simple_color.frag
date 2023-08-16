@@ -1,7 +1,7 @@
 #version 330
 
-#define MAX_STEPS 100
-#define MAX_DIST 1000.
+#define MAX_STEPS 500
+#define MAX_DIST 10000.
 #define SURF_DIST .01
 #define PI 3.1415926535897932384626433832795
 
@@ -179,7 +179,7 @@ void main() {
 	col = pow(col, vec3(.4545));	// gamma correction
 	
 	gl_FragDepth = d / MAX_DIST;
-	//gl_FragDepth = 0.999;
+	gl_FragDepth = 0.999;
 	color = vec4(col, 1.0);
 	//color = vec4(0.0,uv.xy,1.0);
 	//color = vec4(0.0,texcoords.xy,1.0);

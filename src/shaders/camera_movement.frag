@@ -224,7 +224,8 @@ vec3 GetLight(vec3 p) {
 vec3 cameraMovement(in vec3 viewIn, out vec3 viewOut) {
 	vec3 points[4] = vec3[](vec3(0, 10, 0), vec3(0, 10, 10), vec3(-20, -7, -10), vec3(0, 10, 20));
 
-	float t = sin(iTime * 1) * 0.5 + 0.5;
+	float speed = 0.6;
+	float t = sin(iTime * speed) * 0.5 + 0.5;
 
 	vec3 p = points[0];
 
@@ -283,7 +284,8 @@ void main() {
 
 	light = pow(light, vec3(.4545));	// gamma correction
 
-	gl_FragDepth = clamp(d / MAX_DIST, -0.999, 0.999);
+	//gl_FragDepth = clamp(d / MAX_DIST, 0.0, 0.999);
+	gl_FragDepth = 1.0;
 	// gl_FragColor = vec4(col, 1.0);
 	out_Color = vec4(light, 1.0);
 }

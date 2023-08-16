@@ -71,8 +71,9 @@ Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title
     selected_shader_path_vertex_ = shaders_path_ / PATH_CUSTOM_SHADER_VERTEX;
     selected_shader_path_fragment_ = shaders_path_ / PATH_CUSTOM_SHADER_FRAGMENT;
 
-    last_modified_shader_file_vertex_ = std::filesystem::last_write_time(selected_shader_path_vertex_);
-    last_modified_shader_file_fragment_ = std::filesystem::last_write_time(selected_shader_path_fragment_);
+    for (size_t i = 0; i < (size_t)Viewer::ShaderType::COUNT; i++)
+        last_modified_shader_files_.push_back(std::make_pair(
+            std::filesystem::last_write_time(get_path_from_shader_type((Viewer::ShaderType)i)), (Viewer::ShaderType)i));
 
     reload_shader();
 
@@ -103,24 +104,64 @@ void Viewer::on_close_callback()
     file_watcher_disable();
 }
 
+std::filesystem::path Viewer::get_path_from_shader_type(Viewer::ShaderType shader_type)
+{
+    switch (shader_type)
+    {
+    case Viewer::ShaderType::SimpleVert:
+        return shaders_path_ / selected_shader_path_vertex_;
+    case Viewer::ShaderType::SimpleFrag:
+        return shaders_path_ / selected_shader_path_fragment_;
+
+    case Viewer::ShaderType::SkyboxVert:
+        return shaders_path_ / "skybox.vert";
+    case Viewer::ShaderType::SkyboxFrag:
+        return shaders_path_ / "skybox.frag";
+
+    case Viewer::ShaderType::ReflectiveSphereVert:
+        return shaders_path_ / "reflective_sphere.vert";
+    case Viewer::ShaderType::ReflectiveSphereFrag:
+        return shaders_path_ / "reflective_sphere.frag";
+    }
+    throw std::runtime_error("Invalid shader type");
+}
+
 void Viewer::file_watcher_func()
 {
     while (watch_shader_file_)
     {
-        std::filesystem::file_time_type current_shader_file_vertex_last_modified
-            = std::filesystem::last_write_time(selected_shader_path_vertex_);
-        std::filesystem::file_time_type current_shader_file_fragment_last_modified
-            = std::filesystem::last_write_time(selected_shader_path_fragment_);
 
-        if (current_shader_file_fragment_last_modified > last_modified_shader_file_fragment_
-            || current_shader_file_vertex_last_modified > last_modified_shader_file_vertex_)
+        for (auto& [last_modified, shader_type] : last_modified_shader_files_)
         {
-            last_modified_shader_file_vertex_ = current_shader_file_vertex_last_modified;
-            last_modified_shader_file_fragment_ = current_shader_file_fragment_last_modified;
+            std::filesystem::file_time_type current_last_modified
+                = std::filesystem::last_write_time(get_path_from_shader_type(shader_type));
 
-            reload_shader();
+            if (current_last_modified > last_modified)
+            {
+                last_modified = current_last_modified;
+                std::cout << "Reloading shader " << get_path_from_shader_type(shader_type) << std::endl;
+
+                // TODO: Replace this with a single function load_shader(shader_type)
+                switch (shader_type)
+                {
+                case Viewer::ShaderType::SimpleVert:
+                case Viewer::ShaderType::SimpleFrag:
+                    renderer_.load_custom_shader();
+                    break;
+
+                case Viewer::ShaderType::SkyboxVert:
+                case Viewer::ShaderType::SkyboxFrag:
+                    renderer_.load_skybox_shader();
+                    break;
+
+                case Viewer::ShaderType::ReflectiveSphereVert:
+                case Viewer::ShaderType::ReflectiveSphereFrag:
+                    renderer_.load_reflective_sphere_shader();
+                    break;
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
@@ -160,7 +201,8 @@ void Viewer::simulation_thread_func()
         auto c_now = std::chrono::high_resolution_clock::now();
         auto delta_clock_cycles = c_now - clock_last;
         auto delta_ms = (delta_clock_cycles / CLOCKS_PER_SEC).count();
-        // only start updating the state after it has been rendered, otherwise we start rendering and redraw mid frame
+        // only start updating the state after it has been rendered, otherwise we start rendering and redraw mid
+        // frame
         if (!ready_for_display && (unlimited_limit_UPS_ || (delta_ms >= (1000.0 / (double)UPS_))))
         {
             // std::cout << "Update state" << std::endl;
@@ -181,8 +223,12 @@ void Viewer::stop_simulation()
 
 void Viewer::reload_shader()
 {
-    renderer_.reload_shaders(selected_shader_path_vertex_, selected_shader_path_fragment_);
-    renderer_.set_skybox_shader_files(shaders_path_ / "skybox.vert", shaders_path_ / "skybox.frag");
+    renderer_.reload_shaders(get_path_from_shader_type(ShaderType::SimpleVert),
+                             get_path_from_shader_type(ShaderType::SimpleFrag));
+    renderer_.set_skybox_shader_files(get_path_from_shader_type(ShaderType::SkyboxVert),
+                                      get_path_from_shader_type(ShaderType::SkyboxFrag));
+    renderer_.set_reflective_sphere_shader_files(get_path_from_shader_type(ShaderType::ReflectiveSphereVert),
+                                                 get_path_from_shader_type(ShaderType::ReflectiveSphereFrag));
 }
 
 void Viewer::set_mesh_properties()
@@ -298,7 +344,7 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
 
         pmp::BoundingBox bb = bounds(mesh_);
         set_scene((pmp::vec3)bb.center(), 0.5 * bb.size());
-        set_draw_mode("Hidden Line");
+        // set_draw_mode("Hidden Line");
         set_mesh_properties();
         update_mesh();
 
@@ -323,9 +369,9 @@ void Viewer::do_processing()
 {
 
     // do_processing gets called every draw frame (most likely 60fps) so this limits the update rate
-    // ready_for_display gets set to true every time the simulation thread finishes one update, so we limit redraw calls
-    // to be in sync with the simulation delay. uncomplete_updates is used to circumvent this sync behaviour and allows
-    // to redraw the state[] array while it still gets updated in the simulation thread
+    // ready_for_display gets set to true every time the simulation thread finishes one update, so we limit redraw
+    // calls to be in sync with the simulation delay. uncomplete_updates is used to circumvent this sync behaviour
+    // and allows to redraw the state[] array while it still gets updated in the simulation thread
     if (uncomplete_updates || ready_for_display)
     {
         // reset update flag
