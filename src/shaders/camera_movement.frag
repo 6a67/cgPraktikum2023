@@ -1,7 +1,7 @@
 #version 330
 
 #define MAX_STEPS 200
-#define MAX_DIST 100.
+#define MAX_DIST 150.
 #define SURF_DIST .01
 
 precision mediump float;
@@ -147,7 +147,7 @@ vec3 GetNormal(vec3 p) {
 }
 
 vec3 GetLight(vec3 p) {
-	if(length(p) >= MAX_DIST - 1) {
+	if(length(p) >= MAX_DIST - MAX_DIST * 0.3) {
 		return vec3(0, 1, 1);
 	}
 
