@@ -14,6 +14,7 @@
 
 #include "meshlife/algorithms/mesh_lenia.h"
 #include "meshlife/stamps.h"
+#include "meshlife/visualization/custom_renderer.h"
 #include "meshlife/visualization/viewer.h"
 #include "pmp/algorithms/differential_geometry.h"
 #include "pmp/io/io.h"
@@ -24,7 +25,7 @@
 namespace meshlife
 {
 
-Viewer::Viewer(const char* title, int width, int height) : pmp::MeshViewer(title, width, height)
+Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(title, width, height)
 {
     // Load planar grid mesh by default
     mesh_.assign(pmp::quad_sphere(3));
@@ -122,6 +123,14 @@ std::filesystem::path Viewer::get_path_from_shader_type(Viewer::ShaderType shade
         return shaders_path_ / "reflective_sphere.vert";
     case Viewer::ShaderType::ReflectiveSphereFrag:
         return shaders_path_ / "reflective_sphere.frag";
+
+    case Viewer::ShaderType::PhongVert:
+        return shaders_path_ / "phong.vert";
+    case Viewer::ShaderType::PhongFrag:
+        return shaders_path_ / "phong.frag";
+
+    case Viewer::ShaderType::COUNT:
+        throw std::runtime_error("Invalid shader type");
     }
     throw std::runtime_error("Invalid shader type");
 }
@@ -142,25 +151,35 @@ void Viewer::file_watcher_func()
                 std::cout << "Reloading shader " << get_path_from_shader_type(shader_type) << std::endl;
 
                 // TODO: Replace this with a single function load_shader(shader_type)
-                switch (shader_type)
                 {
-                case Viewer::ShaderType::SimpleVert:
-                case Viewer::ShaderType::SimpleFrag:
-                    renderer_.load_custom_shader();
-                    break;
+                    switch (shader_type)
+                    {
+                    case Viewer::ShaderType::SimpleVert:
+                    case Viewer::ShaderType::SimpleFrag:
+                        renderer_.load_custom_shader();
+                        break;
 
-                case Viewer::ShaderType::SkyboxVert:
-                case Viewer::ShaderType::SkyboxFrag:
-                    renderer_.load_skybox_shader();
-                    break;
+                    case Viewer::ShaderType::SkyboxVert:
+                    case Viewer::ShaderType::SkyboxFrag:
+                        renderer_.load_skybox_shader();
+                        break;
 
-                case Viewer::ShaderType::ReflectiveSphereVert:
-                case Viewer::ShaderType::ReflectiveSphereFrag:
-                    renderer_.load_reflective_sphere_shader();
-                    break;
+                    case Viewer::ShaderType::ReflectiveSphereVert:
+                    case Viewer::ShaderType::ReflectiveSphereFrag:
+                        renderer_.load_reflective_sphere_shader();
+                        break;
+
+                    case Viewer::ShaderType::PhongVert:
+                    case Viewer::ShaderType::PhongFrag:
+                        renderer_.load_phong_shader();
+                        break;
+
+                    case Viewer::ShaderType::COUNT:
+                        throw std::runtime_error("Invalid shader type");
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
                 }
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
     }
 }
@@ -223,12 +242,14 @@ void Viewer::stop_simulation()
 
 void Viewer::reload_shader()
 {
-    renderer_.reload_shaders(get_path_from_shader_type(ShaderType::SimpleVert),
-                             get_path_from_shader_type(ShaderType::SimpleFrag));
+    renderer_.set_custom_shader_files(get_path_from_shader_type(ShaderType::SimpleVert),
+                                      get_path_from_shader_type(ShaderType::SimpleFrag));
     renderer_.set_skybox_shader_files(get_path_from_shader_type(ShaderType::SkyboxVert),
                                       get_path_from_shader_type(ShaderType::SkyboxFrag));
     renderer_.set_reflective_sphere_shader_files(get_path_from_shader_type(ShaderType::ReflectiveSphereVert),
                                                  get_path_from_shader_type(ShaderType::ReflectiveSphereFrag));
+    renderer_.set_phong_shader_files(get_path_from_shader_type(ShaderType::PhongVert),
+                                     get_path_from_shader_type(ShaderType::PhongFrag));
 }
 
 void Viewer::set_mesh_properties()
@@ -286,8 +307,8 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
         break;
 
     case GLFW_KEY_C:
-        renderer_.set_cam_direction((pmp::Renderer::CamDirection)(((int)renderer_.get_cam_direction() + 1)
-                                                                  % (int)pmp::Renderer::CamDirection::COUNT));
+        renderer_.set_cam_direction(
+            (CamDirection)(((int)renderer_.get_cam_direction() + 1) % (int)CamDirection::COUNT));
         std::cout << (int)renderer_.get_cam_direction() << " - "
                   << renderer_.direction_names_[(int)renderer_.get_cam_direction()];
         break;
@@ -352,8 +373,7 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     }
     default:
     {
-        MeshViewer::keyboard(key, scancode, action, mods);
-        renderer_.keyboard(key, action);
+        CustomMeshViewer::keyboard(key, scancode, action, mods);
         break;
     }
     }
@@ -369,9 +389,9 @@ void Viewer::do_processing()
 {
 
     // do_processing gets called every draw frame (most likely 60fps) so this limits the update rate
-    // ready_for_display gets set to true every time the simulation thread finishes one update, so we limit redraw
-    // calls to be in sync with the simulation delay. uncomplete_updates is used to circumvent this sync behaviour
-    // and allows to redraw the state[] array while it still gets updated in the simulation thread
+    // ready_for_display gets set to true every time the simulation thread finishes one update, so we limit
+    // redraw calls to be in sync with the simulation delay. uncomplete_updates is used to circumvent this sync
+    // behaviour and allows to redraw the state[] array while it still gets updated in the simulation thread
     if (uncomplete_updates || ready_for_display)
     {
         // reset update flag
@@ -493,7 +513,7 @@ void Viewer::select_debug_info_face(size_t face_idx)
 void Viewer::process_imgui()
 {
     ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate == FLT_MAX ? 0 : ImGui::GetIO().Framerate);
-    ImGui::Text("Calculated FPS: %.0f", renderer_.framerate);
+    ImGui::Text("Calculated FPS: %.0f", renderer_.get_framerate());
     ImGui::Separator();
     ImGui::Text("Current UPS (Simulation): %.0f", current_UPS_);
     ImGui::Separator();
@@ -503,7 +523,7 @@ void Viewer::process_imgui()
     ImGui::Separator();
 
     // Show mesh info in GUI via parent class
-    pmp::MeshViewer::process_imgui();
+    CustomMeshViewer::process_imgui();
 
     ImGui::Spacing();
     ImGui::Spacing();
@@ -552,14 +572,14 @@ void Viewer::process_imgui()
         }
         ImGui::Separator();
 
-        size_t direction_max = (size_t)pmp::Renderer::CamDirection::COUNT;
+        size_t direction_max = (size_t)CamDirection::COUNT;
         for (size_t i = 0; i < direction_max; i++)
         {
             std::stringstream label;
             label << "Direction: " << renderer_.direction_names_[i];
             if (ImGui::Button(label.str().c_str()))
             {
-                renderer_.set_cam_direction((pmp::Renderer::CamDirection)(i));
+                renderer_.set_cam_direction((CamDirection)(i));
             }
         }
         ImGui::Separator();
@@ -1055,7 +1075,7 @@ void Viewer::mouse(int button, int action, int mods)
     }
     else
     {
-        MeshViewer::mouse(button, action, mods);
+        CustomMeshViewer::mouse(button, action, mods);
     }
 }
 

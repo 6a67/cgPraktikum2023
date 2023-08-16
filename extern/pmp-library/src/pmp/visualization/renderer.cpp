@@ -3,12 +3,10 @@
 
 #include "pmp/visualization/renderer.h"
 
-#include <numbers>
 #include <stb_image.h>
 
 #include "pmp/algorithms/normals.h"
 #include "pmp/exceptions.h"
-#include "pmp/mat_vec.h"
 #include "pmp/visualization/cold_warm_texture.h"
 #include "pmp/visualization/mat_cap_shader.h"
 #include "pmp/visualization/phong_shader.h"
@@ -16,7 +14,7 @@
 namespace pmp
 {
 
-Renderer::Renderer(const SurfaceMesh& mesh, GLFWwindow* window) : mesh_(mesh), window_(window)
+Renderer::Renderer(const SurfaceMesh& mesh) : mesh_(mesh)
 {
     // initialize GL buffers to zero
     vertex_array_object_ = 0;
@@ -27,12 +25,8 @@ Renderer::Renderer(const SurfaceMesh& mesh, GLFWwindow* window) : mesh_(mesh), w
     edge_buffer_ = 0;
     feature_buffer_ = 0;
 
-    background_array_object = 0;
-    background_vertex_buffer_ = 0;
-
     // initialize buffer sizes
     n_vertices_ = 0;
-
     n_edges_ = 0;
     n_triangles_ = 0;
     n_features_ = 0;
@@ -60,17 +54,13 @@ Renderer::Renderer(const SurfaceMesh& mesh, GLFWwindow* window) : mesh_(mesh), w
 Renderer::~Renderer()
 {
     // delete OpenGL buffers
-    GL_CHECK(glDeleteBuffers(1, &vertex_buffer_));
-    GL_CHECK(glDeleteBuffers(1, &color_buffer_));
-    GL_CHECK(glDeleteBuffers(1, &normal_buffer_));
-    GL_CHECK(glDeleteBuffers(1, &tex_coord_buffer_));
-    GL_CHECK(glDeleteBuffers(1, &edge_buffer_));
-    GL_CHECK(glDeleteBuffers(1, &feature_buffer_));
-    GL_CHECK(glDeleteVertexArrays(1, &background_array_object));
-    GL_CHECK(glDeleteVertexArrays(1, &vertex_array_object_));
-
-    GL_CHECK(glDeleteFramebuffers(1, &g_framebuffer));
-    GL_CHECK(glDeleteBuffers(1, &g_depthbuffer));
+    glDeleteBuffers(1, &vertex_buffer_);
+    glDeleteBuffers(1, &color_buffer_);
+    glDeleteBuffers(1, &normal_buffer_);
+    glDeleteBuffers(1, &tex_coord_buffer_);
+    glDeleteBuffers(1, &edge_buffer_);
+    glDeleteBuffers(1, &feature_buffer_);
+    glDeleteVertexArrays(1, &vertex_array_object_);
 }
 
 void Renderer::load_texture(const char* filename, GLint format, GLint min_filter, GLint mag_filter, GLint wrap)
@@ -228,72 +218,6 @@ void Renderer::use_checkerboard_texture()
     }
 }
 
-void Renderer::load_custom_shader()
-{
-    if (custom_shader_path_vertex_ == "" || custom_shader_path_fragment_ == "")
-    {
-
-        std::cerr << "Error: No shader path provided. Did you call Renderer::reload_shaders?" << std::endl;
-    }
-    else
-    {
-        try
-        {
-            custom_shader_.load(custom_shader_path_vertex_.c_str(), custom_shader_path_fragment_.c_str());
-        }
-        catch (GLException& e)
-        {
-            std::cerr << "Error: loading custom shader failed" << std::endl;
-            std::cerr << e.what() << std::endl;
-        }
-    }
-}
-
-void Renderer::set_skybox_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path)
-{
-    // std::cout << "Loading texture shader: " << vertex_shader_file_path << " | " << fragment_shader_file_path
-    //           << std::endl;
-    skybox_vertex_shader_file_path_ = vertex_shader_file_path;
-    skybox_fragment_shader_file_path_ = fragment_shader_file_path;
-    load_skybox_shader();
-}
-
-void Renderer::load_skybox_shader()
-{
-    try
-    {
-        skybox_shader_.load(skybox_vertex_shader_file_path_.c_str(), skybox_fragment_shader_file_path_.c_str());
-    }
-    catch (GLException& e)
-    {
-        std::cerr << "Error: loading skybox shader failed" << std::endl;
-        std::cerr << e.what() << std::endl;
-    }
-}
-
-void Renderer::set_reflective_sphere_shader_files(std::string vertex_shader_file_path,
-                                                  std::string fragment_shader_file_path)
-{
-    // std::cout << "Loading texture shader: " << vertex_shader_file_path << " | " << fragment_shader_file_path
-    //           << std::endl;
-    reflective_sphere_vertex_shader_file_path_ = vertex_shader_file_path;
-    reflective_sphere_fragment_shader_file_path_ = fragment_shader_file_path;
-    load_reflective_sphere_shader();
-}
-void Renderer::load_reflective_sphere_shader()
-{
-    try
-    {
-        reflective_sphere_shader_.load(reflective_sphere_vertex_shader_file_path_.c_str(),
-                                       reflective_sphere_fragment_shader_file_path_.c_str());
-    }
-    catch (GLException& e)
-    {
-        std::cerr << "Error: loading reflective sphere shader failed" << std::endl;
-        std::cerr << e.what() << std::endl;
-    }
-}
-
 void Renderer::set_crease_angle(Scalar ca)
 {
     if (ca != crease_angle_)
@@ -303,110 +227,23 @@ void Renderer::set_crease_angle(Scalar ca)
     }
 }
 
-double Renderer::get_itime()
-{
-    return itime_;
-}
-
-void Renderer::set_itime(double itime)
-{
-    glfwSetTime(itime);
-    itime_ = glfwGetTime();
-}
-
-bool Renderer::get_itime_paused()
-{
-    return itime_paused;
-}
-
-void Renderer::itime_pause()
-{
-    itime_paused = true;
-}
-
-void Renderer::itime_continue()
-{
-    set_itime(itime_);
-    itime_paused = false;
-}
-
-void Renderer::itime_toggle_pause()
-{
-    if (itime_paused)
-    {
-        itime_continue();
-    }
-    else
-    {
-        itime_pause();
-    }
-}
-
-void Renderer::reload_shaders(std::string custom_shader_path_vertex, std::string custom_shader_path_fragment)
-{
-    custom_shader_path_fragment_ = custom_shader_path_fragment;
-    custom_shader_path_vertex_ = custom_shader_path_vertex;
-
-    // load automatically cleans up the old shader
-    load_custom_shader();
-}
-
 void Renderer::update_opengl_buffers()
 {
-    glfwGetWindowSize(window_, &wsize_, &hsize_);
-
-    // get time in seconds
-    if (!itime_paused)
-    {
-        itime_ = glfwGetTime();
-    }
-
-    if (!g_framebuffer)
-    {
-        std::cout << "Creating Framebuffer" << std::endl;
-        GL_CHECK(glGenFramebuffers(1, &g_framebuffer));
-        // GL_CHECK(glGenBuffers(1, &g_depthbuffer));
-        // std::cout << "ID : " << FramebufferNames_ << std::endl;
-
-        // GL_CHECK(glGenTextures(6, renderedTexture_));
-    }
-
     // are buffers already initialized?
     if (!vertex_array_object_)
     {
-        GL_CHECK(glGenVertexArrays(1, &vertex_array_object_));
-        GL_CHECK(glBindVertexArray(vertex_array_object_));
-        GL_CHECK(glGenBuffers(1, &vertex_buffer_));
-        GL_CHECK(glGenBuffers(1, &color_buffer_));
-        GL_CHECK(glGenBuffers(1, &normal_buffer_));
-        GL_CHECK(glGenBuffers(1, &tex_coord_buffer_));
-        GL_CHECK(glGenBuffers(1, &edge_buffer_));
-        GL_CHECK(glGenBuffers(1, &feature_buffer_));
+        glGenVertexArrays(1, &vertex_array_object_);
+        glBindVertexArray(vertex_array_object_);
+        glGenBuffers(1, &vertex_buffer_);
+        glGenBuffers(1, &color_buffer_);
+        glGenBuffers(1, &normal_buffer_);
+        glGenBuffers(1, &tex_coord_buffer_);
+        glGenBuffers(1, &edge_buffer_);
+        glGenBuffers(1, &feature_buffer_);
     }
-
-    if (!background_array_object)
-    {
-        GL_CHECK(glGenVertexArrays(1, &background_array_object));
-    }
-
-    if (!skyboxVAO)
-    {
-        glGenVertexArrays(1, &skyboxVAO);
-        glGenBuffers(1, &skyboxVBO);
-        glBindVertexArray(skyboxVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    }
-
-    if (!cubemap_texture)
-        cubemap_texture = loadCubemap(skybox_names);
-
-    CreateCubeTextureIfNotExist();
 
     // activate VAO
-    GL_CHECK(glBindVertexArray(vertex_array_object_));
+    glBindVertexArray(vertex_array_object_);
 
     // get properties
     auto vpos = mesh_.get_vertex_property<Point>("v:point");
@@ -588,61 +425,58 @@ void Renderer::update_opengl_buffers()
     // upload vertices
     if (!position_array.empty())
     {
-        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
-        GL_CHECK(glBufferData(
-            GL_ARRAY_BUFFER, position_array.size() * 3 * sizeof(float), position_array.data(), GL_STATIC_DRAW));
-        GL_CHECK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
-        GL_CHECK(glEnableVertexAttribArray(0));
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
+        glBufferData(GL_ARRAY_BUFFER, position_array.size() * 3 * sizeof(float), position_array.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(0);
         n_vertices_ = position_array.size();
     }
     else
     {
-        GL_CHECK(glDisableVertexAttribArray(0));
+        glDisableVertexAttribArray(0);
         n_vertices_ = 0;
     }
 
     // upload normals
     if (!normal_array.empty())
     {
-        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_));
-        GL_CHECK(glBufferData(
-            GL_ARRAY_BUFFER, normal_array.size() * 3 * sizeof(float), normal_array.data(), GL_STATIC_DRAW));
-        GL_CHECK(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
-        GL_CHECK(glEnableVertexAttribArray(1));
+        glBindBuffer(GL_ARRAY_BUFFER, normal_buffer_);
+        glBufferData(GL_ARRAY_BUFFER, normal_array.size() * 3 * sizeof(float), normal_array.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(1);
     }
     else
     {
-        GL_CHECK(glDisableVertexAttribArray(1));
+        glDisableVertexAttribArray(1);
     }
 
     // upload texture coordinates
     if (!tex_array.empty())
     {
-        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, tex_coord_buffer_));
-        GL_CHECK(glBufferData(GL_ARRAY_BUFFER, tex_array.size() * 2 * sizeof(float), tex_array.data(), GL_STATIC_DRAW));
-        GL_CHECK(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr));
-        GL_CHECK(glEnableVertexAttribArray(2));
+        glBindBuffer(GL_ARRAY_BUFFER, tex_coord_buffer_);
+        glBufferData(GL_ARRAY_BUFFER, tex_array.size() * 2 * sizeof(float), tex_array.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(2);
         has_texcoords_ = true;
     }
     else
     {
-        GL_CHECK(glDisableVertexAttribArray(2));
+        glDisableVertexAttribArray(2);
         has_texcoords_ = false;
     }
 
     // upload colors of vertices
     if (!color_array.empty())
     {
-        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, color_buffer_));
-        GL_CHECK(
-            glBufferData(GL_ARRAY_BUFFER, color_array.size() * 3 * sizeof(float), color_array.data(), GL_STATIC_DRAW));
-        GL_CHECK(glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
-        GL_CHECK(glEnableVertexAttribArray(3));
+        glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
+        glBufferData(GL_ARRAY_BUFFER, color_array.size() * 3 * sizeof(float), color_array.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(3);
         has_vertex_colors_ = true;
     }
     else
     {
-        GL_CHECK(glDisableVertexAttribArray(3));
+        glDisableVertexAttribArray(3);
         has_vertex_colors_ = false;
     }
 
@@ -660,9 +494,9 @@ void Renderer::update_opengl_buffers()
             edge_indices.push_back(vertex_indices[v1]);
         }
 
-        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
-        GL_CHECK(glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, edge_indices.size() * sizeof(unsigned int), edge_indices.data(), GL_STATIC_DRAW));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_);
+        glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER, edge_indices.size() * sizeof(unsigned int), edge_indices.data(), GL_STATIC_DRAW);
         n_edges_ = edge_indices.size();
     }
     else
@@ -685,198 +519,26 @@ void Renderer::update_opengl_buffers()
             }
         }
 
-        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_));
-        GL_CHECK(glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, features.size() * sizeof(unsigned int), features.data(), GL_STATIC_DRAW));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, features.size() * sizeof(unsigned int), features.data(), GL_STATIC_DRAW);
         n_features_ = features.size();
     }
     else
         n_features_ = 0;
 
-    // unbind object
-    GL_CHECK(glBindVertexArray(0));
-}
-
-Renderer::CamDirection Renderer::get_cam_direction()
-{
-    return cam_direction_;
-}
-
-void Renderer::set_cam_direction(Renderer::CamDirection direction)
-{
-    if (direction > CamDirection::COUNT)
-        throw std::runtime_error("Invalid camera direction");
-    cam_direction_ = direction;
-}
-
-void Renderer::keyboard(int key, int action)
-{
-    if (action != GLFW_PRESS && action != GLFW_REPEAT)
-        return;
-
-    switch (key)
-    {
-    }
-}
-
-void Renderer::CreateCubeTextureIfNotExist()
-{
-    if (g_cubeTexture)
-    {
-        return;
-    }
-    std::cout << "Cubemap texture created!: " << std::endl;
-
-    // create cube map texture and set appriopriate parameters
-    GL_CHECK(glGenTextures(1, &g_cubeTexture));
-    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
-
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
-
-    for (int face_side = 0; face_side < 6; ++face_side)
-    {
-        GL_CHECK(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face_side,
-                              0,
-                              GL_RGBA8,
-                              cubemap_size,
-                              cubemap_size,
-                              0,
-                              GL_RGBA,
-                              GL_UNSIGNED_BYTE,
-                              0));
-    }
-
-    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
-}
-
-void Renderer::drawSkybox(mat4 projection_matrix, mat4 view_matrix)
-{
-    // Cubemap reference:
-    // https://learnopengl.com/code_viewer_gh.php?code=src/4.advanced_opengl/6.1.cubemaps_skybox/cubemaps_skybox.cpphttps://learnopengl.com/code_viewer_gh.php?code=src/4.advanced_opengl/6.1.cubemaps_skybox/cubemaps_skybox.cpp
-
-    skybox_shader_.use();
-    skybox_shader_.set_uniform("projection", projection_matrix);
-    skybox_shader_.set_uniform("view", view_matrix);
-    GL_CHECK(glViewport(0, 0, wsize_, hsize_));
-    GL_CHECK(glDepthFunc(GL_LEQUAL));
-    GL_CHECK(glBindVertexArray(skyboxVAO));
-    GL_CHECK(glActiveTexture(GL_TEXTURE0));
-
-    if (use_picture_cubemap_)
-        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_texture));
-    else
-        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
-
-    GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 36));
-    GL_CHECK(glBindVertexArray(0));
-
-    GL_CHECK(glDepthFunc(GL_LESS));
-    skybox_shader_.disable();
-}
-
-void Renderer::drawFace(int face_side)
-{
-    // Bind g_cubeTexture to framebuffer's color attachment 0 (this way colors will be rendered to g_cubeTexture)
-    GL_CHECK(glFramebufferTexture2D(
-        GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face_side, g_cubeTexture, 0));
-
-    GLenum status = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE)
-        printf("Status error: %08x\n", status);
-
-    GL_CHECK(glClearColor(1.0f, 0.0f, 0.0f, 1.0f));
-    GL_CHECK(glClearDepth(1.0f));
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-    GL_CHECK(glViewport(0, 0, cubemap_size, cubemap_size));
-
-    // Setup frame for rendering
-    // Clear the color and depth buffers
-    custom_shader_.use();
-    custom_shader_.set_uniform("window_height", cubemap_size);
-    custom_shader_.set_uniform("window_width", cubemap_size);
-    custom_shader_.set_uniform("iTime", (float)itime_);
-    custom_shader_.set_uniform("viewRotation", view_rotations_[face_side]);
-
-    // Render on the whole framebuffer, complete from the lower left corner to the upper right corner
-    GLuint empty_vao = 0;
-    GL_CHECK(glGenVertexArrays(1, &empty_vao));
-    GL_CHECK(glBindVertexArray(empty_vao));
-
-    GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
-
-    // cleanup
-    custom_shader_.disable();
-    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
-    GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
-}
-
-unsigned int Renderer::loadCubemap(std::vector<std::string> faces)
-{
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
-
-    int width, height, nrChannels;
-    for (unsigned int i = 0; i < faces.size(); i++)
-    {
-        unsigned char* data = stbi_load(("../" + faces[i]).c_str(), &width, &height, &nrChannels, 0);
-        if (data)
-        {
-            glTexImage2D(
-                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-            stbi_image_free(data);
-        }
-        else
-        {
-            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
-            stbi_image_free(data);
-        }
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    return textureID;
-}
-
-void Renderer::render_skybox_faces_to_texture()
-{
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
-    // Draw the cubemap.
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_framebuffer));
-    // bind depth buffer, idk if we even need this
-    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthbuffer));
-    for (int i = 0; i < 6; i++)
-    {
-        drawFace(i);
-    }
-    GL_CHECK(glBindVertexArray(0));
-
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+    // unbind vertex array
+    glBindVertexArray(0);
 }
 
 void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix, const std::string& draw_mode)
 {
-    mat4 mv_matrix = modelview_matrix;
-    mat4 mvp_matrix = projection_matrix * modelview_matrix;
-    mat3 n_matrix = inverse(transpose(linear_part(mv_matrix)));
-
     // did we generate buffers already?
-    if (!vertex_array_object_ || !background_array_object || !skyboxVAO)
+    if (!vertex_array_object_)
     {
         update_opengl_buffers();
     }
 
-    // load shader
+    // load shader?
     if (!phong_shader_.is_valid())
     {
         try
@@ -890,21 +552,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         }
     }
 
-    if (!custom_shader_.is_valid())
-    {
-        load_custom_shader();
-    }
-
-    if (!skybox_shader_.is_valid())
-    {
-        load_skybox_shader();
-    }
-
-    if (!reflective_sphere_shader_.is_valid())
-    {
-        load_reflective_sphere_shader();
-    }
-
+    // load shader?
     if (!matcap_shader_.is_valid())
     {
         try
@@ -924,40 +572,19 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         use_checkerboard_texture();
     }
 
-    // Always check that our framebuffer is ok
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-        std::cerr << "Error: Framebuffer invalid" << std::endl;
-        std::cerr << "This means you're missing something in the framebuffer! See: "
-                     "https://learnopengl.com/Advanced-OpenGL/Framebuffers"
-                  << std::endl;
-        std::cerr << glCheckFramebufferStatus(GL_FRAMEBUFFER) << std::endl;
-        return;
-    }
-
-    // draw the rest of the scene (bind default framebuffer)
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
-
     // empty mesh?
     if (mesh_.is_empty())
         return;
 
-    // setup frame
-    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-    glClearDepth(1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
-    GL_CHECK(glViewport(0, 0, wsize_, hsize_));
+    // allow for transparent objects
+    glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
 
-    // set xyz-translation to 0
-    mat4 view = mv_matrix;
-    view(0, 3) = 0.0f;
-    view(1, 3) = 0.0f;
-    view(2, 3) = 0.0f;
+    // setup matrices
+    mat4 mv_matrix = modelview_matrix;
+    mat4 mvp_matrix = projection_matrix * modelview_matrix;
+    mat3 n_matrix = inverse(transpose(linear_part(mv_matrix)));
 
-    GL_CHECK(glBindVertexArray(vertex_array_object_));
-
-    // // setup shader
+    // setup shader
     phong_shader_.use();
     phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
     phong_shader_.set_uniform("modelview_matrix", mv_matrix);
@@ -978,12 +605,14 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     phong_shader_.set_uniform("show_texture_layout", false);
     phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
 
+    glBindVertexArray(vertex_array_object_);
+
     if (draw_mode == "Points")
     {
 #ifndef __EMSCRIPTEN__
         glEnable(GL_PROGRAM_POINT_SIZE);
 #endif
-        GL_CHECK(glDrawArrays(GL_POINTS, 0, n_vertices_));
+        glDrawArrays(GL_POINTS, 0, n_vertices_);
     }
 
     else if (draw_mode == "Hidden Line")
@@ -991,54 +620,20 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         if (mesh_.n_faces())
         {
             // draw faces
-            GL_CHECK(glDepthRange(0.01, 1.0));
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-            GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+            glDepthRange(0.01, 1.0);
+            glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
+            glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
 
             // overlay edges
-            GL_CHECK(glDepthRange(0.0, 1.0));
-            GL_CHECK(glDepthFunc(GL_LEQUAL));
+            glDepthRange(0.0, 1.0);
+            glDepthFunc(GL_LEQUAL);
             phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
             phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
             phong_shader_.set_uniform("use_lighting", false);
             phong_shader_.set_uniform("use_vertex_color", false);
-            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
-            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
-            GL_CHECK(glDepthFunc(GL_LESS));
-        }
-    }
-    else if (draw_mode == "Fractal Mode With Mesh")
-    {
-        // SEE: https://stackoverflow.com/a/21652955
-        // GL_CHECK(glBindVertexArray(background_array_object));
-        // // https://stackoverflow.com/a/59739538
-
-        // setup shader
-        phong_shader_.use();
-        phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-        phong_shader_.set_uniform("modelview_matrix", mv_matrix);
-        phong_shader_.set_uniform("normal_matrix", n_matrix);
-        phong_shader_.set_uniform("point_size", point_size_);
-        phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
-        phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
-        phong_shader_.set_uniform("front_color", front_color_);
-        phong_shader_.set_uniform("back_color", back_color_);
-        phong_shader_.set_uniform("ambient", ambient_);
-        phong_shader_.set_uniform("diffuse", diffuse_);
-        phong_shader_.set_uniform("specular", specular_);
-        phong_shader_.set_uniform("shininess", shininess_);
-        phong_shader_.set_uniform("alpha", alpha_);
-        phong_shader_.set_uniform("use_lighting", true);
-        phong_shader_.set_uniform("use_texture", false);
-        phong_shader_.set_uniform("use_srgb", false);
-        phong_shader_.set_uniform("show_texture_layout", false);
-        phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
-
-        GL_CHECK(glBindVertexArray(vertex_array_object_));
-
-        if (mesh_.n_faces())
-        {
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_);
+            glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr);
+            glDepthFunc(GL_LESS);
         }
     }
 
@@ -1046,7 +641,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     {
         if (mesh_.n_faces())
         {
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+            glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
         }
     }
 
@@ -1060,8 +655,8 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
                 matcap_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
                 matcap_shader_.set_uniform("normal_matrix", n_matrix);
                 matcap_shader_.set_uniform("alpha", alpha_);
-                GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_));
-                GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+                glBindTexture(GL_TEXTURE_2D, texture_);
+                glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
             }
             else
             {
@@ -1070,8 +665,8 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
                 phong_shader_.set_uniform("use_texture", true);
                 phong_shader_.set_uniform("use_vertex_color", false);
                 phong_shader_.set_uniform("use_srgb", use_srgb_);
-                GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_));
-                GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+                glBindTexture(GL_TEXTURE_2D, texture_);
+                glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
             }
         }
     }
@@ -1087,17 +682,17 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
             // draw faces
             phong_shader_.set_uniform("front_color", vec3(0.8, 0.8, 0.8));
             phong_shader_.set_uniform("back_color", vec3(0.9, 0.0, 0.0));
-            GL_CHECK(glDepthRange(0.01, 1.0));
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+            glDepthRange(0.01, 1.0);
+            glDrawArrays(GL_TRIANGLES, 0, n_vertices_);
 
             // overlay edges
-            GL_CHECK(glDepthRange(0.0, 1.0));
-            GL_CHECK(glDepthFunc(GL_LEQUAL));
+            glDepthRange(0.0, 1.0);
+            glDepthFunc(GL_LEQUAL);
             phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
             phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
-            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
-            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
-            GL_CHECK(glDepthFunc(GL_LESS));
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_);
+            glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr);
+            glDepthFunc(GL_LESS);
         }
     }
 
@@ -1108,183 +703,19 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         phong_shader_.set_uniform("back_color", vec3(0, 1, 0));
         phong_shader_.set_uniform("use_vertex_color", false);
         phong_shader_.set_uniform("use_lighting", false);
-        GL_CHECK(glDepthRange(0.0, 1.0));
-        GL_CHECK(glDepthFunc(GL_LEQUAL));
-        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_));
-        GL_CHECK(glDrawElements(GL_LINES, n_features_, GL_UNSIGNED_INT, nullptr));
-        GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-        GL_CHECK(glDepthFunc(GL_LESS));
-    }
-
-    GL_CHECK(glBindVertexArray(0));
-
-    // Draw skybox last (saves performance because it only needs to be drawn for every pixel thats not occluded by the
-    // model aka. the background pixels)
-    if (draw_mode == "Skybox only")
-    {
-        render_skybox_faces_to_texture();
-        drawSkybox(projection_matrix, view);
-    }
-    else if (draw_mode == "Skybox with model")
-    {
-        render_skybox_faces_to_texture();
-        drawSkybox(projection_matrix, view);
-
-        // // setup shader
-        phong_shader_.use();
-        phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-        phong_shader_.set_uniform("modelview_matrix", mv_matrix);
-        phong_shader_.set_uniform("normal_matrix", n_matrix);
-        phong_shader_.set_uniform("point_size", point_size_);
-        phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
-        phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
-        phong_shader_.set_uniform("front_color", front_color_);
-        phong_shader_.set_uniform("back_color", back_color_);
-        phong_shader_.set_uniform("ambient", ambient_);
-        phong_shader_.set_uniform("diffuse", diffuse_);
-        phong_shader_.set_uniform("specular", specular_);
-        phong_shader_.set_uniform("shininess", shininess_);
-        phong_shader_.set_uniform("alpha", alpha_);
-        phong_shader_.set_uniform("use_lighting", true);
-        phong_shader_.set_uniform("use_texture", false);
-        phong_shader_.set_uniform("use_srgb", false);
-        phong_shader_.set_uniform("show_texture_layout", false);
-        phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
-
-        GL_CHECK(glBindVertexArray(vertex_array_object_));
-        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
-
-        if (mesh_.n_faces())
-        {
-            // draw faces
-            GL_CHECK(glDepthRange(0.01, 1.0));
-            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-            GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
-
-            // overlay edges
-            GL_CHECK(glDepthRange(0.0, 1.0));
-            GL_CHECK(glDepthFunc(GL_LEQUAL));
-            phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
-            phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
-            phong_shader_.set_uniform("use_lighting", false);
-            phong_shader_.set_uniform("use_vertex_color", false);
-            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, edge_buffer_));
-            GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
-            GL_CHECK(glDepthFunc(GL_LESS));
-        }
-    }
-    else if (draw_mode == "Custom Shader")
-    {
-        GL_CHECK(glClearColor(0.0f, 0.8f, 1.0f, 1.0f));
-        GL_CHECK(glClearDepth(1.0f));
-        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
-        custom_shader_.use();
-        custom_shader_.set_uniform("window_width", wsize_);
-        custom_shader_.set_uniform("window_height", hsize_);
-        custom_shader_.set_uniform("iTime", (float)itime_);
-
-        vec3 rotation = view_rotations_[(int)cam_direction_];
-
-        // todo: inverting this will also "flip" left/right view direction,
-        // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
-        rotation[2] = 0; // set z rotation to 0 so we don't flip the image
-        custom_shader_.set_uniform("viewRotation", rotation);
-
-        GLuint empty_vao = 0;
-        GL_CHECK(glGenVertexArrays(1, &empty_vao));
-        GL_CHECK(glBindVertexArray(empty_vao));
-        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
-
-        custom_shader_.disable();
-
-        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
-        GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
-    }
-    else if (draw_mode == "Reflective Sphere")
-    {
-        render_skybox_faces_to_texture();
-
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClearDepth(1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
-        GL_CHECK(glViewport(0, 0, wsize_, hsize_));
-
-        // Draw model with reflection shader
-        reflective_sphere_shader_.use();
-        reflective_sphere_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-        reflective_sphere_shader_.set_uniform("modelview_matrix", mv_matrix);
-        reflective_sphere_shader_.set_uniform("normal_matrix", n_matrix);
-        reflective_sphere_shader_.set_uniform("point_size", point_size_);
-
-        reflective_sphere_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
-        reflective_sphere_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
-        reflective_sphere_shader_.set_uniform("front_color", front_color_);
-        reflective_sphere_shader_.set_uniform("back_color", back_color_);
-        reflective_sphere_shader_.set_uniform("ambient", ambient_);
-        reflective_sphere_shader_.set_uniform("diffuse", diffuse_);
-        reflective_sphere_shader_.set_uniform("specular", specular_);
-        reflective_sphere_shader_.set_uniform("shininess", shininess_);
-        reflective_sphere_shader_.set_uniform("alpha", alpha_);
-        reflective_sphere_shader_.set_uniform("use_lighting", true);
-        // reflective_sphere_shader_.set_uniform("use_texture", false);
-        reflective_sphere_shader_.set_uniform("use_srgb", false);
-        reflective_sphere_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
-
-        reflective_sphere_shader_.set_uniform("show_texture_layout", false);
-
-        GL_CHECK(glBindVertexArray(vertex_array_object_));
-        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
-
-        GL_CHECK(glActiveTexture(GL_TEXTURE0));
-        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture));
-
-        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-
-        reflective_sphere_shader_.disable();
-        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
-        GL_CHECK(glBindVertexArray(0));
-
-        // Draw the custom shader for background
-        GL_CHECK(glDepthFunc(GL_LEQUAL));
-        custom_shader_.use();
-        custom_shader_.set_uniform("window_width", wsize_);
-        custom_shader_.set_uniform("window_height", hsize_);
-        custom_shader_.set_uniform("iTime", (float)itime_);
-
-        vec3 rotation = vec3(0, 0, 0);
-        // todo: inverting this will also "flip" left/right view direction,
-        // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
-        rotation[2] = 0; // set z rotation to 0 so we don't flip the image
-        custom_shader_.set_uniform("viewRotation", rotation);
-
-        GLuint empty_vao = 0;
-        GL_CHECK(glGenVertexArrays(1, &empty_vao));
-        GL_CHECK(glBindVertexArray(empty_vao));
-        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
-
-        custom_shader_.disable();
-
-        GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
-        GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
-        GL_CHECK(glDepthFunc(GL_LESS));
-        // drawSkybox(projection_matrix, view);
+        glDepthRange(0.0, 1.0);
+        glDepthFunc(GL_LEQUAL);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, feature_buffer_);
+        glDrawElements(GL_LINES, n_features_, GL_UNSIGNED_INT, nullptr);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glDepthFunc(GL_LESS);
     }
 
     // disable transparency (doesn't work well with imgui)
-    GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
+    glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
 
-    GL_CHECK(glBindVertexArray(0));
-    GL_CHECK(glCheckError());
-
-    auto time_now = std::chrono::high_resolution_clock::now();
-
-    /* Getting number of milliseconds as an integer. */
-    auto ms_delta = std::chrono::duration_cast<std::chrono::nanoseconds>(time_now - last_time);
-    last_time = time_now;
-    double f = 1000.0 * 1000.0 * 1000.0 / ms_delta.count();
-    framerate = 0.3 * f + 0.7 * framerate;
+    glBindVertexArray(0);
+    glCheckError();
 }
 
 void Renderer::tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles)

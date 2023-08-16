@@ -2,10 +2,10 @@
 
 #include "meshlife/algorithms/mesh_automaton.h"
 #include "meshlife/algorithms/mesh_lenia.h"
+#include "meshlife/visualization/custom_meshviewer.h"
 #include <chrono>
 #include <ctime>
 #include <pmp/stop_watch.h>
-#include <pmp/visualization/mesh_viewer.h>
 #include <thread>
 
 namespace meshlife
@@ -24,7 +24,7 @@ const char* PATH_CUSTOM_SHADER_VERTEX = "simple_color.vert";
 const char* PATH_CUSTOM_SHADER_FRAGMENT = "simple_color.frag";
 
 /// pmp::MeshViewer extension to handle visualization of implemented algorithms
-class Viewer : public pmp::MeshViewer
+class Viewer : public CustomMeshViewer
 {
   public:
     /// window constructor
@@ -125,6 +125,8 @@ class Viewer : public pmp::MeshViewer
         SkyboxFrag,
         ReflectiveSphereVert,
         ReflectiveSphereFrag,
+        PhongVert,
+        PhongFrag,
         COUNT
     };
 

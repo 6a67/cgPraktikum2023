@@ -16,7 +16,7 @@ namespace pmp
 {
 
 MeshViewer::MeshViewer(const char* title, int width, int height, bool showgui)
-    : TrackballViewer(title, width, height, showgui), renderer_(mesh_, window_)
+    : TrackballViewer(title, width, height, showgui), renderer_(mesh_)
 {
     // setup draw modes
     clear_draw_modes();
@@ -24,11 +24,7 @@ MeshViewer::MeshViewer(const char* title, int width, int height, bool showgui)
     add_draw_mode("Hidden Line");
     add_draw_mode("Smooth Shading");
     add_draw_mode("Texture");
-    add_draw_mode("Fractal Mode With Mesh");
-    add_draw_mode("Skybox only");
-    add_draw_mode("Skybox with model");
-    add_draw_mode("Custom Shader");
-    add_draw_mode("Reflective Sphere");
+    set_draw_mode("Smooth Shading");
 
     crease_angle_ = 180.0;
 

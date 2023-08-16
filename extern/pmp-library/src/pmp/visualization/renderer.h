@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <chrono>
-#include <filesystem>
 #include <limits>
 
 #include "pmp/mat_vec.h"
@@ -12,15 +10,8 @@
 #include "pmp/visualization/gl.h"
 #include "pmp/visualization/shader.h"
 
-#include <GLFW/glfw3.h>
-
 namespace pmp
 {
-
-inline float degree_to_rad(float degree)
-{
-    return degree * (M_PI / 180.0);
-}
 
 class SurfaceMesh;
 
@@ -29,25 +20,11 @@ class SurfaceMesh;
 class Renderer
 {
   public:
-    enum class CamDirection
-    {
-        Right,
-        Left,
-        Top,
-        Bottom,
-        Front,
-        Back,
-        COUNT
-    };
-
-  public:
     //! Constructor
-    explicit Renderer(const SurfaceMesh& mesh, GLFWwindow* window);
+    explicit Renderer(const SurfaceMesh& mesh);
 
     //! Default destructor, deletes all OpenGL buffers.
     ~Renderer();
-
-    double framerate = 0;
 
     //! get front color
     const vec3& front_color() const
@@ -169,12 +146,6 @@ class Renderer
     //! Use checkerboard texture.
     void use_checkerboard_texture();
 
-    void reload_shaders(std::string custom_shader_path_vertex, std::string custom_shader_path_fragment);
-
-    void set_skybox_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path);
-
-    void set_reflective_sphere_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path);
-
     //! Load texture from file.
     //! \param filename the location and name of the texture
     //! \param format internal format (GL_RGB, GL_RGBA, GL_SRGB8, etc.)
@@ -196,68 +167,8 @@ class Renderer
     //! \throw IOException in case of failure to load texture from file
     void load_matcap(const char* filename);
 
-    // unsigned int loadCubemap(int width, int height, std::vector<unsigned char*> faces);
-
-    void keyboard(int key, int action);
-
-    double get_itime();
-
-    void set_itime(double itime = 0.0);
-
-    bool get_itime_paused();
-
-    void itime_pause();
-
-    void itime_continue();
-
-    void itime_toggle_pause();
-
-    CamDirection get_cam_direction();
-
-    void set_cam_direction(CamDirection direction);
-
-    void render_skybox_faces_to_texture();
-
-    void load_custom_shader();
-
-    void load_skybox_shader();
-
-    void load_reflective_sphere_shader();
-
-    // TODO: Implement these with proper functions or something
-    bool use_picture_cubemap_ = false;
-
-    const std::vector<std::string> direction_names_ = {
-        "right",
-        "left",
-        "top",
-        "bottom",
-        "front",
-        "back",
-
-    };
-    const std::vector<vec3> view_rotations_ = {
-        vec3(0, degree_to_rad(90), degree_to_rad(180)),
-        vec3(0, degree_to_rad(-90), degree_to_rad(180)),
-        vec3(degree_to_rad(90), 0, degree_to_rad(180)),
-        vec3(degree_to_rad(-90), 0, degree_to_rad(180)),
-        vec3(0, degree_to_rad(0), degree_to_rad(180)),
-        vec3(0, degree_to_rad(180), degree_to_rad(180)),
-    };
-
-    const std::vector<vec3> colors_ = {
-        vec3(1.0, 0.0, 0.0),
-        vec3(0.0, 1.0, 0.0),
-        vec3(0.0, 0.0, 1.0),
-        vec3(1.0, 1.0, 0.0),
-        vec3(0.0, 1.0, 1.0),
-        vec3(1.0, 0.0, 1.0),
-    };
-
   private:
     const SurfaceMesh& mesh_;
-
-    GLFWwindow* window_;
 
     // helpers for computing triangulation of a polygon
     struct Triangulation
@@ -299,8 +210,6 @@ class Renderer
     // this prevents overlapping/folding triangles for non-convex polygons.
     void tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles);
 
-    CamDirection cam_direction_ = CamDirection::Front; // start at direction facing forward
-
     // OpenGL buffers
     GLuint vertex_array_object_;
     GLuint vertex_buffer_;
@@ -309,68 +218,6 @@ class Renderer
     GLuint tex_coord_buffer_;
     GLuint edge_buffer_;
     GLuint feature_buffer_;
-
-    GLuint background_array_object;
-    GLuint background_vertex_buffer_;
-    Shader custom_shader_;
-    GLsizei n_quad_;
-    std::vector<vec3> quad_vertices;
-
-    void drawFace(int faceSide);
-    void CreateCubeTextureIfNotExist();
-    GLuint g_cubeTexture = 0;
-    GLuint g_depthbuffer = 0;
-    GLuint g_framebuffer = 0;
-    int g_cubeTexUnit = 0;
-
-    std::string skybox_vertex_shader_file_path_;
-    std::string skybox_fragment_shader_file_path_;
-
-    std::string reflective_sphere_vertex_shader_file_path_;
-    std::string reflective_sphere_fragment_shader_file_path_;
-
-    Shader skybox_shader_;
-    GLuint skyboxVAO = 0;
-    GLuint skyboxVBO = 0;
-    unsigned int cubemap_texture = 0;
-
-    Shader reflective_sphere_shader_;
-
-    int cubemap_size = 256;
-
-    void drawSkybox(mat4 projection_matrix, mat4 view_matrix);
-    unsigned int loadCubemap(std::vector<std::string> faces);
-
-    std::vector<std::string> skybox_names = {"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
-
-    float skyboxVertices[108] = { // positions
-        -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,
-        1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f,
-
-        -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f,
-        -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f, 1.0f,
-
-        1.0f,  -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f,
-
-        -1.0f, -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f, -1.0f, 1.0f,
-
-        -1.0f, 1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  1.0f,
-        1.0f,  1.0f,  1.0f,  -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f,  -1.0f,
-
-        -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
-        1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f};
-
-    std::string custom_shader_path_vertex_;
-    std::string custom_shader_path_fragment_;
-
-    int wsize_ = 800;
-    int hsize_ = 600;
-
-    double itime_ = 0;
-    bool itime_paused = false;
-    std::chrono::high_resolution_clock::time_point last_time;
 
     // buffer sizes
     GLsizei n_vertices_;
@@ -402,25 +249,5 @@ class Renderer
         Other
     } texture_mode_;
 };
-
-inline void CheckOpenGLError(const char* stat, const char* fname, int line)
-{
-    GLenum err = glGetError();
-
-    if (err != GL_NO_ERROR)
-    {
-
-        std::cerr << "ERROR (OPENGL): " << gluErrorString(err) << " '" << stat << "'"
-                  << " in " << fname << ":" << line << std::endl;
-        exit(1);
-    }
-}
-
-#define GL_CHECK(stat)                                                                                                 \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        stat;                                                                                                          \
-        CheckOpenGLError(#stat, __FILE__, __LINE__);                                                                   \
-    } while (0)
 
 } // namespace pmp
