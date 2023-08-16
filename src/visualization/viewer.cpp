@@ -446,7 +446,7 @@ void Viewer::select_debug_info_face(size_t face_idx)
 
 void Viewer::process_imgui()
 {
-    ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate == FLT_MAX ? 0 : ImGui::GetIO().Framerate);
     ImGui::Text("Calculated FPS: %.0f", renderer_.framerate);
     ImGui::Separator();
     ImGui::Text("Current UPS (Simulation): %.0f", current_UPS_);

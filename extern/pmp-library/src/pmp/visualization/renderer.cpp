@@ -1173,9 +1173,10 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     auto time_now = std::chrono::high_resolution_clock::now();
 
     /* Getting number of milliseconds as an integer. */
-    auto ms_delta = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - last_time);
+    auto ms_delta = std::chrono::duration_cast<std::chrono::nanoseconds>(time_now - last_time);
     last_time = time_now;
-    framerate = 1000.0 / ms_delta.count();
+    double f = 1000.0 * 1000.0 * 1000.0 / ms_delta.count();
+    framerate = 0.3 * f + 0.7 * framerate;
 }
 
 void Renderer::tesselate(const std::vector<vec3>& points, std::vector<ivec3>& triangles)
