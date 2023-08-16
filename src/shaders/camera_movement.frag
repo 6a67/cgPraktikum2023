@@ -1,6 +1,6 @@
 #version 330
 
-#define MAX_STEPS 50
+#define MAX_STEPS 200
 #define MAX_DIST 100.
 #define SURF_DIST .01
 
@@ -56,9 +56,8 @@ mat4 rot(float roll, float pitch, float yaw, vec3 point) {
 	return mat4(r[0], 0, r[1], 0, r[2], 0, p, 1);
 }
 
-float sdSphere( vec3 p, float s )
-{
-  return length(p)-s;
+float sdSphere(vec3 p, float s) {
+	return length(p) - s;
 }
 
 float sdMenger(vec3 p, float size, int iterations) {
@@ -148,8 +147,8 @@ vec3 GetNormal(vec3 p) {
 }
 
 vec3 GetLight(vec3 p) {
-	if (length(p) >= MAX_DIST - 1) {
-		return vec3(0,1,1);
+	if(length(p) >= MAX_DIST - 1) {
+		return vec3(0, 1, 1);
 	}
 
 	// phong lighting
@@ -188,7 +187,7 @@ vec3 GetLight(vec3 p) {
 	res = clamp(res, 0.1, 1.);
 
 	// object color
-	float objColRed = clamp(sin(p.x * 2/ MAX_DIST), 0., 1.);
+	float objColRed = clamp(sin(p.x * 2 / MAX_DIST), 0., 1.);
 	float objColGreen = clamp(cos(p.y / MAX_DIST), 0., 1.);
 	float objColBlue = clamp(sin(p.z / MAX_DIST), 0., 1.);
 	vec3 objColor = vec3(objColRed, objColGreen, objColBlue);
@@ -199,17 +198,31 @@ vec3 GetLight(vec3 p) {
 
 	// objColor = vec3(1.0);
 
-	return result * res * objColor;
+	// ambient occlusion
+	int steps = 5;
+	float stepSize = 0.2;	// increase this to increase effect of ambient occlusion
+	float sumO = 0.0;
+	float maxSum = .0;
+	for(int i = 0; i < steps; i++) {
+		vec3 pos = p + n * stepSize * float(i + 1);
+		float d = GetDist(pos);
+		sumO += 1. / pow(2., float(i)) * d;
+		maxSum += 1. / pow(2., float(i)) * stepSize * float(i + 1);
+	}
+
+	sumO = sumO / maxSum;
+
+	sumO = clamp(sumO, 0., 1.);
+
+	result = result * objColor * res * sumO;
+	// boost the brightness
+	// result = pow(result, vec3(1));
+
+	return result;
 }
 
-
 vec3 cameraMovement(in vec3 viewIn, out vec3 viewOut) {
-	vec3 points[4] = vec3[](
-		vec3(0, 10, 0),
-		vec3(0, 10, 10),
-		vec3(-20, -7, -10),
-		vec3(0, 10, 20)
-	);
+	vec3 points[4] = vec3[](vec3(0, 10, 0), vec3(0, 10, 10), vec3(-20, -7, -10), vec3(0, 10, 20));
 
 	float t = sin(iTime * 1) * 0.5 + 0.5;
 
@@ -248,7 +261,6 @@ in vec3 v2f_viewRotation;
 
 void main() {
 	vec2 uv = (texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5) / window_height;
-
 
 	// vec3 ro = vec3(0, 10, (sin(iTime * 0.2)) * 10 + 10);
 
