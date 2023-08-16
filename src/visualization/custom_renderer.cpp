@@ -63,9 +63,9 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         load_phong_shader();
     }
 
-    if (!custom_shader_.is_valid())
+    if (!simple_shader_.is_valid())
     {
-        load_custom_shader();
+        load_simple_shader();
     }
 
     if (!skybox_shader_.is_valid())
@@ -282,24 +282,24 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         GL_CHECK(glClearDepth(1.0f));
         GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-        custom_shader_.use();
-        custom_shader_.set_uniform("window_width", wsize_);
-        custom_shader_.set_uniform("window_height", hsize_);
-        custom_shader_.set_uniform("iTime", (float)itime_);
+        simple_shader_.use();
+        simple_shader_.set_uniform("window_width", wsize_);
+        simple_shader_.set_uniform("window_height", hsize_);
+        simple_shader_.set_uniform("iTime", (float)itime_);
 
         vec3 rotation = view_rotations_[(int)cam_direction_];
 
         // todo: inverting this will also "flip" left/right view direction,
         // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
         rotation[2] = 0; // set z rotation to 0 so we don't flip the image
-        custom_shader_.set_uniform("viewRotation", rotation);
+        simple_shader_.set_uniform("viewRotation", rotation);
 
         GLuint empty_vao = 0;
         GL_CHECK(glGenVertexArrays(1, &empty_vao));
         GL_CHECK(glBindVertexArray(empty_vao));
         GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 
-        custom_shader_.disable();
+        simple_shader_.disable();
 
         GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
         GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
@@ -351,23 +351,23 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
 
         // Draw the custom shader for background
         GL_CHECK(glDepthFunc(GL_LEQUAL));
-        custom_shader_.use();
-        custom_shader_.set_uniform("window_width", wsize_);
-        custom_shader_.set_uniform("window_height", hsize_);
-        custom_shader_.set_uniform("iTime", (float)itime_);
+        simple_shader_.use();
+        simple_shader_.set_uniform("window_width", wsize_);
+        simple_shader_.set_uniform("window_height", hsize_);
+        simple_shader_.set_uniform("iTime", (float)itime_);
 
         vec3 rotation = vec3(0, 0, 0);
         // todo: inverting this will also "flip" left/right view direction,
         // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
         rotation[2] = 0; // set z rotation to 0 so we don't flip the image
-        custom_shader_.set_uniform("viewRotation", rotation);
+        simple_shader_.set_uniform("viewRotation", rotation);
 
         GLuint empty_vao = 0;
         GL_CHECK(glGenVertexArrays(1, &empty_vao));
         GL_CHECK(glBindVertexArray(empty_vao));
         GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 
-        custom_shader_.disable();
+        simple_shader_.disable();
 
         GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
         GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
@@ -726,14 +726,14 @@ void CustomRenderer::update_opengl_buffers()
     GL_CHECK(glBindVertexArray(0));
 }
 
-void CustomRenderer::set_custom_shader_files(std::string custom_shader_path_vertex,
-                                             std::string custom_shader_path_fragment)
+void CustomRenderer::set_simple_shader_files(std::string simple_shader_path_vertex,
+                                             std::string simple_shader_path_fragment)
 {
-    custom_shader_path_fragment_ = custom_shader_path_fragment;
-    custom_shader_path_vertex_ = custom_shader_path_vertex;
+    simple_shader_path_fragment_ = simple_shader_path_fragment;
+    simple_shader_path_vertex_ = simple_shader_path_vertex;
 
     // load automatically cleans up the old shader
-    load_custom_shader();
+    load_simple_shader();
 }
 
 void CustomRenderer::set_skybox_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path)
@@ -830,9 +830,9 @@ void CustomRenderer::render_skybox_faces_to_texture()
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
 }
 
-void CustomRenderer::load_custom_shader()
+void CustomRenderer::load_simple_shader()
 {
-    if (custom_shader_path_vertex_ == "" || custom_shader_path_fragment_ == "")
+    if (simple_shader_path_vertex_ == "" || simple_shader_path_fragment_ == "")
     {
 
         std::cerr << "Error: No shader path provided. Did you call Renderer::reload_shaders?" << std::endl;
@@ -841,7 +841,7 @@ void CustomRenderer::load_custom_shader()
     {
         try
         {
-            custom_shader_.load(custom_shader_path_vertex_.c_str(), custom_shader_path_fragment_.c_str());
+            simple_shader_.load(simple_shader_path_vertex_.c_str(), simple_shader_path_fragment_.c_str());
         }
         catch (pmp::GLException& e)
         {
@@ -908,11 +908,11 @@ void CustomRenderer::draw_face(int face_side)
 
     // Setup frame for rendering
     // Clear the color and depth buffers
-    custom_shader_.use();
-    custom_shader_.set_uniform("window_height", cubemap_size_);
-    custom_shader_.set_uniform("window_width", cubemap_size_);
-    custom_shader_.set_uniform("iTime", (float)itime_);
-    custom_shader_.set_uniform("viewRotation", view_rotations_[face_side]);
+    simple_shader_.use();
+    simple_shader_.set_uniform("window_height", cubemap_size_);
+    simple_shader_.set_uniform("window_width", cubemap_size_);
+    simple_shader_.set_uniform("iTime", (float)itime_);
+    simple_shader_.set_uniform("viewRotation", view_rotations_[face_side]);
 
     // Render on the whole framebuffer, complete from the lower left corner to the upper right corner
     GLuint empty_vao = 0;
@@ -922,7 +922,7 @@ void CustomRenderer::draw_face(int face_side)
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 
     // cleanup
-    custom_shader_.disable();
+    simple_shader_.disable();
     GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
     GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
 }

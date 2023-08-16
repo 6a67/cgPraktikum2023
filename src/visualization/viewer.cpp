@@ -69,8 +69,8 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
 
     clock_last = std::chrono::high_resolution_clock::now();
 
-    selected_shader_path_vertex_ = shaders_path_ / PATH_CUSTOM_SHADER_VERTEX;
-    selected_shader_path_fragment_ = shaders_path_ / PATH_CUSTOM_SHADER_FRAGMENT;
+    selected_shader_path_vertex_ = shaders_path_ / PATH_SIMPLE_SHADER_VERTEX;
+    selected_shader_path_fragment_ = shaders_path_ / PATH_SIMPLE_SHADER_FRAGMENT;
 
     for (size_t i = 0; i < (size_t)Viewer::ShaderType::COUNT; i++)
         last_modified_shader_files_.push_back(std::make_pair(
@@ -156,7 +156,7 @@ void Viewer::file_watcher_func()
                     {
                     case Viewer::ShaderType::SimpleVert:
                     case Viewer::ShaderType::SimpleFrag:
-                        renderer_.load_custom_shader();
+                        renderer_.load_simple_shader();
                         break;
 
                     case Viewer::ShaderType::SkyboxVert:
@@ -242,7 +242,7 @@ void Viewer::stop_simulation()
 
 void Viewer::reload_shader()
 {
-    renderer_.set_custom_shader_files(get_path_from_shader_type(ShaderType::SimpleVert),
+    renderer_.set_simple_shader_files(get_path_from_shader_type(ShaderType::SimpleVert),
                                       get_path_from_shader_type(ShaderType::SimpleFrag));
     renderer_.set_skybox_shader_files(get_path_from_shader_type(ShaderType::SkyboxVert),
                                       get_path_from_shader_type(ShaderType::SkyboxFrag));

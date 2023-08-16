@@ -20,8 +20,8 @@ struct DebugData
     pmp::Face face;
 };
 
-const char* PATH_CUSTOM_SHADER_VERTEX = "simple_color.vert";
-const char* PATH_CUSTOM_SHADER_FRAGMENT = "simple_color.frag";
+const char* PATH_SIMPLE_SHADER_VERTEX = "simple_color.vert";
+const char* PATH_SIMPLE_SHADER_FRAGMENT = "simple_color.frag";
 
 /// pmp::MeshViewer extension to handle visualization of implemented algorithms
 class Viewer : public CustomMeshViewer

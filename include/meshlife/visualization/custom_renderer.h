@@ -65,7 +65,7 @@ class CustomRenderer
     //! Update all OpenGL buffers for rendering.
     void update_opengl_buffers();
 
-    void set_custom_shader_files(std::string custom_shader_path_vertex, std::string custom_shader_path_fragment);
+    void set_simple_shader_files(std::string simple_shader_path_vertex, std::string simple_shader_path_fragment);
 
     void set_skybox_shader_files(std::string vertex_shader_file_path, std::string fragment_shader_file_path);
 
@@ -93,7 +93,7 @@ class CustomRenderer
 
     void render_skybox_faces_to_texture();
 
-    void load_custom_shader();
+    void load_simple_shader();
 
     void load_skybox_shader();
 
@@ -206,13 +206,13 @@ class CustomRenderer
     unsigned int cubemap_texture_ = 0;
 
     // OpenGL shader
-    pmp::Shader custom_shader_;
+    pmp::Shader simple_shader_;
     pmp::Shader skybox_shader_;
     pmp::Shader reflective_sphere_shader_;
     pmp::Shader phong_shader_;
 
-    std::string custom_shader_path_vertex_;
-    std::string custom_shader_path_fragment_;
+    std::string simple_shader_path_vertex_;
+    std::string simple_shader_path_fragment_;
 
     std::string skybox_vertex_shader_file_path_;
     std::string skybox_fragment_shader_file_path_;
