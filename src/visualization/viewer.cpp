@@ -506,7 +506,7 @@ void Viewer::process_imgui()
         }
         ImGui::Separator();
 
-        int direction_max = (int)pmp::Renderer::CamDirection::COUNT;
+        size_t direction_max = (size_t)pmp::Renderer::CamDirection::COUNT;
         for (size_t i = 0; i < direction_max; i++)
         {
             std::stringstream label;
