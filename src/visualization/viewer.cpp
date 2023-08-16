@@ -464,14 +464,28 @@ void Viewer::process_imgui()
 
     if (ImGui::CollapsingHeader("Shader Settings"))
     {
-        if (ImGui::Button("Reset iTime"))
+        if (ImGui::Button("Step Backwards"))
         {
-            renderer_.set_itime();
+            renderer_.set_itime(std::max(0.0f, (float)renderer_.get_itime() - 0.1f));
         }
+
+        ImGui::SameLine();
 
         if (ImGui::Button(renderer_.get_itime_paused() ? "Continue iTime" : "Pause iTime"))
         {
             renderer_.itime_toggle_pause();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Step Forwards"))
+        {
+            renderer_.set_itime(renderer_.get_itime() + 0.1);
+        }
+
+        if (ImGui::Button("Reset iTime"))
+        {
+            renderer_.set_itime();
         }
 
         if (ImGui::Button(renderer_.use_picture_cubemap_ ? "Swap cubemap: Picture" : "Swap cubemap: Shader cubemap"))
