@@ -741,6 +741,7 @@ void Renderer::drawSkybox(mat4 projection_matrix, mat4 view_matrix)
     skybox_shader_.use();
     skybox_shader_.set_uniform("projection", projection_matrix);
     skybox_shader_.set_uniform("view", view_matrix);
+    GL_CHECK(glViewport(0, 0, wsize_, hsize_));
     GL_CHECK(glDepthFunc(GL_LEQUAL));
     GL_CHECK(glBindVertexArray(skyboxVAO));
     GL_CHECK(glActiveTexture(GL_TEXTURE0));
