@@ -14,14 +14,14 @@ namespace meshlife
 struct DebugData
 {
     // used to select a face does not always match with the index of face, use face.idx() instead
-    int selected_face_idx = 0;
+    int selected_face_idx_ = 0;
 
     // the currently selected face (may be invalid use face.is_valid())
-    pmp::Face face;
+    pmp::Face face_;
 };
 
-const char* PATH_SIMPLE_SHADER_VERTEX = "simple.vert";
-const char* PATH_SIMPLE_SHADER_FRAGMENT = "simple.frag";
+const char* PATH_SIMPLE_SHADER_VERTEX_ = "simple.vert";
+const char* PATH_SIMPLE_SHADER_FRAGMENT_ = "simple.frag";
 
 /// pmp::MeshViewer extension to handle visualization of implemented algorithms
 class Viewer : public CustomMeshViewer
@@ -36,16 +36,16 @@ class Viewer : public CustomMeshViewer
     inline void set_automaton()
     {
         // TODO: Free in destructor
-        automaton = new T(mesh_);
+        automaton_ = new T(mesh_);
 
-        if (auto* lenia = dynamic_cast<MeshLenia*>(automaton))
+        if (auto* lenia = dynamic_cast<MeshLenia*>(automaton_))
         {
             std::string s;
-            for (auto peak : lenia->p_beta_peaks)
+            for (auto peak : lenia->p_beta_peaks_)
             {
                 s += std::to_string(peak) + ",";
             }
-            strcpy(peak_string, s.c_str());
+            strcpy(peak_string_, s.c_str());
         }
     }
 
@@ -77,11 +77,11 @@ class Viewer : public CustomMeshViewer
     void on_close_callback() override;
 
   private:
-    MeshAutomaton* automaton = nullptr;
-    bool simulation_running = false;
-    char* modelpath_buf;
-    char* peak_string;
-    std::chrono::time_point<std::chrono::high_resolution_clock> clock_last;
+    MeshAutomaton* automaton_ = nullptr;
+    bool simulation_running_ = false;
+    char* modelpath_buf_;
+    char* peak_string_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> clock_last_;
 
     // Updates per second
     int UPS_ = 30;
@@ -90,12 +90,12 @@ class Viewer : public CustomMeshViewer
     double current_UPS_;
 
     // Debug data
-    DebugData debug_data;
+    DebugData debug_data_;
 
-    std::thread simulation_thread;
+    std::thread simulation_thread_;
     void simulation_thread_func();
-    std::atomic<bool> ready_for_display = false;
-    bool uncomplete_updates = false;
+    std::atomic<bool> ready_for_display_ = false;
+    bool uncomplete_updates_ = false;
 
     pmp::Color hsv_to_rgb(float h, float s, float v);
 
@@ -106,7 +106,7 @@ class Viewer : public CustomMeshViewer
     void stop_simulation();
 
     void file_watcher_func();
-    std::thread file_watcher_thread;
+    std::thread file_watcher_thread_;
 
     std::filesystem::path shaders_path_;
 

@@ -41,7 +41,7 @@ class QuadMeshNavigator
 
     OnEnterFace on_enter_face_callback_;
 
-    std::stack<pmp::Halfedge> stack;
+    std::stack<pmp::Halfedge> stack_;
 };
 
 } // namespace meshlife

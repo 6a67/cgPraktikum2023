@@ -74,17 +74,17 @@ bool QuadMeshNavigator::move_counterclockwise(int steps)
 
 void QuadMeshNavigator::push_position()
 {
-    stack.push(current_halfedge_);
+    stack_.push(current_halfedge_);
 }
 
 void QuadMeshNavigator::pop_position()
 {
-    if (stack.empty())
+    if (stack_.empty())
         throw std::runtime_error("Cannot pop empty stack");
 
-    current_halfedge_ = stack.top();
+    current_halfedge_ = stack_.top();
     current_face_ = mesh_.face(current_halfedge_);
-    stack.pop();
+    stack_.pop();
 }
 
 void QuadMeshNavigator::rotate_clockwise()

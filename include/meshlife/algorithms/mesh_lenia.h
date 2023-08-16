@@ -57,21 +57,21 @@ class MeshLenia : public MeshAutomaton
     float k(const Neighbor& n, const Neighbors& neighborhood);
     float growth(float f, float mu, float sigma);
 
-    float p_mu = 0.581;
-    float p_sigma = 0.131;
-    float p_neighborhood_radius = 0.371;
-    int neighbor_count_avg = 0;
+    float p_mu_ = 0.581;
+    float p_sigma_ = 0.131;
+    float p_neighborhood_radius_ = 0.371;
+    int neighbor_count_avg_ = 0;
 
-    std::vector<float> p_beta_peaks;
+    std::vector<float> p_beta_peaks_;
 
-    float average_edge_length = 0;
+    float average_edge_length_ = 0;
 
-    int p_T = 10;
+    int p_T_ = 10;
 
   private:
     std::vector<float> kernel_shell_length_;
 
-    NeighborMap neighbor_map;
+    NeighborMap neighbor_map_;
 
     /// Find face with lowest distance to all other facestamp
     pmp::Face find_center_face();

@@ -45,7 +45,6 @@ class MeshAutomaton
         return state_;
     }
 
-
     int p_upper_threshold_ = 3;
     int p_lower_threshold_ = 2;
 

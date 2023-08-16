@@ -39,14 +39,14 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
 
     update_mesh();
 
-    modelpath_buf = new char[300];
+    modelpath_buf_ = new char[300];
     for (int i = 0; i < 300; i++)
     {
-        modelpath_buf[i] = 0;
+        modelpath_buf_[i] = 0;
     }
 
-    std::string("./../assets/monkey.obj").copy(modelpath_buf, 299);
-    modelpath_buf[299] = '\0';
+    std::string("./../assets/monkey.obj").copy(modelpath_buf_, 299);
+    modelpath_buf_[299] = '\0';
 
     shaders_path_ = std::filesystem::current_path() / "shaders";
     if (!std::filesystem::exists(shaders_path_))
@@ -59,7 +59,7 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
         std::cout << "Found shaders folder in current directory! Using ./shaders" << std::endl;
     }
 
-    peak_string = new char[300];
+    peak_string_ = new char[300];
 
     add_help_item("T", "Toggle Simulation");
     add_help_item("R", "Load random state");
@@ -67,10 +67,10 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     add_help_item("D", "Select face and retrieve debug info");
     add_help_item("O", "Reload custom shader from file");
 
-    clock_last = std::chrono::high_resolution_clock::now();
+    clock_last_ = std::chrono::high_resolution_clock::now();
 
-    selected_shader_path_vertex_ = shaders_path_ / PATH_SIMPLE_SHADER_VERTEX;
-    selected_shader_path_fragment_ = shaders_path_ / PATH_SIMPLE_SHADER_FRAGMENT;
+    selected_shader_path_vertex_ = shaders_path_ / PATH_SIMPLE_SHADER_VERTEX_;
+    selected_shader_path_fragment_ = shaders_path_ / PATH_SIMPLE_SHADER_FRAGMENT_;
 
     for (size_t i = 0; i < (size_t)ShaderType::COUNT; i++)
         last_modified_shader_files_.push_back(
@@ -96,7 +96,7 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
 
 Viewer::~Viewer()
 {
-    delete modelpath_buf;
+    delete modelpath_buf_;
 }
 
 void Viewer::on_close_callback()
@@ -196,57 +196,57 @@ void Viewer::file_watcher_func()
 void Viewer::file_watcher_enable()
 {
     watch_shader_file_ = true;
-    file_watcher_thread = std::thread(&Viewer::file_watcher_func, this);
+    file_watcher_thread_ = std::thread(&Viewer::file_watcher_func, this);
 }
 
 void Viewer::file_watcher_disable()
 {
     watch_shader_file_ = false;
-    file_watcher_thread.join();
+    file_watcher_thread_.join();
 }
 
 void Viewer::start_simulation(bool single_step)
 {
-    if (simulation_running)
+    if (simulation_running_)
     {
         return;
     }
-    simulation_running = true;
+    simulation_running_ = true;
 
     if (single_step)
     {
-        automaton->update_state(1);
-        simulation_running = false;
+        automaton_->update_state(1);
+        simulation_running_ = false;
     }
     else
-        simulation_thread = std::thread(&Viewer::simulation_thread_func, this);
+        simulation_thread_ = std::thread(&Viewer::simulation_thread_func, this);
 }
 
 void Viewer::simulation_thread_func()
 {
-    while (simulation_running)
+    while (simulation_running_)
     {
         auto c_now = std::chrono::high_resolution_clock::now();
-        auto delta_clock_cycles = c_now - clock_last;
+        auto delta_clock_cycles = c_now - clock_last_;
         auto delta_ms = (delta_clock_cycles / CLOCKS_PER_SEC).count();
         // only start updating the state after it has been rendered, otherwise we start rendering and redraw mid
         // frame
-        if (!ready_for_display && (unlimited_limit_UPS_ || (delta_ms >= (1000.0 / (double)UPS_))))
+        if (!ready_for_display_ && (unlimited_limit_UPS_ || (delta_ms >= (1000.0 / (double)UPS_))))
         {
             // std::cout << "Update state" << std::endl;
-            clock_last = std::chrono::high_resolution_clock::now();
-            automaton->update_state(1);
+            clock_last_ = std::chrono::high_resolution_clock::now();
+            automaton_->update_state(1);
             current_UPS_ = 1000.0 / delta_ms;
-            ready_for_display = true;
+            ready_for_display_ = true;
         }
     }
 }
 
 void Viewer::stop_simulation()
 {
-    simulation_running = false;
-    if (simulation_thread.joinable())
-        simulation_thread.join();
+    simulation_running_ = false;
+    if (simulation_thread_.joinable())
+        simulation_thread_.join();
 }
 
 void Viewer::reload_shader()
@@ -268,8 +268,8 @@ void Viewer::set_mesh_properties()
         mesh_.add_face_property("f:color", pmp::Color{1, 1, 1});
         renderer_.update_opengl_buffers();
     }
-    if (automaton)
-        automaton->allocate_needed_properties();
+    if (automaton_)
+        automaton_->allocate_needed_properties();
 }
 
 void Viewer::retrieve_debug_info_for_selected_face()
@@ -280,8 +280,8 @@ void Viewer::retrieve_debug_info_for_selected_face()
     find_face(x, y, face);
     if (face.is_valid())
     {
-        debug_data.selected_face_idx = face.idx();
-        select_debug_info_face(debug_data.selected_face_idx);
+        debug_data_.selected_face_idx_ = face.idx();
+        select_debug_info_face(debug_data_.selected_face_idx_);
     }
 }
 
@@ -295,18 +295,18 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     {
     case GLFW_KEY_D:
         retrieve_debug_info_for_selected_face();
-        ready_for_display = true;
+        ready_for_display_ = true;
         break;
     case GLFW_KEY_S:
         start_simulation(true);
-        ready_for_display = true;
+        ready_for_display_ = true;
         break;
     case GLFW_KEY_R:
-        automaton->init_state_random();
-        ready_for_display = true;
+        automaton_->init_state_random();
+        ready_for_display_ = true;
         break;
     case GLFW_KEY_T:
-        if (simulation_running)
+        if (simulation_running_)
             stop_simulation();
         else
             start_simulation();
@@ -401,17 +401,17 @@ void Viewer::do_processing()
     // ready_for_display gets set to true every time the simulation thread finishes one update, so we limit
     // redraw calls to be in sync with the simulation delay. uncomplete_updates is used to circumvent this sync
     // behaviour and allows to redraw the state[] array while it still gets updated in the simulation thread
-    if (uncomplete_updates || ready_for_display)
+    if (uncomplete_updates_ || ready_for_display_)
     {
         // reset update flag
-        ready_for_display = false;
+        ready_for_display_ = false;
 
         // calculate raninbow colors for each face
-        if (automaton)
+        if (automaton_)
         {
             for (auto f : mesh_.faces())
             {
-                auto state = automaton->state(f);
+                auto state = automaton_->state(f);
                 float v = std::clamp(state, 0.0f, 1.0f);
                 // make hsv rainbow color
                 set_face_color(f, hsv_to_rgb((int)(v * 360 + 270) % 360, state, 1));
@@ -504,18 +504,18 @@ void Viewer::select_debug_info_face(size_t face_idx)
     }
 
     // reset previous selected face
-    if (debug_data.face.is_valid())
-        automaton->set_state(debug_data.face, 0);
+    if (debug_data_.face_.is_valid())
+        automaton_->set_state(debug_data_.face_, 0);
 
     if (selected_face.is_valid())
     {
         // highlight selected face
-        debug_data.face = selected_face;
-        automaton->set_state(selected_face, 1);
+        debug_data_.face_ = selected_face;
+        automaton_->set_state(selected_face, 1);
     }
     else
     {
-        debug_data.face = pmp::Face();
+        debug_data_.face_ = pmp::Face();
     }
 }
 
@@ -602,10 +602,10 @@ void Viewer::process_imgui()
         {
             std::stringstream label;
             label << "Unrestricted render updates (allows visual  update mid-calculation): "
-                  << (uncomplete_updates ? "ON" : "OFF") << ")";
+                  << (uncomplete_updates_ ? "ON" : "OFF") << ")";
             if (ImGui::Button(label.str().c_str()))
             {
-                uncomplete_updates = !uncomplete_updates;
+                uncomplete_updates_ = !uncomplete_updates_;
             }
         }
         {
@@ -626,12 +626,12 @@ void Viewer::process_imgui()
 
     if (ImGui::CollapsingHeader("Debug Info (Press D on a face)"))
     {
-        if (debug_data.face.is_valid())
+        if (debug_data_.face_.is_valid())
         {
-            ImGui::Text("Face Idx: %d", debug_data.face.idx());
+            ImGui::Text("Face Idx: %d", debug_data_.face_.idx());
 
             {
-                auto halfedges = mesh_.halfedges(debug_data.face);
+                auto halfedges = mesh_.halfedges(debug_data_.face_);
                 int count = 0;
                 // TODO: Figure out a better way to count the edges
                 for (auto h : halfedges)
@@ -645,7 +645,7 @@ void Viewer::process_imgui()
 
                 ImGui::Text("%s", title.str().c_str());
                 ImGui::BeginListBox("##halfedges", ImVec2(-FLT_MIN, count * 18.5));
-                for (pmp::Halfedge halfedge : mesh_.halfedges(debug_data.face))
+                for (pmp::Halfedge halfedge : mesh_.halfedges(debug_data_.face_))
                 {
                     ImGui::Text("Halfedge idx: %d (opp. HE: %d | Face: %d) (Start: %d | End: %d)",
                                 halfedge.idx(),
@@ -658,12 +658,12 @@ void Viewer::process_imgui()
             }
 
             {
-                int vertex_count = mesh_.valence(debug_data.face);
+                int vertex_count = mesh_.valence(debug_data_.face_);
                 std::stringstream label;
                 label << "Vertices of face: " << vertex_count;
                 ImGui::Text("%s", label.str().c_str());
                 ImGui::BeginListBox("##vertices", ImVec2(400, vertex_count * 18.5));
-                for (pmp::Vertex vertex : mesh_.vertices(debug_data.face))
+                for (pmp::Vertex vertex : mesh_.vertices(debug_data_.face_))
                 {
                     auto pos = mesh_.position(vertex);
                     ImGui::Text("Vertex idx: %d XYZ: (%.02f, %.02f, %.02f)", vertex.idx(), pos[0], pos[1], pos[2]);
@@ -675,27 +675,27 @@ void Viewer::process_imgui()
         {
             ImGui::Text("No face selected. Press 'D' on a Face to get more info.");
         }
-        ImGui::InputInt("Face Idx", &debug_data.selected_face_idx, 0);
+        ImGui::InputInt("Face Idx", &debug_data_.selected_face_idx_, 0);
         if (ImGui::Button("Previous face"))
         {
-            debug_data.selected_face_idx -= 1;
-            if (debug_data.selected_face_idx < 0)
-                debug_data.selected_face_idx = mesh_.faces_size() - 1;
-            select_debug_info_face(debug_data.selected_face_idx);
+            debug_data_.selected_face_idx_ -= 1;
+            if (debug_data_.selected_face_idx_ < 0)
+                debug_data_.selected_face_idx_ = mesh_.faces_size() - 1;
+            select_debug_info_face(debug_data_.selected_face_idx_);
         }
         ImGui::SameLine();
         if (ImGui::Button("Select face"))
         {
-            select_debug_info_face(debug_data.selected_face_idx);
+            select_debug_info_face(debug_data_.selected_face_idx_);
         }
         ImGui::SameLine();
         if (ImGui::Button("Next face"))
         {
-            debug_data.selected_face_idx += 1;
-            if ((size_t)debug_data.selected_face_idx >= mesh_.faces_size())
-                debug_data.selected_face_idx = 0;
+            debug_data_.selected_face_idx_ += 1;
+            if ((size_t)debug_data_.selected_face_idx_ >= mesh_.faces_size())
+                debug_data_.selected_face_idx_ = 0;
 
-            select_debug_info_face(debug_data.selected_face_idx);
+            select_debug_info_face(debug_data_.selected_face_idx_);
         }
     }
 
@@ -757,21 +757,21 @@ void Viewer::process_imgui()
                 std::cerr << e.what() << std::endl;
                 return;
             }
-            automaton->allocate_needed_properties();
+            automaton_->allocate_needed_properties();
             update_mesh();
         }
 
         if (ImGui::Button("Quad-Tri Subdivision"))
         {
             quad_tri_subdivision(mesh_);
-            automaton->allocate_needed_properties();
+            automaton_->allocate_needed_properties();
             update_mesh();
         }
 
         if (ImGui::Button("Catmull-Clark Subdivision"))
         {
             catmull_clark_subdivision(mesh_);
-            automaton->allocate_needed_properties();
+            automaton_->allocate_needed_properties();
             update_mesh();
         }
     }
@@ -829,10 +829,10 @@ void Viewer::process_imgui()
         ImGui::SameLine();
         {
             std::stringstream label;
-            label << "Toggle Simulation (" << (simulation_running ? "RUNNING" : "OFFLINE") << ")";
+            label << "Toggle Simulation (" << (simulation_running_ ? "RUNNING" : "OFFLINE") << ")";
             if (ImGui::Button(label.str().c_str()))
             {
-                if (simulation_running)
+                if (simulation_running_)
                     stop_simulation();
                 else
                     start_simulation();
@@ -843,28 +843,28 @@ void Viewer::process_imgui()
         ImGui::SameLine();
         if (ImGui::Button("Next"))
         {
-            automaton->update_state(1);
+            automaton_->update_state(1);
         }
 
         ImGui::Text("Gome of Life Random");
         ImGui::SameLine();
         if (ImGui::Button("Random"))
         {
-            automaton->init_state_random();
+            automaton_->init_state_random();
         }
 
         // threshold slider
         ImGui::Text("Thresholds");
         ImGui::PushItemWidth(100);
-        ImGui::SliderInt("Upper", &automaton->p_upper_threshold_, automaton->p_lower_threshold_, 10);
+        ImGui::SliderInt("Upper", &automaton_->p_upper_threshold_, automaton_->p_lower_threshold_, 10);
         ImGui::PopItemWidth();
         ImGui::PushItemWidth(100);
-        ImGui::SliderInt("Lower", &automaton->p_lower_threshold_, 1, 10);
+        ImGui::SliderInt("Lower", &automaton_->p_lower_threshold_, 1, 10);
         ImGui::PopItemWidth();
 
-        if (automaton->p_upper_threshold_ < automaton->p_lower_threshold_)
+        if (automaton_->p_upper_threshold_ < automaton_->p_lower_threshold_)
         {
-            automaton->p_upper_threshold_ = automaton->p_lower_threshold_;
+            automaton_->p_upper_threshold_ = automaton_->p_lower_threshold_;
         }
     }
 
@@ -884,34 +884,34 @@ void Viewer::process_imgui()
 
     if (ImGui::CollapsingHeader("Load custom model file"))
     {
-        ImGui::InputText("Path: ", modelpath_buf, 300);
+        ImGui::InputText("Path: ", modelpath_buf_, 300);
         if (ImGui::Button("Load model from path"))
         {
-            read_mesh_from_file(std::string(modelpath_buf));
+            read_mesh_from_file(std::string(modelpath_buf_));
         }
     }
 
-    if (auto* lenia = dynamic_cast<MeshLenia*>(automaton))
+    if (auto* lenia = dynamic_cast<MeshLenia*>(automaton_))
     {
         ImGui::Spacing();
         ImGui::Spacing();
         if (ImGui::CollapsingHeader("Lenia Parameters"))
         {
-            ImGui::SliderFloat("Mu", &lenia->p_mu, 0, 1);
-            ImGui::SliderFloat("Sigma", &lenia->p_sigma, 0, 1);
-            ImGui::SliderInt("T", &lenia->p_T, 1, 50);
+            ImGui::SliderFloat("Mu", &lenia->p_mu_, 0, 1);
+            ImGui::SliderFloat("Sigma", &lenia->p_sigma_, 0, 1);
+            ImGui::SliderInt("T", &lenia->p_T_, 1, 50);
 
             // TODO: recalculate neighbors
-            float neighborhood_radius = lenia->p_neighborhood_radius / lenia->average_edge_length;
+            float neighborhood_radius = lenia->p_neighborhood_radius_ / lenia->average_edge_length_;
             ImGui::SliderFloat("Neighborhood Radius", &neighborhood_radius, 0, 20);
-            lenia->p_neighborhood_radius = neighborhood_radius * lenia->average_edge_length;
+            lenia->p_neighborhood_radius_ = neighborhood_radius * lenia->average_edge_length_;
             if (ImGui::Button("Recalculate Neighborhood"))
             {
                 // TODO: move a_gol to a better place
                 stop_simulation();
                 lenia->allocate_needed_properties();
             }
-            ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighbor_count_avg);
+            ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighbor_count_avg_);
 
             if (ImGui::Button("Visualize Kernel Shell"))
             {
@@ -923,26 +923,26 @@ void Viewer::process_imgui()
                 lenia->visualize_kernel_skeleton();
             }
 
-            ImGui::InputText("Peaks: ", peak_string, 300);
+            ImGui::InputText("Peaks: ", peak_string_, 300);
             if (ImGui::Button("Update Peaks"))
             {
-                std::cout << peak_string << std::endl;
-                lenia->p_beta_peaks.clear();
-                std::string s(peak_string);
+                std::cout << peak_string_ << std::endl;
+                lenia->p_beta_peaks_.clear();
+                std::string s(peak_string_);
                 std::stringstream ss(s);
                 std::string item;
                 while (std::getline(ss, item, ','))
                 {
-                    lenia->p_beta_peaks.push_back(std::stof(item));
+                    lenia->p_beta_peaks_.push_back(std::stof(item));
                     std::cout << std::stof(item) << std::endl;
                 }
 
                 std::string s2;
-                for (auto peak : lenia->p_beta_peaks)
+                for (auto peak : lenia->p_beta_peaks_)
                 {
                     s2 += std::to_string(peak) + ",";
                 }
-                strcpy(peak_string, s2.c_str());
+                strcpy(peak_string_, s2.c_str());
             }
 
             if (ImGui::CollapsingHeader("Stamps"))
@@ -966,8 +966,8 @@ void Viewer::process_imgui()
                 if (ImGui::Button("Place Stamp (Select startface with 'D')"))
                 {
                     pmp::Face f;
-                    if (debug_data.face.is_valid())
-                        f = debug_data.face;
+                    if (debug_data_.face_.is_valid())
+                        f = debug_data_.face_;
                     switch (stamp)
                     {
                     case stamps::Shapes::s_none:
@@ -986,7 +986,7 @@ void Viewer::process_imgui()
                         break;
                     }
                     // cause the render to redraw the next draw frame
-                    ready_for_display = true;
+                    ready_for_display_ = true;
                 }
             }
 
@@ -1016,18 +1016,18 @@ void Viewer::process_imgui()
                 switch (item_current)
                 {
                 case 0:
-                    lenia->p_mu = 0.15;
-                    lenia->p_sigma = 0.017;
-                    lenia->p_beta_peaks = {1};
-                    lenia->p_T = 10;
-                    lenia->p_neighborhood_radius = 13 * lenia->average_edge_length;
+                    lenia->p_mu_ = 0.15;
+                    lenia->p_sigma_ = 0.017;
+                    lenia->p_beta_peaks_ = {1};
+                    lenia->p_T_ = 10;
+                    lenia->p_neighborhood_radius_ = 13 * lenia->average_edge_length_;
                     break;
                 case 1:
-                    lenia->p_mu = 0.26;
-                    lenia->p_sigma = 0.036;
-                    lenia->p_beta_peaks = {0.5, 1, 0.667};
-                    lenia->p_T = 10;
-                    lenia->p_neighborhood_radius = 18 * lenia->average_edge_length;
+                    lenia->p_mu_ = 0.26;
+                    lenia->p_sigma_ = 0.036;
+                    lenia->p_beta_peaks_ = {0.5, 1, 0.667};
+                    lenia->p_T_ = 10;
+                    lenia->p_neighborhood_radius_ = 18 * lenia->average_edge_length_;
                     break;
                 }
 
@@ -1074,8 +1074,8 @@ void Viewer::mouse(int button, int action, int mods)
             pmp::Face face;
             find_face(x, y, face);
             // TODO: maybe convert to method
-            automaton->set_state(face, 1.0);
-            if (auto* lenia = dynamic_cast<MeshLenia*>(automaton))
+            automaton_->set_state(face, 1.0);
+            if (auto* lenia = dynamic_cast<MeshLenia*>(automaton_))
             {
                 lenia->highlight_neighbors(face);
                 std::cout << "highlighted neighbors" << std::endl;
