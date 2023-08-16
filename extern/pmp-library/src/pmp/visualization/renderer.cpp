@@ -823,6 +823,22 @@ unsigned int Renderer::loadCubemap(std::vector<std::string> faces)
     return textureID;
 }
 
+void Renderer::render_skybox_faces_to_texture()
+{
+    GL_CHECK(glEnable(GL_DEPTH_TEST));
+    // Draw the cubemap.
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_framebuffer));
+    // bind depth buffer, idk if we even need this
+    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthbuffer));
+    for (int i = 0; i < 6; i++)
+    {
+        drawFace(i);
+    }
+    GL_CHECK(glBindVertexArray(0));
+
+    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+}
+
 void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix, const std::string& draw_mode)
 {
     mat4 mv_matrix = modelview_matrix;
@@ -878,19 +894,9 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
         use_checkerboard_texture();
     }
 
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
-    // Draw the cubemap.
-    GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_framebuffer));
-    // bind depth buffer, idk if we even need this
-    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthbuffer));
-    for (int i = 0; i < 6; i++)
-    {
-        drawFace(i);
-    }
-    GL_CHECK(glBindVertexArray(0));
-
     // draw the rest of the scene (bind default framebuffer)
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
+
     // Always check that our framebuffer is ok
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -1086,10 +1092,12 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     // model aka. the background pixels)
     if (draw_mode == "Skybox only")
     {
+        render_skybox_faces_to_texture();
         drawSkybox(projection_matrix, view);
     }
     else if (draw_mode == "Skybox with model")
     {
+        render_skybox_faces_to_texture();
         drawSkybox(projection_matrix, view);
 
         // // setup shader

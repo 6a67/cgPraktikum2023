@@ -214,6 +214,8 @@ class Renderer
 
     void set_cam_direction(CamDirection direction);
 
+    void render_skybox_faces_to_texture();
+
     // TODO: Implement these with proper functions or something
     bool use_picture_cubemap_ = false;
 
