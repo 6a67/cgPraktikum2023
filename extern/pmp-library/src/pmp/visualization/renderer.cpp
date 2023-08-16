@@ -1145,7 +1145,7 @@ void Renderer::draw(const mat4& projection_matrix, const mat4& modelview_matrix,
     }
     else if (draw_mode == "Custom Shader")
     {
-        GL_CHECK(glClearColor(1.0f, 0.2f, 0.2f, 1.0f));
+        GL_CHECK(glClearColor(0.0f, 0.8f, 1.0f, 1.0f));
         GL_CHECK(glClearDepth(1.0f));
         GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
