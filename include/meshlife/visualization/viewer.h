@@ -20,8 +20,8 @@ struct DebugData
     pmp::Face face;
 };
 
-const char* PATH_SIMPLE_SHADER_VERTEX = "simple_color.vert";
-const char* PATH_SIMPLE_SHADER_FRAGMENT = "simple_color.frag";
+const char* PATH_SIMPLE_SHADER_VERTEX = "simple.vert";
+const char* PATH_SIMPLE_SHADER_FRAGMENT = "simple.frag";
 
 /// pmp::MeshViewer extension to handle visualization of implemented algorithms
 class Viewer : public CustomMeshViewer
@@ -110,27 +110,14 @@ class Viewer : public CustomMeshViewer
 
     std::filesystem::path shaders_path_;
 
-    bool watch_shader_file_ = false;
+    volatile bool watch_shader_file_ = false;
     void file_watcher_enable();
     void file_watcher_disable();
 
     std::string selected_shader_path_vertex_;
     std::string selected_shader_path_fragment_;
 
-    enum class ShaderType
-    {
-        SimpleVert,
-        SimpleFrag,
-        SkyboxVert,
-        SkyboxFrag,
-        ReflectiveSphereVert,
-        ReflectiveSphereFrag,
-        PhongVert,
-        PhongFrag,
-        COUNT
-    };
-
-    std::filesystem::path get_path_from_shader_type(Viewer::ShaderType shader_type);
+    std::filesystem::path get_path_from_shader_type(ShaderType shader_type);
 
     // Stores a pair of the last modified time and the shader type (we dont store the
     // file name because for our simple shader it changes, and for the Skybox and ReflectiveSphere shader its always the

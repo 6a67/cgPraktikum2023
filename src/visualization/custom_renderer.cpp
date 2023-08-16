@@ -1,4 +1,5 @@
 #include "meshlife/visualization/custom_renderer.h"
+#include "gl_helper.h"
 #include "pmp/algorithms/normals.h"
 #include "pmp/surface_mesh.h"
 
@@ -727,9 +728,9 @@ void CustomRenderer::update_opengl_buffers()
 }
 
 void CustomRenderer::set_simple_shader_files(std::string simple_shader_path_vertex,
-                                             std::string simple_shader_path_fragment)
+                                             std::string custom_shader_path_fragment)
 {
-    simple_shader_path_fragment_ = simple_shader_path_fragment;
+    simple_shader_path_fragment_ = custom_shader_path_fragment;
     simple_shader_path_vertex_ = simple_shader_path_vertex;
 
     // load automatically cleans up the old shader

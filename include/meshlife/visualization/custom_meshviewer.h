@@ -1,8 +1,12 @@
 #pragma once
 
+#include <map>
+
 #include "custom_renderer.h"
+#include "meshlife/shadertype.h"
 #include "pmp/surface_mesh.h"
 #include "pmp/visualization/trackball_viewer.h"
+
 namespace meshlife
 {
 
@@ -35,6 +39,11 @@ class CustomMeshViewer : public pmp::TrackballViewer
     //! get vertex closest to 3D position under the mouse cursor
     pmp::Vertex pick_vertex(int x, int y);
 
+    // Notifies the viewer that a shader reload is required
+    // this is used so the file watcher thread can notify the viewer thread
+    // that a shader file has changed (otherwise it might reload mid-draw which causes a crash sometimes)
+    void notify_shader_reload_required(ShaderType shader_typ);
+
   protected:
     pmp::SurfaceMesh mesh_;
 
@@ -43,6 +52,9 @@ class CustomMeshViewer : public pmp::TrackballViewer
     std::string filename_; //!< the current file
 
     float crease_angle_;
+
+    // maps the shader type to a boolean indicating whether it needs to be reloaded before the next draw call
+    std::map<ShaderType, bool> shader_reload_required_map_;
 };
 
 } // namespace meshlife

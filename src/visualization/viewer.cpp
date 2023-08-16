@@ -72,9 +72,9 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     selected_shader_path_vertex_ = shaders_path_ / PATH_SIMPLE_SHADER_VERTEX;
     selected_shader_path_fragment_ = shaders_path_ / PATH_SIMPLE_SHADER_FRAGMENT;
 
-    for (size_t i = 0; i < (size_t)Viewer::ShaderType::COUNT; i++)
-        last_modified_shader_files_.push_back(std::make_pair(
-            std::filesystem::last_write_time(get_path_from_shader_type((Viewer::ShaderType)i)), (Viewer::ShaderType)i));
+    for (size_t i = 0; i < (size_t)ShaderType::COUNT; i++)
+        last_modified_shader_files_.push_back(
+            std::make_pair(std::filesystem::last_write_time(get_path_from_shader_type((ShaderType)i)), (ShaderType)i));
 
     reload_shader();
 
@@ -105,31 +105,31 @@ void Viewer::on_close_callback()
     file_watcher_disable();
 }
 
-std::filesystem::path Viewer::get_path_from_shader_type(Viewer::ShaderType shader_type)
+std::filesystem::path Viewer::get_path_from_shader_type(ShaderType shader_type)
 {
     switch (shader_type)
     {
-    case Viewer::ShaderType::SimpleVert:
+    case ShaderType::SimpleVert:
         return shaders_path_ / selected_shader_path_vertex_;
-    case Viewer::ShaderType::SimpleFrag:
+    case ShaderType::SimpleFrag:
         return shaders_path_ / selected_shader_path_fragment_;
 
-    case Viewer::ShaderType::SkyboxVert:
+    case ShaderType::SkyboxVert:
         return shaders_path_ / "skybox.vert";
-    case Viewer::ShaderType::SkyboxFrag:
+    case ShaderType::SkyboxFrag:
         return shaders_path_ / "skybox.frag";
 
-    case Viewer::ShaderType::ReflectiveSphereVert:
+    case ShaderType::ReflectiveSphereVert:
         return shaders_path_ / "reflective_sphere.vert";
-    case Viewer::ShaderType::ReflectiveSphereFrag:
+    case ShaderType::ReflectiveSphereFrag:
         return shaders_path_ / "reflective_sphere.frag";
 
-    case Viewer::ShaderType::PhongVert:
+    case ShaderType::PhongVert:
         return shaders_path_ / "phong.vert";
-    case Viewer::ShaderType::PhongFrag:
+    case ShaderType::PhongFrag:
         return shaders_path_ / "phong.frag";
 
-    case Viewer::ShaderType::COUNT:
+    case ShaderType::COUNT:
         throw std::runtime_error("Invalid shader type");
     }
     throw std::runtime_error("Invalid shader type");
@@ -154,29 +154,38 @@ void Viewer::file_watcher_func()
                 {
                     switch (shader_type)
                     {
-                    case Viewer::ShaderType::SimpleVert:
-                    case Viewer::ShaderType::SimpleFrag:
-                        renderer_.load_simple_shader();
+                    case ShaderType::SimpleVert:
+                        notify_shader_reload_required(ShaderType::SimpleVert);
+                        break;
+                    case ShaderType::SimpleFrag:
+                        notify_shader_reload_required(ShaderType::SimpleFrag);
                         break;
 
-                    case Viewer::ShaderType::SkyboxVert:
-                    case Viewer::ShaderType::SkyboxFrag:
-                        renderer_.load_skybox_shader();
+                    case ShaderType::SkyboxVert:
+                        notify_shader_reload_required(ShaderType::SkyboxVert);
+                        break;
+                    case ShaderType::SkyboxFrag:
+                        notify_shader_reload_required(ShaderType::SkyboxFrag);
                         break;
 
-                    case Viewer::ShaderType::ReflectiveSphereVert:
-                    case Viewer::ShaderType::ReflectiveSphereFrag:
-                        renderer_.load_reflective_sphere_shader();
+                    case ShaderType::ReflectiveSphereVert:
+                        notify_shader_reload_required(ShaderType::ReflectiveSphereVert);
+                        break;
+                    case ShaderType::ReflectiveSphereFrag:
+                        notify_shader_reload_required(ShaderType::ReflectiveSphereFrag);
                         break;
 
-                    case Viewer::ShaderType::PhongVert:
-                    case Viewer::ShaderType::PhongFrag:
-                        renderer_.load_phong_shader();
+                    case ShaderType::PhongVert:
+                        notify_shader_reload_required(ShaderType::PhongVert);
+                        break;
+                    case ShaderType::PhongFrag:
+                        notify_shader_reload_required(ShaderType::PhongFrag);
                         break;
 
-                    case Viewer::ShaderType::COUNT:
+                    case ShaderType::COUNT:
                         throw std::runtime_error("Invalid shader type");
                     }
+
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
                 }
             }
