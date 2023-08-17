@@ -71,7 +71,7 @@ class CustomRenderer
 
     void set_cam_direction(CamDirection direction);
 
-    void render_skybox_faces_to_texture();
+    void render_skybox_faces_to_texture(pmp::vec3 model_pos);
 
     void load_simple_shader();
 
@@ -203,7 +203,7 @@ class CustomRenderer
     std::string phong_vertex_shader_file_path_;
     std::string phong_fragment_shader_file_path_;
 
-    void draw_face(int face_side);
+    void draw_face(int face_side, pmp::vec3 model_pos);
 
     void create_cube_texture_if_not_exist();
 
