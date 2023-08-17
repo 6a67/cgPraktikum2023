@@ -156,7 +156,7 @@ void MeshViewer::process_imgui()
 void MeshViewer::draw(const std::string& drawMode)
 {
     // draw mesh
-    renderer_.draw(projection_matrix_, modelview_matrix_, drawMode);
+    renderer_.draw(projection_matrix_, get_modelview_matrix(), drawMode);
 }
 
 void MeshViewer::keyboard(int key, int scancode, int action, int mods)

@@ -92,6 +92,12 @@ class TrackballViewer : public Window
     //! rotate the scene (around its center) and update modelview matrix
     void rotate(const vec3& axis, float angle);
 
+    void set_mesh_scale(vec3 scale);
+
+    void set_mesh_scale(float scale);
+
+    mat4 get_modelview_matrix() const;
+
     //! virtual trackball: map 2D screen point to unit sphere. used by rotate().
     bool map_to_sphere(const ivec2& point, vec3& result);
 
@@ -112,7 +118,9 @@ class TrackballViewer : public Window
 
     //! OpenGL matrices
     mat4 projection_matrix_;
-    mat4 modelview_matrix_;
+    vec3 scale_;
+    vec3 position_;
+    mat4 rotation_matrix_;
 
     //! trackball helpers
     ivec2 last_point_2d_;

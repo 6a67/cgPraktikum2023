@@ -115,16 +115,16 @@ inline float degree_to_rad(float degree)
 
 void TrackballViewer::rotate_to_point()
 {
-  std::vector<vec3> view_directions = {
+    std::vector<vec3> view_directions = {
         vec3(0, (90), 0),
         vec3(0, (-90), 0),
         vec3((90), 0, 0),
         vec3((-90), 0, 0),
-        vec3(0, (0),0),
-        vec3(0, (180),0),
+        vec3(0, (0), 0),
+        vec3(0, (180), 0),
     };
 
-  std::vector<vec3> view_positions = {
+    std::vector<vec3> view_positions = {
         vec3(0, 0, 10),
         vec3(0, 0, 10),
         vec3(0, 0, 10),
@@ -136,19 +136,12 @@ void TrackballViewer::rotate_to_point()
     vec3 point = view_directions[counter_];
     std::cout << "Counter: " << counter_ << "-  Looking in direction " << point << std::endl;
 
-	vec3 offset = view_positions[counter_] - center_;
-		
-
-
     // center in eye coordinates
-    vec4 centerPos = vec4(center_, 1.0);
-    vec4 ec = centerPos;
+    vec4 center_pos = vec4(center_, 1.0);
+    vec4 ec = center_pos;
     vec3 c(ec[0] / ec[3], ec[1] / ec[3], ec[2] / ec[3]);
-	modelview_matrix_
-	  = translation_matrix(offset) 
-	  * rotation_matrix(vec3(1.,0.,0.), point[0])
-	  * rotation_matrix(vec3(0.,1.,0.), point[1])
-	  * rotation_matrix(vec3(0.,0.,1.), point[2]);
+    rotation_matrix_ = rotation_matrix(vec3(1., 0., 0.), point[0]) * rotation_matrix(vec3(0., 1., 0.), point[1])
+                       * rotation_matrix(vec3(0., 0., 1.), point[2]);
 }
 
 void TrackballViewer::resize(int width, int height)
@@ -163,7 +156,7 @@ void TrackballViewer::display()
 
     // adjust clipping planes to tightly fit bounding sphere
     vec4 mc(center_, 1.0);
-    vec4 ec = modelview_matrix_ * mc;
+    vec4 ec = get_modelview_matrix() * mc;
     float z = -ec[2];
     near_ = 0.01 * radius_;
     far_ = 10.0 * radius_;
@@ -247,8 +240,10 @@ void TrackballViewer::init()
     glEnable(GL_DEPTH_TEST);
     glFrontFace(GL_CCW);
 
-    // init modelview
-    modelview_matrix_ = mat4::identity();
+    // init transform
+    rotation_matrix_ = mat4::identity();
+    scale_ = vec3(1.0);
+    position_ = vec3(0.0);
 
 // turn on multi-sampling to anti-alias lines
 #ifndef __EMSCRIPTEN__
@@ -269,7 +264,7 @@ void TrackballViewer::set_scene(const vec3& center, float radius)
 void TrackballViewer::view_all()
 {
     vec4 c = vec4(center_, 1.0);
-    vec4 t = modelview_matrix_ * c;
+    vec4 t = get_modelview_matrix() * c;
     translate(vec3(-t[0], -t[1], -t[2] - 2.5 * radius_));
 }
 
@@ -301,7 +296,7 @@ bool TrackballViewer::pick(int x, int y, vec3& result)
         float yf = ((float)y - (float)viewport[1]) / ((float)viewport[3]) * 2.0f - 1.0f;
         zf = zf * 2.0f - 1.0f;
 
-        mat4 mvp = projection_matrix_ * modelview_matrix_;
+        mat4 mvp = projection_matrix_ * get_modelview_matrix();
         mat4 inv = inverse(mvp);
         vec4 p = inv * vec4(xf, yf, zf, 1.0f);
         p /= p[3];
@@ -323,7 +318,7 @@ void TrackballViewer::fly_to(int x, int y)
     {
         center_ = p;
         vec4 c = vec4(center_, 1.0);
-        vec4 t = modelview_matrix_ * c;
+        vec4 t = get_modelview_matrix() * c;
         translate(vec3(-t[0], -t[1], -0.5 * t[2]));
     }
 }
@@ -381,8 +376,12 @@ void TrackballViewer::translation(int x, int y)
     float dy = y - last_point_2d_[1];
 
     vec4 mc = vec4(center_, 1.0);
-    vec4 ec = modelview_matrix_ * mc;
+    vec4 ec = get_modelview_matrix() * mc;
     float z = -(ec[2] / ec[3]);
+    // TODO: Z shouldnt become negative
+    // somehow scaling the model too big causes the center position to fall behind the camera?!
+    std::cout << "ec: " << ec << std::endl;
+    std::cout << "Z: " << z << std::endl;
 
     float aspect = (float)width() / (float)height();
     float up = tan(fovy_ / 2.0f * M_PI / 180.f) * near_;
@@ -400,18 +399,39 @@ void TrackballViewer::zoom(int, int y)
 
 void TrackballViewer::translate(const vec3& t)
 {
-    modelview_matrix_ = translation_matrix(t) * modelview_matrix_;
+    // TODO: Figure out a better way to do this
+    mat4 translation = translation_matrix(t) * rotation_matrix_;
+    position_ += vec3(translation(0, 3), translation(1, 3), translation(2, 3));
 }
 
 void TrackballViewer::rotate(const vec3& axis, float angle)
 {
     // center in eye coordinates
     vec4 mc = vec4(center_, 1.0);
-    vec4 ec = modelview_matrix_ * mc;
+    vec4 ec = get_modelview_matrix() * mc;
     vec3 c(ec[0] / ec[3], ec[1] / ec[3], ec[2] / ec[3]);
 
-    modelview_matrix_
-        = translation_matrix(c) * rotation_matrix(axis, angle) * translation_matrix(-c) * modelview_matrix_;
+    rotation_matrix_ = rotation_matrix(axis, angle) * rotation_matrix_;
+}
+
+void TrackballViewer::set_mesh_scale(vec3 scale)
+{
+    scale_ = scale;
+}
+
+void TrackballViewer::set_mesh_scale(float scale)
+{
+    scale_ = vec3(scale);
+}
+
+mat4 TrackballViewer::get_modelview_matrix() const
+{
+    mat4 scale_matrix = mat4::identity();
+    scale_matrix(0, 0) = scale_[0];
+    scale_matrix(1, 1) = scale_[1];
+    scale_matrix(2, 2) = scale_[2];
+
+    return translation_matrix(position_) * rotation_matrix_ * translation_matrix(-center_) * scale_matrix;
 }
 
 } // namespace pmp

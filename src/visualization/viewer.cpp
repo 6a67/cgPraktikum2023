@@ -535,6 +535,81 @@ void Viewer::process_imgui()
     // Show mesh info in GUI via parent class
     CustomMeshViewer::process_imgui();
 
+    if (ImGui::CollapsingHeader("Mesh Transform Settings"))
+    {
+        {
+            std::stringstream position_text;
+            position_text << center_;
+            ImGui::Text("Mesh Center Position: %s", position_text.str().c_str());
+        }
+        {
+            std::stringstream position_text;
+            pmp::vec3 model_pos = position_;
+            position_text << model_pos;
+            ImGui::Text("Mesh Position: %s", position_text.str().c_str());
+        }
+        {
+            std::stringstream modelview_matrix_text;
+            modelview_matrix_text << get_modelview_matrix();
+            ImGui::Text("Modelview matrix:\n%s", modelview_matrix_text.str().c_str());
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::Button("Reset Mesh to origin"))
+        {
+            position_ = pmp::vec3(0.0f);
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Reset Mesh Orientation"))
+        {
+            rotation_matrix_ = pmp::mat4::identity();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Reset Mesh scale"))
+        {
+            mesh_size_uniform_ = 1.0;
+            mesh_size_x_ = 1.0;
+            mesh_size_y_ = 1.0;
+            mesh_size_z_ = 1.0;
+            set_mesh_scale(1.0);
+            update_mesh();
+        }
+
+        if (ImGui::SliderFloat("Mesh scale Uniformly:", &mesh_size_uniform_, 0.01, 40))
+        {
+            pmp::vec3 scaling = pmp::vec3(mesh_size_uniform_, mesh_size_uniform_, mesh_size_uniform_);
+            mesh_size_x_ = mesh_size_uniform_;
+            mesh_size_y_ = mesh_size_uniform_;
+            mesh_size_z_ = mesh_size_uniform_;
+            set_mesh_scale(scaling);
+            update_mesh();
+        }
+
+        if (ImGui::SliderFloat("Mesh scale X:", &mesh_size_x_, 0.01, 40))
+        {
+            pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
+            set_mesh_scale(scaling);
+            update_mesh();
+        }
+        if (ImGui::SliderFloat("Mesh scale Y:", &mesh_size_y_, 0.01, 40))
+        {
+            pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
+            set_mesh_scale(scaling);
+            update_mesh();
+        }
+        if (ImGui::SliderFloat("Mesh scale Z:", &mesh_size_z_, 0.01, 40))
+        {
+            pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
+            set_mesh_scale(scaling);
+            update_mesh();
+        }
+    }
+
     ImGui::Spacing();
     ImGui::Spacing();
 

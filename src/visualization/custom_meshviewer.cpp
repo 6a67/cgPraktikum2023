@@ -63,6 +63,7 @@ void CustomMeshViewer::update_mesh()
     // update scene center and radius, but don't update camera view
     pmp::BoundingBox bb = bounds(mesh_);
     center_ = (pmp::vec3)bb.center();
+    center_ = pmp::vec3(center_[0] * mesh_size_x_, center_[1] * mesh_size_y_, center_[2] * mesh_size_z_);
     radius_ = 0.5f * bb.size();
 
     // re-compute face and vertex normals
@@ -87,7 +88,7 @@ void CustomMeshViewer::draw(const std::string& draw_mode)
         renderer_.load_phong_shader();
 
     // draw mesh
-    renderer_.draw(projection_matrix_, modelview_matrix_, draw_mode);
+    renderer_.draw(projection_matrix_, get_modelview_matrix(), draw_mode);
 }
 
 //! handle ImGUI interface
