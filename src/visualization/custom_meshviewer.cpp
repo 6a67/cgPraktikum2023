@@ -4,6 +4,7 @@
 #include "pmp/bounding_box.h"
 #include "pmp/io/io.h"
 #include "pmp/visualization/trackball_viewer.h"
+#include "stb_image.h"
 #include <unistd.h>
 
 namespace meshlife
@@ -19,6 +20,15 @@ CustomMeshViewer::CustomMeshViewer(const char* title, int width, int height, boo
     add_draw_mode("Skybox with model");
     add_draw_mode("Custom Shader");
     add_draw_mode("Reflective Sphere");
+
+    // load icon as GLFW image
+    GLFWimage icon;
+    icon.height = 256;
+    icon.width = 256;
+    // load image as char array
+    icon.pixels = stbi_load("../icon.png", &icon.width, &icon.height, 0, 4);
+
+    glfwSetWindowIcon(window_, 1, &icon);
 }
 
 //! load a mesh from file \p filename
