@@ -170,6 +170,8 @@ void TrackballViewer::display()
     fovy_ = 45.0;
     near_ = std::max(0.001f * radius_, z - radius_);
     far_ = std::max(0.002f * radius_, z + radius_);
+    near_ = 0.01;
+    far_ = 90;
 
     // update projection matrix
     projection_matrix_ = perspective_matrix(fovy_, (float)width() / (float)height(), near_, far_);

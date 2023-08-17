@@ -1,7 +1,7 @@
 #version 330
 
-#define MAX_STEPS 500
-#define MAX_DIST 10000.
+#define MAX_STEPS 100
+#define MAX_DIST 150.
 #define SURF_DIST .01
 #define PI 3.1415926535897932384626433832795
 
@@ -13,13 +13,11 @@ uniform vec3 cam_origin;
 uniform vec3 cam_direction;
 
 
+uniform float iTime;                 // shader playback time (in seconds)
 uniform int window_width;
 uniform int window_height;
+uniform vec3 model_pos;
 
-// out vec4 f_color;
-// in vec2 fragCoord;
-
-uniform float iTime;                 // shader playback time (in seconds)
 
 float rangeMod(float x, float start, float end) {
 	float l = end - start;
@@ -52,8 +50,8 @@ float GetDist(vec3 p) {
 	float sphereDist = 0;
 	float d = MAX_DIST;
 
-	float radius = 15.0;
-	vec4 s = vec4( radius * cos(iTime * 0.5), 1, radius * sin(iTime * 0.5) , 1);
+	float radius = 10.0;
+	vec4 s = vec4( 0.0, 1, radius * sin(iTime * 0.2) , 1);
 	//sphereDist = length(rangeModWithOffset(p,s.xyz, vec3(4, 4, 5)) - s.xyz) - s.w;
 
 	//s = vec4(0, 1, 3, 1);
@@ -166,7 +164,7 @@ void main() {
 
 	vec3 col = vec3(0);
 
-	vec3 ro = vec3(0,1,0);
+	vec3 ro = vec3(0,1,0) + model_pos;
 	vec3 rd = normalize(( rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0)).xyz);
 
 	float d = RayMarch(ro, rd);
@@ -179,10 +177,7 @@ void main() {
 	col = pow(col, vec3(.4545));	// gamma correction
 	
 	gl_FragDepth = d / MAX_DIST;
-	gl_FragDepth = 0.999;
 	color = vec4(col, 1.0);
-	//color = vec4(0.0,uv.xy,1.0);
-	//color = vec4(0.0,texcoords.xy,1.0);
-	//color = vec4(this_color, 1.0);
+	// color = vec4(1.0,0.0,0.0, 1.0);
 
 }

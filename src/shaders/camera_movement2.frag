@@ -3,20 +3,19 @@
 #define MAX_STEPS 200
 #define MAX_DIST 150.
 #define SURF_DIST .01
-#define PI 3.14159265359
 
 precision mediump float;
 
 in vec2 texcoords;
-in vec3 v2f_viewRotation;
 
-uniform float iTime;                 // shader playback time (in seconds)
 uniform int window_width;
 uniform int window_height;
-uniform vec3 model_pos;
+
+uniform float distOffset;
 
 out vec4 out_Color;
 
+uniform float iTime;                 // shader playback time (in seconds)
 
 float rangeMod(float x, float start, float end) {
 	float l = end - start;
@@ -68,12 +67,6 @@ float sdMenger(vec3 p, float size, int iterations) {
 	vec3[] s = vec3[](vec3(1, 1, 1), vec3(1, 1, 0));
 
 	for(int iter = 0; iter < iterations; ++iter) {
-		// float alpha = iTime * 0.1;
-		// p = p * rot(0, 0, alpha);
-		// float beta = iTime * 0.15;
-		// p = p * rot(0, beta, 0);
-		// float gamma = iTime * 0.05;
-		// p = p * rot(gamma, 0, 0);
 
 		p = abs(p);
 		if(p.y > p.x)
@@ -88,7 +81,7 @@ float sdMenger(vec3 p, float size, int iterations) {
 		size /= 3.;
 
 	}
-	return sdSphere(p, vec3(size).x);
+	return sdBox(p, vec3(size));
 }
 
 float sdBoxFrame(vec3 p, vec3 b, float e) {
@@ -108,7 +101,13 @@ float GetDist(vec3 p) {
 
 	// p = rangeModWithOffset(p, mengerPos, 5.);
 
+	// if(mod(iTime, 20.) > 10) {
+	// 	p.y = rangeMod(p.y, 5, 15);
+	// 	p.x = rangeMod(p.x, -5, 5);
+	// }
+
 	float mengerDist = sdMenger(p - mengerPos, 3., 7);
+	// d = min(d, sdSphere(p - vec3(0,10,13), 2)/2);
 
 	d = min(d, mengerDist);
 
@@ -155,8 +154,8 @@ vec3 GetLight(vec3 p) {
 	}
 
 	// phong lighting
-	vec3 lightPos = vec3(0, 100, 0);
-	// lightPos.xz += vec2(sin(iTime), cos(iTime)) * 2.;
+	vec3 lightPos = vec3(0, 100, -20);
+	lightPos.xz += vec2(sin(iTime), cos(iTime)) * 2.;
 	lightPos.y += sin(iTime * 0.5) * 80.;
 
 	float red = 0.5 + (sin(iTime * 0.1) + 1) * 0.5;
@@ -224,11 +223,11 @@ vec3 GetLight(vec3 p) {
 	return result;
 }
 
-vec3 cameraMovement(in vec3 viewIn, out vec3 viewOut, out mat4 view_matrix) {
-	vec3 points[4] = vec3[](vec3(0, 10, 0), vec3(0, 10, 10), vec3(-20, -7, -10), vec3(0, 10, 20));
+vec3 cameraMovement(in vec3 viewIn, out vec3 viewOut, out mat3 rot) {
+	// vec3 points[4] = vec3[](vec3(0, 10, 0), vec3(0, 10, 10), vec3(-20, -7, -10), vec3(0, 10, 20));
 	// vec3 points[2] = vec3[](vec3(10, 10, 0), vec3(-10, 10, 0));
 	// vec3 points[2] = vec3[](vec3(0, 10, 0), vec3(0, -10, 0));
-	// vec3 points[2] = vec3[](vec3(0, 10, -10), vec3(0, 10, 20));
+	vec3 points[2] = vec3[](vec3(0, 10, -10), vec3(0, 10, 20));
 
 	float speed = 0.6;
 	float t = 1 - (cos(iTime * speed) * 0.5 + 0.5);
@@ -245,16 +244,16 @@ vec3 cameraMovement(in vec3 viewIn, out vec3 viewOut, out mat4 view_matrix) {
 		tangent = mix(tangent, normalize(points[i + 2] - points[i + 1]), t);
 	}
 
+	// tangent = vec3(0,0,1);
+
 	// rotate viewIn to match tangent
 	vec3 up = vec3(0, 1, 0);
 	vec3 right = normalize(cross(tangent, up));
 	up = normalize(cross(right, tangent));
 
-	mat3 rot = mat3(-right, up, tangent);
-	viewOut = rot * viewIn;
+	rot = mat3(-right, up, tangent);
 
-	vec3 c = vec3(0.0);
-	view_matrix = mat4(rot[0],0,rot[1],0, rot[2], 0,vec4(-dot(right, c),-dot(up, c),dot(tangent, c),1));
+	viewOut = rot * viewIn;
 
 	return p;
 }
@@ -266,23 +265,29 @@ vec3 cameraRotate(in vec3 center, in vec3 viewIn) {
 	return viewIn;
 }
 
+in vec3 v2f_viewRotation;
+uniform vec3 model_pos;
 
 void main() {
 	vec2 uv = (texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5) / window_height;
 
-	vec3 ro = vec3(0, 0, 0);
+	// vec3 ro = vec3(0, 10, (sin(iTime * 0.2)) * 10 + 10);
+
+	vec3 ro = vec3(0, 10, 0);
 
 	vec3 rd = normalize(rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
-
+	// vec3 rd = normalize(vec3(uv.x, uv.y, 0.5));
 	vec3 viewOut;
-
-	// TODO: Fix this
-	mat4 view_matrix = mat4(1.0);
-	ro = cameraMovement(rd, viewOut, view_matrix);
+	mat3 rot;
+	ro = cameraMovement(rd, viewOut, rot);
 	rd = normalize(viewOut);
 
-	vec3 model_pos_transformed = (view_matrix * vec4(model_pos.x,model_pos.y,model_pos.z, 1.0)).xyz;
-	ro =  ro + model_pos_transformed;
+
+	ro = ro + rot * vec3(model_pos.x, model_pos.y, model_pos.z);
+
+	// rd = cameraRotate(vec3(0, 10, 20), rd);
+
+	// rd = rot(0, iTime, 0) * rd;
 
 	float d = RayMarch(ro, rd);
 
@@ -292,6 +297,9 @@ void main() {
 
 	light = pow(light, vec3(.4545));	// gamma correction
 
-	gl_FragDepth = d / MAX_DIST;
+	//gl_FragDepth = clamp(d / MAX_DIST, 0.0, 0.999);
+	gl_FragDepth = clamp(d / (MAX_DIST - MAX_DIST * 0.4), 0., 0.999);
+	// gl_FragColor = vec4(col, 1.0);
 	out_Color = vec4(light, 1.0);
+	// out_Color = vec4(texcoords,0.,1.);
 }
