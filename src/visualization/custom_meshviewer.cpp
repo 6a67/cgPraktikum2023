@@ -72,12 +72,16 @@ void CustomMeshViewer::update_mesh()
 //! draw the scene in different draw modes
 void CustomMeshViewer::draw(const std::string& draw_mode)
 {
-	// Reload shaders if necessary
+    // Reload shaders if necessary
     if (shader_reload_required_map_[ShaderType::SimpleVert] || shader_reload_required_map_[ShaderType::SimpleFrag])
         renderer_.load_simple_shader();
 
     if (shader_reload_required_map_[ShaderType::SkyboxVert] || shader_reload_required_map_[ShaderType::SkyboxFrag])
         renderer_.load_skybox_shader();
+
+    if (shader_reload_required_map_[ShaderType::ReflectiveSphereFrag]
+        || shader_reload_required_map_[ShaderType::ReflectiveSphereVert])
+        renderer_.load_reflective_sphere_shader();
 
     if (shader_reload_required_map_[ShaderType::PhongVert] || shader_reload_required_map_[ShaderType::PhongFrag])
         renderer_.load_phong_shader();
