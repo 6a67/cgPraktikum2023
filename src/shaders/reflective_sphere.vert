@@ -9,7 +9,6 @@ out vec3 v2f_normal;
 out vec2 v2f_tex;
 out vec3 v2f_view;
 out vec3 v2f_color;
-out vec4  v2f_pos;
 
 uniform mat4 modelview_projection_matrix;
 uniform mat4 modelview_matrix;
@@ -29,6 +28,5 @@ void main()
 
     gl_PointSize = point_size;
     gl_Position  = modelview_projection_matrix * pos;
-	v2f_pos = modelview_projection_matrix * pos;
 }
 

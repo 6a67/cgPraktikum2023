@@ -115,36 +115,40 @@ inline float degree_to_rad(float degree)
 
 void TrackballViewer::rotate_to_point()
 {
-    // Rotations around axis (in degrees), maps to x, y, z axis respectively
-    std::vector<vec3> view_rotations = {
-        vec3(0, 90, 0),
-        vec3(0, -90, 0),
-        vec3(-90, 0, 0),
-        vec3(90, 0, 0),
-        vec3(0, 0, 0),
-        vec3(0, 180, 0),
+  std::vector<vec3> view_directions = {
+        vec3(0, (90), 0),
+        vec3(0, (-90), 0),
+        vec3((90), 0, 0),
+        vec3((-90), 0, 0),
+        vec3(0, (0),0),
+        vec3(0, (180),0),
     };
 
-    std::vector<vec3> model_position = {
-        vec3(0, 0, 0),
-        vec3(0, 0, 0),
-        vec3(0, 0, 0),
-        vec3(0, 0, 0),
-        vec3(0, 0, 0),
-        vec3(0, 0, 0),
+  std::vector<vec3> view_positions = {
+        vec3(0, 0, 10),
+        vec3(0, 0, 10),
+        vec3(0, 0, 10),
+        vec3(0, 0, 10),
+        vec3(0, 0, 10),
+        vec3(0, 0, -10),
     };
 
-    vec3 point = view_rotations[counter_];
+    vec3 point = view_directions[counter_];
     std::cout << "Counter: " << counter_ << "-  Looking in direction " << point << std::endl;
 
-    vec3 offset = model_position[counter_];
+	vec3 offset = view_positions[counter_] - center_;
+		
+
 
     // center in eye coordinates
     vec4 centerPos = vec4(center_, 1.0);
     vec4 ec = centerPos;
     vec3 c(ec[0] / ec[3], ec[1] / ec[3], ec[2] / ec[3]);
-    modelview_matrix_ = translation_matrix(offset) * rotation_matrix(vec3(1., 0., 0.), point[0])
-                        * rotation_matrix(vec3(0., 1., 0.), point[1]) * rotation_matrix(vec3(0., 0., 1.), point[2]);
+	modelview_matrix_
+	  = translation_matrix(offset) 
+	  * rotation_matrix(vec3(1.,0.,0.), point[0])
+	  * rotation_matrix(vec3(0.,1.,0.), point[1])
+	  * rotation_matrix(vec3(0.,0.,1.), point[2]);
 }
 
 void TrackballViewer::resize(int width, int height)
@@ -166,11 +170,6 @@ void TrackballViewer::display()
     fovy_ = 45.0;
     near_ = std::max(0.001f * radius_, z - radius_);
     far_ = std::max(0.002f * radius_, z + radius_);
-    near_ = 0.01;
-    far_ = 90;
-    // std::cout << "Center: " << center_ << std::endl;
-    //  std::cout << "Radius: " << radius_ << std::endl;
-    //  std::cout << "Near: " << near_ << " Far: " << far_ << std::endl;
 
     // update projection matrix
     projection_matrix_ = perspective_matrix(fovy_, (float)width() / (float)height(), near_, far_);

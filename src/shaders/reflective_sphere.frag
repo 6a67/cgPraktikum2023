@@ -1,14 +1,11 @@
 #version 330
 
-#define FAR_PLANE 90
-
 precision mediump float;
 
 in vec3  v2f_normal;
 in vec2  v2f_tex;
 in vec3  v2f_view;
 in vec3  v2f_color;
-in vec4  v2f_pos;
 
 uniform bool   use_lighting;
 uniform bool   use_texture;
@@ -32,8 +29,6 @@ uniform float iTime;
 
 // uniform sampler2D mytexture;
 uniform samplerCube cubetexture;
-
-
 
 
 out vec4 f_color;
@@ -98,11 +93,6 @@ void main()
     if (use_srgb)    rgb  = pow(clamp(rgb, 0.0, 1.0), vec3(0.45));
 
     f_color = vec4(rgb, alpha);
-    //f_color = vec4(2.0,0.2,0.0,alpha);
-
-	gl_FragDepth = v2f_pos.z / FAR_PLANE;
-
-
-	// if(alive != 0.0)
-	//  discard;
+	if(alive != 0.0)
+	 discard;
 }

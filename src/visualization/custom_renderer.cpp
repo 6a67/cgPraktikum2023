@@ -222,18 +222,16 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
 
     GL_CHECK(glBindVertexArray(0));
 
-    vec3 model_pos = vec3(modelview_matrix(0, 3), modelview_matrix(1, 3), -modelview_matrix(2, 3));
-
     // Draw skybox last (saves performance because it only needs to be drawn for every pixel thats not occluded by the
     // model aka. the background pixels)
     if (draw_mode == "Skybox only")
     {
-        render_skybox_faces_to_texture(model_pos);
+        render_skybox_faces_to_texture();
         draw_skybox(projection_matrix, view);
     }
     else if (draw_mode == "Skybox with model")
     {
-        render_skybox_faces_to_texture(model_pos);
+        render_skybox_faces_to_texture();
         draw_skybox(projection_matrix, view);
 
         // // setup shader
@@ -309,7 +307,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
     }
     else if (draw_mode == "Reflective Sphere")
     {
-        render_skybox_faces_to_texture(model_pos);
+        render_skybox_faces_to_texture();
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClearDepth(1.0f);
@@ -364,7 +362,6 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
         rotation[2] = 0; // set z rotation to 0 so we don't flip the image
         simple_shader_.set_uniform("viewRotation", rotation);
-        simple_shader_.set_uniform("model_pos", vec3(0, 0, 0));
 
         GLuint empty_vao = 0;
         GL_CHECK(glGenVertexArrays(1, &empty_vao));
@@ -376,7 +373,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
         GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
         GL_CHECK(glDepthFunc(GL_LESS));
-        //  drawSkybox(projection_matrix, view);
+        // drawSkybox(projection_matrix, view);
     }
 
     // disable transparency (doesn't work well with imgui)
@@ -818,16 +815,16 @@ void CustomRenderer::set_cam_direction(CamDirection direction)
     cam_direction_ = direction;
 }
 
-void CustomRenderer::render_skybox_faces_to_texture(pmp::vec3 model_pos)
+void CustomRenderer::render_skybox_faces_to_texture()
 {
     GL_CHECK(glEnable(GL_DEPTH_TEST));
     // Draw the cubemap.
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_framebuffer_));
     // bind depth buffer, idk if we even need this
-    // GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthbuffer_));
+    GL_CHECK(glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depthbuffer_));
     for (int i = 0; i < 6; i++)
     {
-        draw_face(i, model_pos);
+        draw_face(i);
     }
     GL_CHECK(glBindVertexArray(0));
 
@@ -895,7 +892,7 @@ void CustomRenderer::load_phong_shader()
     }
 }
 
-void CustomRenderer::draw_face(int face_side, pmp::vec3 model_pos)
+void CustomRenderer::draw_face(int face_side)
 {
     // Bind g_cubeTexture to framebuffer's color attachment 0 (this way colors will be rendered to g_cubeTexture)
     GL_CHECK(glFramebufferTexture2D(
@@ -917,7 +914,6 @@ void CustomRenderer::draw_face(int face_side, pmp::vec3 model_pos)
     simple_shader_.set_uniform("window_width", cubemap_size_);
     simple_shader_.set_uniform("iTime", (float)itime_);
     simple_shader_.set_uniform("viewRotation", view_rotations_[face_side]);
-    simple_shader_.set_uniform("model_pos", model_pos);
 
     // Render on the whole framebuffer, complete from the lower left corner to the upper right corner
     GLuint empty_vao = 0;
@@ -928,7 +924,7 @@ void CustomRenderer::draw_face(int face_side, pmp::vec3 model_pos)
 
     // cleanup
     simple_shader_.disable();
-    // GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
+    GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
     GL_CHECK(glDeleteVertexArrays(1, &empty_vao));
 }
 
