@@ -529,6 +529,7 @@ void Viewer::process_imgui()
     ImGui::Text("iTime (Shader): %.2f", renderer_.get_itime());
     ImGui::Text("Current Draw Mode: %s", draw_mode_names_[draw_mode_].c_str());
     ImGui::Text("Last Cam-Direction: %s", renderer_.direction_names_[(int)renderer_.get_cam_direction()].c_str());
+    ImGui::Text("Selected Shader: %s", get_path_from_shader_type(ShaderType::SimpleFrag).filename().c_str());
     ImGui::Separator();
 
     // Show mesh info in GUI via parent class
