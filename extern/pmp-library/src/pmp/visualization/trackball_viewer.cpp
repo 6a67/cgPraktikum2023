@@ -376,13 +376,9 @@ void TrackballViewer::translation(int x, int y)
     float dy = y - last_point_2d_[1];
 
     vec4 mc = vec4(center_, 1.0);
-    vec4 ec = get_modelview_matrix() * mc;
-    float z = -(ec[2] / ec[3]);
-    // TODO: Z shouldnt become negative
-    // somehow scaling the model too big causes the center position to fall behind the camera?!
-    std::cout << "ec: " << ec << std::endl;
-    std::cout << "Z: " << z << std::endl;
+    vec4 ec = translation_matrix(position_) * rotation_matrix_ * mc;
 
+    float z = (-(ec[2] / ec[3]));
     float aspect = (float)width() / (float)height();
     float up = tan(fovy_ / 2.0f * M_PI / 180.f) * near_;
     float right = aspect * up;
