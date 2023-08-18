@@ -640,6 +640,13 @@ void Viewer::process_imgui()
 
         if (ImGui::CollapsingHeader("Shader Settings"))
         {
+            static float reflectiveness = 0.3f;
+            if (ImGui::SliderFloat("Reflectiveness", &reflectiveness, 0.0, 1.0f))
+            {
+                renderer_.set_reflectiveness(reflectiveness);
+            }
+            IMGUI_TOOLTIP_TEXT("How much the reflective sphere shader reflects the skybox");
+
             if (ImGui::Button("Step Backwards"))
             {
                 renderer_.set_itime(std::max(0.0f, (float)renderer_.get_itime() - 0.1f));

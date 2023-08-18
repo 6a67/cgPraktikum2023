@@ -81,6 +81,8 @@ class CustomRenderer
 
     void load_phong_shader();
 
+    void set_reflectiveness(float reflectiveness);
+
     const std::vector<std::string> direction_names_ = {
         "right",
         "left",
@@ -158,6 +160,7 @@ class CustomRenderer
     bool use_colors_;
     float crease_angle_;
     float point_size_;
+    float reflectiveness_;
 
     // OpenGL buffers
     GLuint MESH_VAO_ = 0;

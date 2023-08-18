@@ -1,8 +1,7 @@
-#version 330
 
+#version 330
 #define MAX_DIST 150
 #define FAR_PLANE (MAX_DIST - MAX_DIST * 0.3)
-#define REFLECTIVENESS 0.3
 
 precision mediump float;
 
@@ -11,6 +10,8 @@ in vec2  v2f_tex;
 in vec3  v2f_view;
 in vec3  v2f_color;
 in vec4  v2f_pos;
+
+uniform float reflectiveness;
 
 uniform bool   use_lighting;
 uniform bool   use_texture;
@@ -85,7 +86,7 @@ void main()
          vec3 Re  = normalize(reflect(V, N));
 		 vec4 reflection = texture(cubetexture,vec3(Re.x, -Re.y, Re.z));
 		 // rgb = mix(rgb, reflection.xyz, 0.3 * alive);
-		 rgb = mix(rgb, reflection.xyz, REFLECTIVENESS);
+		 rgb = mix(rgb, reflection.xyz, reflectiveness);
     }
 
     // do not use lighting

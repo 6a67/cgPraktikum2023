@@ -323,6 +323,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         reflective_sphere_shader_.set_uniform("modelview_matrix", mv_matrix);
         reflective_sphere_shader_.set_uniform("normal_matrix", n_matrix);
         reflective_sphere_shader_.set_uniform("point_size", point_size_);
+        reflective_sphere_shader_.set_uniform("reflectiveness", reflectiveness_);
 
         reflective_sphere_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
         reflective_sphere_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
@@ -893,6 +894,11 @@ void CustomRenderer::load_phong_shader()
         std::cerr << "Error: loading phong sphere shader failed" << std::endl;
         std::cerr << e.what() << std::endl;
     }
+}
+
+void CustomRenderer::set_reflectiveness(float reflectiveness)
+{
+    reflectiveness_ = reflectiveness;
 }
 
 void CustomRenderer::draw_face(int face_side, pmp::vec3 model_pos)
