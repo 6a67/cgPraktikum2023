@@ -519,12 +519,25 @@ void Viewer::select_debug_info_face(size_t face_idx)
     }
 }
 
+// Call this right after creating the object e.g. after using ImGui::Button(...);
+#define IMGUI_TOOLTIP_TEXT(TEXT)                                                                                       \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))                                                 \
+        {                                                                                                              \
+            ImGui::SetTooltip(TEXT);                                                                                   \
+        }                                                                                                              \
+    } while (0);
+
 void Viewer::process_imgui()
 {
     ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate == FLT_MAX ? 0 : ImGui::GetIO().Framerate);
+    IMGUI_TOOLTIP_TEXT("This FPS is averaged over last 60 frames")
     ImGui::Text("Calculated FPS: %.0f", renderer_.get_framerate());
+    IMGUI_TOOLTIP_TEXT("This FPS is calculated with the time between the last two draw calls")
     ImGui::Separator();
     ImGui::Text("Current UPS (Simulation): %.0f", current_UPS_);
+    IMGUI_TOOLTIP_TEXT("This FPS is calculated with the time between the last two draw calls")
     ImGui::Separator();
     ImGui::Text("iTime (Shader): %.2f", renderer_.get_itime());
     ImGui::Text("Current Draw Mode: %s", draw_mode_names_[draw_mode_].c_str());
@@ -541,12 +554,14 @@ void Viewer::process_imgui()
             std::stringstream position_text;
             position_text << center_;
             ImGui::Text("Mesh Center Position: %s", position_text.str().c_str());
+            IMGUI_TOOLTIP_TEXT("The center point of the mesh (in local space)");
         }
         {
             std::stringstream position_text;
             pmp::vec3 model_pos = position_;
             position_text << model_pos;
             ImGui::Text("Mesh Position: %s", position_text.str().c_str());
+            IMGUI_TOOLTIP_TEXT("Mesh world position");
         }
         {
             std::stringstream modelview_matrix_text;
@@ -643,6 +658,8 @@ void Viewer::process_imgui()
         {
             renderer_.use_picture_cubemap_ = !renderer_.use_picture_cubemap_;
         }
+        IMGUI_TOOLTIP_TEXT(
+            "(Only applies in 'Skybox' draw mode, swaps between rendered shader texture and debug texture)");
 
         ImGui::Separator();
 
@@ -676,15 +693,15 @@ void Viewer::process_imgui()
     if (ImGui::CollapsingHeader("UPS Settings (for simulation)"))
     {
         {
-            std::stringstream label;
-            label << "Unrestricted render updates (allows visual  update mid-calculation): "
-                  << (uncomplete_updates_ ? "ON" : "OFF") << ")";
-            if (ImGui::Button(label.str().c_str()))
-            {
-                uncomplete_updates_ = !uncomplete_updates_;
-            }
-        }
-        {
+            // std::stringstream label;
+            // label << "Unrestricted render updates (allows visual  update mid-calculation): "
+            //       << (uncomplete_updates_ ? "ON" : "OFF") << ")";
+            // if (ImGui::Button(label.str().c_str()))
+            // {
+            //     uncomplete_updates_ = !uncomplete_updates_;
+            // }
+            // IMGUI_TOOLTIP_TEXT("(HAS NO EFFECT ANYMORE)");
+        } {
 
             std::stringstream limit_ups_text;
             limit_ups_text << "Unlimited UPS (Current: " << (unlimited_limit_UPS_ ? "ON" : "OFF") << ")";
@@ -692,8 +709,10 @@ void Viewer::process_imgui()
             {
                 unlimited_limit_UPS_ = !unlimited_limit_UPS_;
             }
+            IMGUI_TOOLTIP_TEXT("Limits the updates per second of the lenia simulation");
 
             ImGui::SliderInt("UPS", &UPS_, 1, 1000);
+            IMGUI_TOOLTIP_TEXT("Updates per second of the lenia simulation");
         }
     }
 
@@ -954,6 +973,7 @@ void Viewer::process_imgui()
             pmp::dual(mesh_);
             set_mesh_properties();
         }
+        IMGUI_TOOLTIP_TEXT("Converts the current mesh to its dual mesh variant");
     }
     ImGui::Spacing();
     ImGui::Spacing();
@@ -965,6 +985,7 @@ void Viewer::process_imgui()
         {
             read_mesh_from_file(std::string(modelpath_buf_));
         }
+        IMGUI_TOOLTIP_TEXT("Loads the model as current mesh. Drag&Drop'ing the mesh file is also supported.");
     }
 
     if (auto* lenia = dynamic_cast<MeshLenia*>(automaton_))
@@ -987,6 +1008,7 @@ void Viewer::process_imgui()
                 stop_simulation();
                 lenia->allocate_needed_properties();
             }
+            IMGUI_TOOLTIP_TEXT("Manually recalculates the neighboorhood map for the lenia simulation.");
             ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighbor_count_avg_);
 
             if (ImGui::Button("Visualize Kernel Shell"))
@@ -1064,11 +1086,7 @@ void Viewer::process_imgui()
                     // cause the render to redraw the next draw frame
                     ready_for_display_ = true;
                 }
-            }
-
-            if (ImGui::Button("Check if normalised"))
-            {
-                std::cout << lenia->norm_check() << std::endl;
+                IMGUI_TOOLTIP_TEXT("Select a stamp and a face (with D) and then press this button to place the stamp");
             }
 
             // list from where presets can be selected
