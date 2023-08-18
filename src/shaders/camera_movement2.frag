@@ -4,6 +4,8 @@
 #define MAX_DIST 150.
 #define SURF_DIST .01
 
+#define MOD_TIME mod(iTime, 80.)
+
 precision mediump float;
 
 in vec2 texcoords;
@@ -66,7 +68,44 @@ float sdMenger(vec3 p, float size, int iterations) {
     //p=rotateY(p,iTime*.5);
 	vec3[] s = vec3[](vec3(1, 1, 1), vec3(1, 1, 0));
 
+	if(MOD_TIME > 49 && MOD_TIME < 54) {
+		float alpha = ((MOD_TIME - 49) / 5.) * 3.1415 / 2.;
+		p = p * rot(0, 0, alpha);
+	}
+
 	for(int iter = 0; iter < iterations; ++iter) {
+		if(MOD_TIME > 12 && MOD_TIME < 17) {
+			float alpha = ((MOD_TIME - 12) / 5.) * 3.1415 / 2.;
+			p = p * rot(0, 0, alpha);
+		}
+
+		if(MOD_TIME > 32 && MOD_TIME < 37) {
+			float gamma = ((MOD_TIME - 32) / 5.) * 3.1415 / 2.;
+			p = p * rot(0, 0, gamma);
+		}
+
+		if(MOD_TIME > 38 && MOD_TIME < 43) {
+			float beta = ((MOD_TIME - 38) / 5.) * 3.1415 / 2.;
+			p = p * rot(0, beta, 0);
+		}
+
+		if(MOD_TIME > 44 && MOD_TIME < 49) {
+			float alpha = ((MOD_TIME - 44) / 5.) * 3.1415 / 2.;
+			float gamma = 3.1415 - ((MOD_TIME - 44) / 5.) * 3.1415 / 2.;
+			p = p * rot(gamma, 0, alpha);
+		}
+
+		if(MOD_TIME > 54 && MOD_TIME < 75) {
+			float alpha = ((MOD_TIME - 54) / 21.) * 3.1415 / 2.;
+			float gamma = 3.1415 - ((MOD_TIME - 54) / 21.) * 3.1415 / 2.;
+			float beta = ((MOD_TIME - 54) / 21.) * 3.1415 / 2.;
+			p = p * rot(gamma, beta, alpha);
+		}
+
+		// float beta = iTime * 0.15;
+		// p = p * rot(0, beta, 0);
+		// float gamma = iTime * 0.05;
+		// p = p * rot(gamma, 0, 0);
 
 		p = abs(p);
 		if(p.y > p.x)
@@ -81,6 +120,7 @@ float sdMenger(vec3 p, float size, int iterations) {
 		size /= 3.;
 
 	}
+
 	return sdBox(p, vec3(size));
 }
 
@@ -106,10 +146,33 @@ float GetDist(vec3 p) {
 	// 	p.x = rangeMod(p.x, -5, 5);
 	// }
 
-	float mengerDist = sdMenger(p - mengerPos, 3., 7);
+	// bounding box for infinite cubes
+	// at first only one menger cube is visible
+	// then over time the bouding box expands and more pop in
+	float boxSize = 4.5;
+	if(MOD_TIME > 10 && MOD_TIME < 15) {
+		boxSize = 4.5 + (MOD_TIME - 10) * 2 * 85.5 / 10;
+	}
+	if(MOD_TIME > 15) {
+		boxSize = 90;
+	}
+
+	if(MOD_TIME > 75 && MOD_TIME <= 80) {
+		boxSize = 90 - (MOD_TIME - 75) * 2 * 85.5 / 10;
+	}
+
+	float bBox = sdBox(p - mengerPos, vec3(boxSize));
+
+	float mengerDist = 0.;
+
+
+	mengerDist = sdMenger(rangeModWithOffset(p, mengerPos, 5.) - mengerPos, 3., 7);
+
 	// d = min(d, sdSphere(p - vec3(0,10,13), 2)/2);
 
 	d = min(d, mengerDist);
+
+	d = max(d, bBox);
 
 	// sphereDist = length(rangeModWithOffset(p,s.xyz, vec3(4, 4, 5)) - s.xyz) - s.w;
 	// d = max(-p.z + 5., d);
@@ -223,14 +286,27 @@ vec3 GetLight(vec3 p) {
 	return result;
 }
 
-vec3 cameraMovement(in vec3 viewIn, out vec3 viewOut, out mat3 rot) {
-	// vec3 points[4] = vec3[](vec3(0, 10, 0), vec3(0, 10, 10), vec3(-20, -7, -10), vec3(0, 10, 20));
+vec3 cameraMovement(in vec3[3] points, float start, float end, bool smoothp, in vec3 viewIn, out vec3 viewOut, out mat3 rot) {
+	// vec3 points[4] = vec3[](vec3(0, 10, 0), vec3(0, 10, 10), vec3(-30, -10, -5), vec3(0, 10, 20));
 	// vec3 points[2] = vec3[](vec3(10, 10, 0), vec3(-10, 10, 0));
 	// vec3 points[2] = vec3[](vec3(0, 10, 0), vec3(0, -10, 0));
-	vec3 points[2] = vec3[](vec3(0, 10, -10), vec3(0, 10, 20));
+	// vec3 points[2] = vec3[](vec3(0, 10, -10), vec3(0, 10, 20));
 
-	float speed = 0.6;
-	float t = 1 - (cos(iTime * speed) * 0.5 + 0.5);
+	float diff = end - start;
+	float t = (MOD_TIME - start) / diff;
+	if(smoothp) {
+		t = smoothstep(0., 1., t);
+	}
+
+	if(MOD_TIME > end) {
+		t = 1;
+	}
+
+	if(MOD_TIME < start) {
+		t = 0;
+	}
+
+	// float t = 1 - (cos(iTime * speed) * 0.5 + 0.5);
 
 	vec3 p = points[0];
 
@@ -276,25 +352,43 @@ void main() {
 	vec3 ro = vec3(0, 10, 0);
 
 	vec3 rd = normalize(rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
-	// vec3 rd = normalize(vec3(uv.x, uv.y, 0.5));
 	vec3 viewOut;
 	mat3 rot;
-	ro = cameraMovement(rd, viewOut, rot);
+
+	if(MOD_TIME < 10) {
+		vec3 points[3] = vec3[](vec3(0, 10, 0), vec3(0, 10, 10), vec3(0, 10, 20));
+		ro = cameraMovement(points, 0, 10, true, rd, viewOut, rot);
+		// see getDist for popping in more cubes
+	}
+
+	if(MOD_TIME < 30 && MOD_TIME >= 10) {
+		vec3 points[3] = vec3[](vec3(0, 10, 20), vec3(0, 10, 20.01), vec3(0, 20, 20.01));
+		ro = cameraMovement(points, 10, 30, true, rd, viewOut, rot);
+	}
+
+	if(MOD_TIME < 40 && MOD_TIME >= 30) {
+		vec3 points[3] = vec3[](vec3(0, 20, 20), vec3(0, 20.01, 20), vec3(0, 20.01, 30));
+		ro = cameraMovement(points, 30, 40, false, rd, viewOut, rot);
+	}
+
+	// follow
+	if(MOD_TIME >= 40 && MOD_TIME < 60) {
+		vec3 points[3] = vec3[](vec3(0, 20, 30), vec3(0, 20, 40), vec3(0, 20, 50));
+		ro = cameraMovement(points, 40, 60, false, rd, viewOut, rot);
+	}
+
+	// move camera back to origin
+	if(MOD_TIME > 60) {
+		vec3 points[3] = vec3[](vec3(0, 10, 0), vec3(0, 10, 0.01), vec3(0, 10, 0.02));
+		ro = cameraMovement(points, 60, 80, false, rd, viewOut, rot);
+	}
+
 	rd = normalize(viewOut);
-
-
 	ro = ro + rot * vec3(model_pos.x, model_pos.y, model_pos.z);
 
-	// rd = cameraRotate(vec3(0, 10, 20), rd);
-
-	// rd = rot(0, iTime, 0) * rd;
-
 	float d = RayMarch(ro, rd);
-
 	vec3 p = ro + rd * d;
-
 	vec3 light = GetLight(p);
-
 	light = pow(light, vec3(.4545));	// gamma correction
 
 	//gl_FragDepth = clamp(d / MAX_DIST, 0.0, 0.999);

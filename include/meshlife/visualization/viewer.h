@@ -21,7 +21,7 @@ struct DebugData
 };
 
 const char* PATH_SIMPLE_SHADER_VERTEX_ = "simple.vert";
-const char* PATH_SIMPLE_SHADER_FRAGMENT_ = "simple.frag";
+const char* PATH_SIMPLE_SHADER_FRAGMENT_ = "camera_movement2.frag";
 
 /// pmp::MeshViewer extension to handle visualization of implemented algorithms
 class Viewer : public CustomMeshViewer
