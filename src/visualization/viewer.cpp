@@ -537,618 +537,625 @@ void Viewer::select_debug_info_face(size_t face_idx)
 
 void Viewer::process_imgui()
 {
-    ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate == FLT_MAX ? 0 : ImGui::GetIO().Framerate);
-    IMGUI_TOOLTIP_TEXT("This FPS is averaged over last 60 frames")
-    ImGui::Text("Calculated FPS: %.0f", renderer_.get_framerate());
-    IMGUI_TOOLTIP_TEXT("This FPS is calculated with the time between the last two draw calls")
-    ImGui::Separator();
-    ImGui::Text("Current UPS (Simulation): %.0f", current_UPS_);
-    IMGUI_TOOLTIP_TEXT("This FPS is calculated with the time between the last two draw calls")
-    ImGui::Separator();
-    ImGui::Text("iTime (Shader): %.2f", renderer_.get_itime());
-    ImGui::Text("Current Draw Mode: %s", draw_mode_names_[draw_mode_].c_str());
-    ImGui::Text("Last Cam-Direction: %s", renderer_.direction_names_[(int)renderer_.get_cam_direction()].c_str());
-    ImGui::Text("Selected Shader: %s", get_path_from_shader_type(ShaderType::SimpleFrag).filename().c_str());
-    ImGui::Separator();
+    ImGui::StyleColorsDark();
 
-    // Show mesh info in GUI via parent class
-    CustomMeshViewer::process_imgui();
-
-    if (ImGui::CollapsingHeader("Mesh Transform Settings"))
+    if (ImGui::CollapsingHeader("Settings"))
     {
-        {
-            std::stringstream position_text;
-            position_text << center_;
-            ImGui::Text("Mesh Center Position: %s", position_text.str().c_str());
-            IMGUI_TOOLTIP_TEXT("The center point of the mesh (in local space)");
-        }
-        {
-            std::stringstream position_text;
-            pmp::vec3 model_pos = position_;
-            position_text << model_pos;
-            ImGui::Text("Mesh Position: %s", position_text.str().c_str());
-            IMGUI_TOOLTIP_TEXT("Mesh world position");
-        }
-        {
-            std::stringstream modelview_matrix_text;
-            modelview_matrix_text << get_modelview_matrix();
-            ImGui::Text("Modelview matrix:\n%s", modelview_matrix_text.str().c_str());
-        }
-
+        ImGui::Text("IMGui FPS: %.1f", ImGui::GetIO().Framerate == FLT_MAX ? 0 : ImGui::GetIO().Framerate);
+        IMGUI_TOOLTIP_TEXT("This FPS is averaged over last 60 frames")
+        ImGui::Text("Calculated FPS: %.0f", renderer_.get_framerate());
+        IMGUI_TOOLTIP_TEXT("This FPS is calculated with the time between the last two draw calls")
+        ImGui::Separator();
+        ImGui::Text("Current UPS (Simulation): %.0f", current_UPS_);
+        IMGUI_TOOLTIP_TEXT("This FPS is calculated with the time between the last two draw calls")
+        ImGui::Separator();
+        ImGui::Text("iTime (Shader): %.2f", renderer_.get_itime());
+        ImGui::Text("Current Draw Mode: %s", draw_mode_names_[draw_mode_].c_str());
+        ImGui::Text("Last Cam-Direction: %s", renderer_.direction_names_[(int)renderer_.get_cam_direction()].c_str());
+        ImGui::Text("Selected Shader: %s", get_path_from_shader_type(ShaderType::SimpleFrag).filename().c_str());
         ImGui::Separator();
 
-        if (ImGui::Button("Reset Mesh to origin"))
+        // Show mesh info in GUI via parent class
+        CustomMeshViewer::process_imgui();
+
+        if (ImGui::CollapsingHeader("Mesh Transform Settings"))
         {
-            position_ = pmp::vec3(0.0f);
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("Reset Mesh Orientation"))
-        {
-            rotation_matrix_ = pmp::mat4::identity();
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("Reset Mesh scale"))
-        {
-            mesh_size_uniform_ = 1.0;
-            mesh_size_x_ = 1.0;
-            mesh_size_y_ = 1.0;
-            mesh_size_z_ = 1.0;
-            set_mesh_scale(1.0);
-            update_mesh();
-        }
-
-        if (ImGui::SliderFloat("Mesh scale Uniformly:", &mesh_size_uniform_, 0.01, 40))
-        {
-            pmp::vec3 scaling = pmp::vec3(mesh_size_uniform_, mesh_size_uniform_, mesh_size_uniform_);
-            mesh_size_x_ = mesh_size_uniform_;
-            mesh_size_y_ = mesh_size_uniform_;
-            mesh_size_z_ = mesh_size_uniform_;
-            set_mesh_scale(scaling);
-            update_mesh();
-        }
-
-        if (ImGui::SliderFloat("Mesh scale X:", &mesh_size_x_, 0.01, 40))
-        {
-            pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
-            set_mesh_scale(scaling);
-            update_mesh();
-        }
-        if (ImGui::SliderFloat("Mesh scale Y:", &mesh_size_y_, 0.01, 40))
-        {
-            pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
-            set_mesh_scale(scaling);
-            update_mesh();
-        }
-        if (ImGui::SliderFloat("Mesh scale Z:", &mesh_size_z_, 0.01, 40))
-        {
-            pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
-            set_mesh_scale(scaling);
-            update_mesh();
-        }
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Shader Settings"))
-    {
-        if (ImGui::Button("Step Backwards"))
-        {
-            renderer_.set_itime(std::max(0.0f, (float)renderer_.get_itime() - 0.1f));
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button(renderer_.get_itime_paused() ? "Continue iTime" : "Pause iTime"))
-        {
-            renderer_.itime_toggle_pause();
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("Step Forwards"))
-        {
-            renderer_.set_itime(renderer_.get_itime() + 0.1);
-        }
-
-        if (ImGui::Button("Reset iTime"))
-        {
-            renderer_.set_itime();
-        }
-
-        if (ImGui::Button(renderer_.use_picture_cubemap_ ? "Swap cubemap: Picture" : "Swap cubemap: Shader cubemap"))
-        {
-            renderer_.use_picture_cubemap_ = !renderer_.use_picture_cubemap_;
-        }
-        IMGUI_TOOLTIP_TEXT(
-            "(Only applies in 'Skybox' draw mode, swaps between rendered shader texture and debug texture)");
-
-        ImGui::Separator();
-
-        for (size_t i = 0; i < n_draw_modes_; i++)
-        {
-            std::stringstream label;
-            label << "Draw Mode: " << draw_mode_names_[i];
-            if (ImGui::Button(label.str().c_str()))
             {
-                draw_mode_ = i;
+                std::stringstream position_text;
+                position_text << center_;
+                ImGui::Text("Mesh Center Position: %s", position_text.str().c_str());
+                IMGUI_TOOLTIP_TEXT("The center point of the mesh (in local space)");
             }
-        }
-        ImGui::Separator();
-
-        size_t direction_max = (size_t)CamDirection::COUNT;
-        for (size_t i = 0; i < direction_max; i++)
-        {
-            std::stringstream label;
-            label << "Direction: " << renderer_.direction_names_[i];
-            if (ImGui::Button(label.str().c_str()))
             {
-                renderer_.set_cam_direction((CamDirection)(i));
+                std::stringstream position_text;
+                pmp::vec3 model_pos = position_;
+                position_text << model_pos;
+                ImGui::Text("Mesh Position: %s", position_text.str().c_str());
+                IMGUI_TOOLTIP_TEXT("Mesh world position");
             }
-        }
-        ImGui::Separator();
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("UPS Settings (for simulation)"))
-    {
-        {
-            // std::stringstream label;
-            // label << "Unrestricted render updates (allows visual  update mid-calculation): "
-            //       << (uncomplete_updates_ ? "ON" : "OFF") << ")";
-            // if (ImGui::Button(label.str().c_str()))
-            // {
-            //     uncomplete_updates_ = !uncomplete_updates_;
-            // }
-            // IMGUI_TOOLTIP_TEXT("(HAS NO EFFECT ANYMORE)");
-        } {
-
-            std::stringstream limit_ups_text;
-            limit_ups_text << "Unlimited UPS (Current: " << (unlimited_limit_UPS_ ? "ON" : "OFF") << ")";
-            if (ImGui::Button(limit_ups_text.str().c_str()))
             {
-                unlimited_limit_UPS_ = !unlimited_limit_UPS_;
-            }
-            IMGUI_TOOLTIP_TEXT("Limits the updates per second of the lenia simulation");
-
-            ImGui::SliderInt("UPS", &UPS_, 1, 1000);
-            IMGUI_TOOLTIP_TEXT("Updates per second of the lenia simulation");
-        }
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Debug Info (Press D on a face)"))
-    {
-        if (debug_data_.face_.is_valid())
-        {
-            ImGui::Text("Face Idx: %d", debug_data_.face_.idx());
-
-            {
-                auto halfedges = mesh_.halfedges(debug_data_.face_);
-                int count = 0;
-                // TODO: Figure out a better way to count the edges
-                for (auto h : halfedges)
-                {
-                    // this ignores unused variable warning
-                    std::ignore = h;
-                    count++;
-                }
-                std::stringstream title;
-                title << "Halfedges of face: " << count;
-
-                ImGui::Text("%s", title.str().c_str());
-                ImGui::BeginListBox("##halfedges", ImVec2(-FLT_MIN, count * 18.5));
-                for (pmp::Halfedge halfedge : mesh_.halfedges(debug_data_.face_))
-                {
-                    ImGui::Text("Halfedge idx: %d (opp. HE: %d | Face: %d) (Start: %d | End: %d)",
-                                halfedge.idx(),
-                                mesh_.opposite_halfedge(halfedge).idx(),
-                                mesh_.face(mesh_.opposite_halfedge(halfedge)).idx(),
-                                mesh_.from_vertex(halfedge).idx(),
-                                mesh_.to_vertex(halfedge).idx());
-                }
-                ImGui::EndListBox();
+                std::stringstream modelview_matrix_text;
+                modelview_matrix_text << get_modelview_matrix();
+                ImGui::Text("Modelview matrix:\n%s", modelview_matrix_text.str().c_str());
             }
 
+            ImGui::Separator();
+
+            if (ImGui::Button("Reset Mesh to origin"))
             {
-                int vertex_count = mesh_.valence(debug_data_.face_);
-                std::stringstream label;
-                label << "Vertices of face: " << vertex_count;
-                ImGui::Text("%s", label.str().c_str());
-                ImGui::BeginListBox("##vertices", ImVec2(400, vertex_count * 18.5));
-                for (pmp::Vertex vertex : mesh_.vertices(debug_data_.face_))
-                {
-                    auto pos = mesh_.position(vertex);
-                    ImGui::Text("Vertex idx: %d XYZ: (%.02f, %.02f, %.02f)", vertex.idx(), pos[0], pos[1], pos[2]);
-                }
-                ImGui::EndListBox();
+                position_ = pmp::vec3(0.0f);
             }
-        }
-        else
-        {
-            ImGui::Text("No face selected. Press 'D' on a Face to get more info.");
-        }
-        ImGui::InputInt("Face Idx", &debug_data_.selected_face_idx_, 0);
-        if (ImGui::Button("Previous face"))
-        {
-            debug_data_.selected_face_idx_ -= 1;
-            if (debug_data_.selected_face_idx_ < 0)
-                debug_data_.selected_face_idx_ = mesh_.faces_size() - 1;
-            select_debug_info_face(debug_data_.selected_face_idx_);
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Select face"))
-        {
-            select_debug_info_face(debug_data_.selected_face_idx_);
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Next face"))
-        {
-            debug_data_.selected_face_idx_ += 1;
-            if ((size_t)debug_data_.selected_face_idx_ >= mesh_.faces_size())
-                debug_data_.selected_face_idx_ = 0;
 
-            select_debug_info_face(debug_data_.selected_face_idx_);
-        }
-    }
+            ImGui::SameLine();
 
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    // Some functionality from pmp::MeshProcessingViewer to edit mesh
-    if (ImGui::CollapsingHeader("Decimation"))
-    {
-        static int target_percentage = 10;
-        ImGui::PushItemWidth(100);
-        ImGui::SliderInt("Percentage", &target_percentage, 1, 99);
-        ImGui::PopItemWidth();
-
-        static int normal_deviation = 135;
-        ImGui::PushItemWidth(100);
-        ImGui::SliderInt("Normal Deviation", &normal_deviation, 1, 135);
-        ImGui::PopItemWidth();
-
-        static int aspect_ratio = 10;
-        ImGui::PushItemWidth(100);
-        ImGui::SliderInt("Aspect Ratio", &aspect_ratio, 1, 10);
-        ImGui::PopItemWidth();
-
-        static int seam_angle_deviation = 1;
-        ImGui::PushItemWidth(100);
-        ImGui::SliderInt("Seam Angle Deviation", &seam_angle_deviation, 0, 15);
-        ImGui::PopItemWidth();
-
-        if (ImGui::Button("Decimate"))
-        {
-            try
+            if (ImGui::Button("Reset Mesh Orientation"))
             {
-                auto nv = mesh_.n_vertices() * 0.01 * target_percentage;
-                decimate(mesh_, nv, aspect_ratio, 0.0, 0.0, normal_deviation, 0.0, 0.01, seam_angle_deviation);
+                rotation_matrix_ = pmp::mat4::identity();
             }
-            catch (const pmp::InvalidInputException& e)
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Reset Mesh scale"))
             {
-                std::cerr << e.what() << std::endl;
-                return;
+                mesh_size_uniform_ = 1.0;
+                mesh_size_x_ = 1.0;
+                mesh_size_y_ = 1.0;
+                mesh_size_z_ = 1.0;
+                set_mesh_scale(1.0);
+                update_mesh();
             }
-            update_mesh();
-        }
-    }
 
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Subdivision"))
-    {
-        if (ImGui::Button("Loop Subdivision"))
-        {
-            try
+            if (ImGui::SliderFloat("Mesh scale Uniformly:", &mesh_size_uniform_, 0.01, 40))
             {
-                loop_subdivision(mesh_);
+                pmp::vec3 scaling = pmp::vec3(mesh_size_uniform_, mesh_size_uniform_, mesh_size_uniform_);
+                mesh_size_x_ = mesh_size_uniform_;
+                mesh_size_y_ = mesh_size_uniform_;
+                mesh_size_z_ = mesh_size_uniform_;
+                set_mesh_scale(scaling);
+                update_mesh();
             }
-            catch (const pmp::InvalidInputException& e)
+
+            if (ImGui::SliderFloat("Mesh scale X:", &mesh_size_x_, 0.01, 40))
             {
-                std::cerr << e.what() << std::endl;
-                return;
+                pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
+                set_mesh_scale(scaling);
+                update_mesh();
             }
-            automaton_->allocate_needed_properties();
-            update_mesh();
-        }
-
-        if (ImGui::Button("Quad-Tri Subdivision"))
-        {
-            quad_tri_subdivision(mesh_);
-            automaton_->allocate_needed_properties();
-            update_mesh();
-        }
-
-        if (ImGui::Button("Catmull-Clark Subdivision"))
-        {
-            catmull_clark_subdivision(mesh_);
-            automaton_->allocate_needed_properties();
-            update_mesh();
-        }
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Remeshing"))
-    {
-        if (ImGui::Button("Adaptive Remeshing"))
-        {
-            auto bb = bounds(mesh_).size();
-
-            try
+            if (ImGui::SliderFloat("Mesh scale Y:", &mesh_size_y_, 0.01, 40))
             {
-                adaptive_remeshing(mesh_,
-                                   0.001 * bb,  // min length
-                                   1.0 * bb,    // max length
-                                   0.001 * bb); // approx. error
+                pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
+                set_mesh_scale(scaling);
+                update_mesh();
             }
-            catch (const pmp::InvalidInputException& e)
+            if (ImGui::SliderFloat("Mesh scale Z:", &mesh_size_z_, 0.01, 40))
             {
-                std::cerr << e.what() << std::endl;
-                return;
-            }
-            update_mesh();
-        }
-
-        if (ImGui::Button("Uniform Remeshing"))
-        {
-            pmp::Scalar l(0);
-            for (auto eit : mesh_.edges())
-                l += distance(mesh_.position(mesh_.vertex(eit, 0)), mesh_.position(mesh_.vertex(eit, 1)));
-            l /= (pmp::Scalar)mesh_.n_edges();
-
-            try
-            {
-                uniform_remeshing(mesh_, l);
-            }
-            catch (const pmp::InvalidInputException& e)
-            {
-                std::cerr << e.what() << std::endl;
-                return;
-            }
-            update_mesh();
-        }
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Algorithms"))
-    {
-        ImGui::Text("Game of Life Toggle");
-        ImGui::SameLine();
-        {
-            std::stringstream label;
-            label << "Toggle Simulation (" << (simulation_running_ ? "RUNNING" : "OFFLINE") << ")";
-            if (ImGui::Button(label.str().c_str()))
-            {
-                if (simulation_running_)
-                    stop_simulation();
-                else
-                    start_simulation();
+                pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
+                set_mesh_scale(scaling);
+                update_mesh();
             }
         }
 
-        ImGui::Text("Gome of Life Step");
-        ImGui::SameLine();
-        if (ImGui::Button("Next"))
-        {
-            automaton_->update_state(1);
-        }
-
-        ImGui::Text("Gome of Life Random");
-        ImGui::SameLine();
-        if (ImGui::Button("Random"))
-        {
-            automaton_->init_state_random();
-        }
-
-        // threshold slider
-        ImGui::Text("Thresholds");
-        ImGui::PushItemWidth(100);
-        ImGui::SliderInt("Upper", &automaton_->p_upper_threshold_, automaton_->p_lower_threshold_, 10);
-        ImGui::PopItemWidth();
-        ImGui::PushItemWidth(100);
-        ImGui::SliderInt("Lower", &automaton_->p_lower_threshold_, 1, 10);
-        ImGui::PopItemWidth();
-
-        if (automaton_->p_upper_threshold_ < automaton_->p_lower_threshold_)
-        {
-            automaton_->p_upper_threshold_ = automaton_->p_lower_threshold_;
-        }
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Dual Meshes"))
-    {
-        if (ImGui::Button("Create Dual Mesh"))
-        {
-            pmp::dual(mesh_);
-            set_mesh_properties();
-        }
-        IMGUI_TOOLTIP_TEXT("Converts the current mesh to its dual mesh variant");
-    }
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Load custom model file"))
-    {
-        ImGui::InputText("Path: ", modelpath_buf_, 300);
-        if (ImGui::Button("Load model from path"))
-        {
-            read_mesh_from_file(std::string(modelpath_buf_));
-        }
-        IMGUI_TOOLTIP_TEXT("Loads the model as current mesh. Drag&Drop'ing the mesh file is also supported.");
-    }
-
-    if (auto* lenia = dynamic_cast<MeshLenia*>(automaton_))
-    {
         ImGui::Spacing();
         ImGui::Spacing();
-        if (ImGui::CollapsingHeader("Lenia Parameters"))
+
+        if (ImGui::CollapsingHeader("Shader Settings"))
         {
-            ImGui::SliderFloat("Mu", &lenia->p_mu_, 0, 1);
-            ImGui::SliderFloat("Sigma", &lenia->p_sigma_, 0, 1);
-            ImGui::SliderInt("T", &lenia->p_T_, 1, 50);
-
-            // TODO: recalculate neighbors
-            float neighborhood_radius = lenia->p_neighborhood_radius_ / lenia->average_edge_length_;
-            ImGui::SliderFloat("Neighborhood Radius", &neighborhood_radius, 0, 20);
-            lenia->p_neighborhood_radius_ = neighborhood_radius * lenia->average_edge_length_;
-            if (ImGui::Button("Recalculate Neighborhood"))
+            if (ImGui::Button("Step Backwards"))
             {
-                // TODO: move a_gol to a better place
-                stop_simulation();
-                lenia->allocate_needed_properties();
-            }
-            IMGUI_TOOLTIP_TEXT("Manually recalculates the neighboorhood map for the lenia simulation.");
-            ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighbor_count_avg_);
-
-            if (ImGui::Button("Visualize Kernel Shell"))
-            {
-                lenia->visualize_kernel_shell();
+                renderer_.set_itime(std::max(0.0f, (float)renderer_.get_itime() - 0.1f));
             }
 
-            if (ImGui::Button("Visualize Kernel Skeleton"))
+            ImGui::SameLine();
+
+            if (ImGui::Button(renderer_.get_itime_paused() ? "Continue iTime" : "Pause iTime"))
             {
-                lenia->visualize_kernel_skeleton();
+                renderer_.itime_toggle_pause();
             }
 
-            ImGui::InputText("Peaks: ", peak_string_, 300);
-            if (ImGui::Button("Update Peaks"))
-            {
-                std::cout << peak_string_ << std::endl;
-                lenia->p_beta_peaks_.clear();
-                std::string s(peak_string_);
-                std::stringstream ss(s);
-                std::string item;
-                while (std::getline(ss, item, ','))
-                {
-                    lenia->p_beta_peaks_.push_back(std::stof(item));
-                    std::cout << std::stof(item) << std::endl;
-                }
+            ImGui::SameLine();
 
-                std::string s2;
-                for (auto peak : lenia->p_beta_peaks_)
-                {
-                    s2 += std::to_string(peak) + ",";
-                }
-                strcpy(peak_string_, s2.c_str());
+            if (ImGui::Button("Step Forwards"))
+            {
+                renderer_.set_itime(renderer_.get_itime() + 0.1);
             }
 
-            if (ImGui::CollapsingHeader("Stamps"))
+            if (ImGui::Button("Reset iTime"))
             {
-                static stamps::Shapes stamp;
+                renderer_.set_itime();
+            }
+
+            if (ImGui::Button(renderer_.use_picture_cubemap_ ? "Swap cubemap: Picture"
+                                                             : "Swap cubemap: Shader cubemap"))
+            {
+                renderer_.use_picture_cubemap_ = !renderer_.use_picture_cubemap_;
+            }
+            IMGUI_TOOLTIP_TEXT(
+                "(Only applies in 'Skybox' draw mode, swaps between rendered shader texture and debug texture)");
+
+            ImGui::Separator();
+
+            for (size_t i = 0; i < n_draw_modes_; i++)
+            {
                 std::stringstream label;
-                label << "Stamp: " << stamps::shape_to_str(stamp);
-                if (ImGui::BeginMenu(label.str().c_str()))
+                label << "Draw Mode: " << draw_mode_names_[i];
+                if (ImGui::Button(label.str().c_str()))
                 {
-                    if (ImGui::MenuItem("Orbium"))
-                        stamp = stamps::s_orbium;
-                    else if (ImGui::MenuItem("Smiley"))
-                        stamp = stamps::s_smiley;
-                    else if (ImGui::MenuItem("Debug"))
-                        stamp = stamps::s_debug;
-                    else if (ImGui::MenuItem("Geminium"))
-                        stamp = stamps::s_geminium;
-                    ImGui::EndMenu();
+                    draw_mode_ = i;
                 }
+            }
+            ImGui::Separator();
 
-                if (ImGui::Button("Place Stamp (Select startface with 'D')"))
+            size_t direction_max = (size_t)CamDirection::COUNT;
+            for (size_t i = 0; i < direction_max; i++)
+            {
+                std::stringstream label;
+                label << "Direction: " << renderer_.direction_names_[i];
+                if (ImGui::Button(label.str().c_str()))
                 {
-                    pmp::Face f;
-                    if (debug_data_.face_.is_valid())
-                        f = debug_data_.face_;
-                    switch (stamp)
+                    renderer_.set_cam_direction((CamDirection)(i));
+                }
+            }
+            ImGui::Separator();
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("UPS Settings (for simulation)"))
+        {
+            {
+                // std::stringstream label;
+                // label << "Unrestricted render updates (allows visual  update mid-calculation): "
+                //       << (uncomplete_updates_ ? "ON" : "OFF") << ")";
+                // if (ImGui::Button(label.str().c_str()))
+                // {
+                //     uncomplete_updates_ = !uncomplete_updates_;
+                // }
+                // IMGUI_TOOLTIP_TEXT("(HAS NO EFFECT ANYMORE)");
+            } {
+
+                std::stringstream limit_ups_text;
+                limit_ups_text << "Unlimited UPS (Current: " << (unlimited_limit_UPS_ ? "ON" : "OFF") << ")";
+                if (ImGui::Button(limit_ups_text.str().c_str()))
+                {
+                    unlimited_limit_UPS_ = !unlimited_limit_UPS_;
+                }
+                IMGUI_TOOLTIP_TEXT("Limits the updates per second of the lenia simulation");
+
+                ImGui::SliderInt("UPS", &UPS_, 1, 1000);
+                IMGUI_TOOLTIP_TEXT("Updates per second of the lenia simulation");
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Debug Info (Press D on a face)"))
+        {
+            if (debug_data_.face_.is_valid())
+            {
+                ImGui::Text("Face Idx: %d", debug_data_.face_.idx());
+
+                {
+                    auto halfedges = mesh_.halfedges(debug_data_.face_);
+                    int count = 0;
+                    // TODO: Figure out a better way to count the edges
+                    for (auto h : halfedges)
                     {
-                    case stamps::Shapes::s_none:
+                        // this ignores unused variable warning
+                        std::ignore = h;
+                        count++;
+                    }
+                    std::stringstream title;
+                    title << "Halfedges of face: " << count;
+
+                    ImGui::Text("%s", title.str().c_str());
+                    ImGui::BeginListBox("##halfedges", ImVec2(-FLT_MIN, count * 18.5));
+                    for (pmp::Halfedge halfedge : mesh_.halfedges(debug_data_.face_))
+                    {
+                        ImGui::Text("Halfedge idx: %d (opp. HE: %d | Face: %d) (Start: %d | End: %d)",
+                                    halfedge.idx(),
+                                    mesh_.opposite_halfedge(halfedge).idx(),
+                                    mesh_.face(mesh_.opposite_halfedge(halfedge)).idx(),
+                                    mesh_.from_vertex(halfedge).idx(),
+                                    mesh_.to_vertex(halfedge).idx());
+                    }
+                    ImGui::EndListBox();
+                }
+
+                {
+                    int vertex_count = mesh_.valence(debug_data_.face_);
+                    std::stringstream label;
+                    label << "Vertices of face: " << vertex_count;
+                    ImGui::Text("%s", label.str().c_str());
+                    ImGui::BeginListBox("##vertices", ImVec2(400, vertex_count * 18.5));
+                    for (pmp::Vertex vertex : mesh_.vertices(debug_data_.face_))
+                    {
+                        auto pos = mesh_.position(vertex);
+                        ImGui::Text("Vertex idx: %d XYZ: (%.02f, %.02f, %.02f)", vertex.idx(), pos[0], pos[1], pos[2]);
+                    }
+                    ImGui::EndListBox();
+                }
+            }
+            else
+            {
+                ImGui::Text("No face selected. Press 'D' on a Face to get more info.");
+            }
+            ImGui::InputInt("Face Idx", &debug_data_.selected_face_idx_, 0);
+            if (ImGui::Button("Previous face"))
+            {
+                debug_data_.selected_face_idx_ -= 1;
+                if (debug_data_.selected_face_idx_ < 0)
+                    debug_data_.selected_face_idx_ = mesh_.faces_size() - 1;
+                select_debug_info_face(debug_data_.selected_face_idx_);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Select face"))
+            {
+                select_debug_info_face(debug_data_.selected_face_idx_);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Next face"))
+            {
+                debug_data_.selected_face_idx_ += 1;
+                if ((size_t)debug_data_.selected_face_idx_ >= mesh_.faces_size())
+                    debug_data_.selected_face_idx_ = 0;
+
+                select_debug_info_face(debug_data_.selected_face_idx_);
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        // Some functionality from pmp::MeshProcessingViewer to edit mesh
+        if (ImGui::CollapsingHeader("Decimation"))
+        {
+            static int target_percentage = 10;
+            ImGui::PushItemWidth(100);
+            ImGui::SliderInt("Percentage", &target_percentage, 1, 99);
+            ImGui::PopItemWidth();
+
+            static int normal_deviation = 135;
+            ImGui::PushItemWidth(100);
+            ImGui::SliderInt("Normal Deviation", &normal_deviation, 1, 135);
+            ImGui::PopItemWidth();
+
+            static int aspect_ratio = 10;
+            ImGui::PushItemWidth(100);
+            ImGui::SliderInt("Aspect Ratio", &aspect_ratio, 1, 10);
+            ImGui::PopItemWidth();
+
+            static int seam_angle_deviation = 1;
+            ImGui::PushItemWidth(100);
+            ImGui::SliderInt("Seam Angle Deviation", &seam_angle_deviation, 0, 15);
+            ImGui::PopItemWidth();
+
+            if (ImGui::Button("Decimate"))
+            {
+                try
+                {
+                    auto nv = mesh_.n_vertices() * 0.01 * target_percentage;
+                    decimate(mesh_, nv, aspect_ratio, 0.0, 0.0, normal_deviation, 0.0, 0.01, seam_angle_deviation);
+                }
+                catch (const pmp::InvalidInputException& e)
+                {
+                    std::cerr << e.what() << std::endl;
+                    return;
+                }
+                update_mesh();
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Subdivision"))
+        {
+            if (ImGui::Button("Loop Subdivision"))
+            {
+                try
+                {
+                    loop_subdivision(mesh_);
+                }
+                catch (const pmp::InvalidInputException& e)
+                {
+                    std::cerr << e.what() << std::endl;
+                    return;
+                }
+                automaton_->allocate_needed_properties();
+                update_mesh();
+            }
+
+            if (ImGui::Button("Quad-Tri Subdivision"))
+            {
+                quad_tri_subdivision(mesh_);
+                automaton_->allocate_needed_properties();
+                update_mesh();
+            }
+
+            if (ImGui::Button("Catmull-Clark Subdivision"))
+            {
+                catmull_clark_subdivision(mesh_);
+                automaton_->allocate_needed_properties();
+                update_mesh();
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Remeshing"))
+        {
+            if (ImGui::Button("Adaptive Remeshing"))
+            {
+                auto bb = bounds(mesh_).size();
+
+                try
+                {
+                    adaptive_remeshing(mesh_,
+                                       0.001 * bb,  // min length
+                                       1.0 * bb,    // max length
+                                       0.001 * bb); // approx. error
+                }
+                catch (const pmp::InvalidInputException& e)
+                {
+                    std::cerr << e.what() << std::endl;
+                    return;
+                }
+                update_mesh();
+            }
+
+            if (ImGui::Button("Uniform Remeshing"))
+            {
+                pmp::Scalar l(0);
+                for (auto eit : mesh_.edges())
+                    l += distance(mesh_.position(mesh_.vertex(eit, 0)), mesh_.position(mesh_.vertex(eit, 1)));
+                l /= (pmp::Scalar)mesh_.n_edges();
+
+                try
+                {
+                    uniform_remeshing(mesh_, l);
+                }
+                catch (const pmp::InvalidInputException& e)
+                {
+                    std::cerr << e.what() << std::endl;
+                    return;
+                }
+                update_mesh();
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Algorithms"))
+        {
+            ImGui::Text("Game of Life Toggle");
+            ImGui::SameLine();
+            {
+                std::stringstream label;
+                label << "Toggle Simulation (" << (simulation_running_ ? "RUNNING" : "OFFLINE") << ")";
+                if (ImGui::Button(label.str().c_str()))
+                {
+                    if (simulation_running_)
+                        stop_simulation();
+                    else
+                        start_simulation();
+                }
+            }
+
+            ImGui::Text("Gome of Life Step");
+            ImGui::SameLine();
+            if (ImGui::Button("Next"))
+            {
+                automaton_->update_state(1);
+            }
+
+            ImGui::Text("Gome of Life Random");
+            ImGui::SameLine();
+            if (ImGui::Button("Random"))
+            {
+                automaton_->init_state_random();
+            }
+
+            // threshold slider
+            ImGui::Text("Thresholds");
+            ImGui::PushItemWidth(100);
+            ImGui::SliderInt("Upper", &automaton_->p_upper_threshold_, automaton_->p_lower_threshold_, 10);
+            ImGui::PopItemWidth();
+            ImGui::PushItemWidth(100);
+            ImGui::SliderInt("Lower", &automaton_->p_lower_threshold_, 1, 10);
+            ImGui::PopItemWidth();
+
+            if (automaton_->p_upper_threshold_ < automaton_->p_lower_threshold_)
+            {
+                automaton_->p_upper_threshold_ = automaton_->p_lower_threshold_;
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Dual Meshes"))
+        {
+            if (ImGui::Button("Create Dual Mesh"))
+            {
+                pmp::dual(mesh_);
+                set_mesh_properties();
+            }
+            IMGUI_TOOLTIP_TEXT("Converts the current mesh to its dual mesh variant");
+        }
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Load custom model file"))
+        {
+            ImGui::InputText("Path: ", modelpath_buf_, 300);
+            if (ImGui::Button("Load model from path"))
+            {
+                read_mesh_from_file(std::string(modelpath_buf_));
+            }
+            IMGUI_TOOLTIP_TEXT("Loads the model as current mesh. Drag&Drop'ing the mesh file is also supported.");
+        }
+
+        if (auto* lenia = dynamic_cast<MeshLenia*>(automaton_))
+        {
+            ImGui::Spacing();
+            ImGui::Spacing();
+            if (ImGui::CollapsingHeader("Lenia Parameters"))
+            {
+                ImGui::SliderFloat("Mu", &lenia->p_mu_, 0, 1);
+                ImGui::SliderFloat("Sigma", &lenia->p_sigma_, 0, 1);
+                ImGui::SliderInt("T", &lenia->p_T_, 1, 50);
+
+                // TODO: recalculate neighbors
+                float neighborhood_radius = lenia->p_neighborhood_radius_ / lenia->average_edge_length_;
+                ImGui::SliderFloat("Neighborhood Radius", &neighborhood_radius, 0, 20);
+                lenia->p_neighborhood_radius_ = neighborhood_radius * lenia->average_edge_length_;
+                if (ImGui::Button("Recalculate Neighborhood"))
+                {
+                    // TODO: move a_gol to a better place
+                    stop_simulation();
+                    lenia->allocate_needed_properties();
+                }
+                IMGUI_TOOLTIP_TEXT("Manually recalculates the neighboorhood map for the lenia simulation.");
+                ImGui::LabelText("Avg. Neighbor count:", "%d", lenia->neighbor_count_avg_);
+
+                if (ImGui::Button("Visualize Kernel Shell"))
+                {
+                    lenia->visualize_kernel_shell();
+                }
+
+                if (ImGui::Button("Visualize Kernel Skeleton"))
+                {
+                    lenia->visualize_kernel_skeleton();
+                }
+
+                ImGui::InputText("Peaks: ", peak_string_, 300);
+                if (ImGui::Button("Update Peaks"))
+                {
+                    std::cout << peak_string_ << std::endl;
+                    lenia->p_beta_peaks_.clear();
+                    std::string s(peak_string_);
+                    std::stringstream ss(s);
+                    std::string item;
+                    while (std::getline(ss, item, ','))
+                    {
+                        lenia->p_beta_peaks_.push_back(std::stof(item));
+                        std::cout << std::stof(item) << std::endl;
+                    }
+
+                    std::string s2;
+                    for (auto peak : lenia->p_beta_peaks_)
+                    {
+                        s2 += std::to_string(peak) + ",";
+                    }
+                    strcpy(peak_string_, s2.c_str());
+                }
+
+                if (ImGui::CollapsingHeader("Stamps"))
+                {
+                    static stamps::Shapes stamp;
+                    std::stringstream label;
+                    label << "Stamp: " << stamps::shape_to_str(stamp);
+                    if (ImGui::BeginMenu(label.str().c_str()))
+                    {
+                        if (ImGui::MenuItem("Orbium"))
+                            stamp = stamps::s_orbium;
+                        else if (ImGui::MenuItem("Smiley"))
+                            stamp = stamps::s_smiley;
+                        else if (ImGui::MenuItem("Debug"))
+                            stamp = stamps::s_debug;
+                        else if (ImGui::MenuItem("Geminium"))
+                            stamp = stamps::s_geminium;
+                        ImGui::EndMenu();
+                    }
+
+                    if (ImGui::Button("Place Stamp (Select startface with 'D')"))
+                    {
+                        pmp::Face f;
+                        if (debug_data_.face_.is_valid())
+                            f = debug_data_.face_;
+                        switch (stamp)
+                        {
+                        case stamps::Shapes::s_none:
+                            break;
+                        case stamps::Shapes::s_orbium:
+                            lenia->place_stamp(f, stamps::orbium);
+                            break;
+                        case stamps::Shapes::s_smiley:
+                            lenia->place_stamp(f, stamps::smiley);
+                            break;
+                        case stamps::Shapes::s_debug:
+                            lenia->place_stamp(f, stamps::debug);
+                            break;
+                        case stamps::Shapes::s_geminium:
+                            lenia->place_stamp(f, stamps::geminium);
+                            break;
+                        }
+                        // cause the render to redraw the next draw frame
+                        ready_for_display_ = true;
+                    }
+                    IMGUI_TOOLTIP_TEXT(
+                        "Select a stamp and a face (with D) and then press this button to place the stamp");
+                }
+
+                // list from where presets can be selected
+                static const char* items[] = {"Glider Settings", "Geminium Settings"};
+                static int item_current = 1;
+                if (ImGui::BeginCombo("Presets", items[item_current]))
+                {
+                    for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+                    {
+                        bool is_selected = (item_current == n);
+                        if (ImGui::Selectable(items[n], is_selected))
+                            item_current = n;
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+
+                if (ImGui::Button("Load preset"))
+                {
+                    switch (item_current)
+                    {
+                    case 0:
+                        lenia->p_mu_ = 0.15;
+                        lenia->p_sigma_ = 0.017;
+                        lenia->p_beta_peaks_ = {1};
+                        lenia->p_T_ = 10;
+                        lenia->p_neighborhood_radius_ = 13 * lenia->average_edge_length_;
                         break;
-                    case stamps::Shapes::s_orbium:
-                        lenia->place_stamp(f, stamps::orbium);
-                        break;
-                    case stamps::Shapes::s_smiley:
-                        lenia->place_stamp(f, stamps::smiley);
-                        break;
-                    case stamps::Shapes::s_debug:
-                        lenia->place_stamp(f, stamps::debug);
-                        break;
-                    case stamps::Shapes::s_geminium:
-                        lenia->place_stamp(f, stamps::geminium);
+                    case 1:
+                        lenia->p_mu_ = 0.26;
+                        lenia->p_sigma_ = 0.036;
+                        lenia->p_beta_peaks_ = {0.5, 1, 0.667};
+                        lenia->p_T_ = 10;
+                        lenia->p_neighborhood_radius_ = 18 * lenia->average_edge_length_;
                         break;
                     }
-                    // cause the render to redraw the next draw frame
-                    ready_for_display_ = true;
-                }
-                IMGUI_TOOLTIP_TEXT("Select a stamp and a face (with D) and then press this button to place the stamp");
-            }
 
-            // list from where presets can be selected
-            static const char* items[] = {"Glider Settings", "Geminium Settings"};
-            static int item_current = 1;
-            if (ImGui::BeginCombo("Presets", items[item_current]))
-            {
-                for (int n = 0; n < IM_ARRAYSIZE(items); n++)
-                {
-                    bool is_selected = (item_current == n);
-                    if (ImGui::Selectable(items[n], is_selected))
-                        item_current = n;
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
+                    lenia->allocate_needed_properties();
                 }
-                ImGui::EndCombo();
-            }
-
-            if (ImGui::Button("Load preset"))
-            {
-                switch (item_current)
-                {
-                case 0:
-                    lenia->p_mu_ = 0.15;
-                    lenia->p_sigma_ = 0.017;
-                    lenia->p_beta_peaks_ = {1};
-                    lenia->p_T_ = 10;
-                    lenia->p_neighborhood_radius_ = 13 * lenia->average_edge_length_;
-                    break;
-                case 1:
-                    lenia->p_mu_ = 0.26;
-                    lenia->p_sigma_ = 0.036;
-                    lenia->p_beta_peaks_ = {0.5, 1, 0.667};
-                    lenia->p_T_ = 10;
-                    lenia->p_neighborhood_radius_ = 18 * lenia->average_edge_length_;
-                    break;
-                }
-
-                lenia->allocate_needed_properties();
             }
         }
-    }
 
-    ImGui::Spacing();
-    ImGui::Spacing();
+        ImGui::Spacing();
+        ImGui::Spacing();
 
-    // select shader from file
-    if (ImGui::CollapsingHeader("Shaders"))
-    {
-        for (auto sh : shader_files_fragment_)
+        // select shader from file
+        if (ImGui::CollapsingHeader("Shaders"))
         {
-            std::string name = sh.substr(sh.find_last_of("/\\") + 1);
-            if (ImGui::Button(name.c_str()))
+            for (auto sh : shader_files_fragment_)
             {
-                selected_shader_path_fragment_ = sh;
-                reload_shader();
+                std::string name = sh.substr(sh.find_last_of("/\\") + 1);
+                if (ImGui::Button(name.c_str()))
+                {
+                    selected_shader_path_fragment_ = sh;
+                    reload_shader();
+                }
             }
         }
     }
