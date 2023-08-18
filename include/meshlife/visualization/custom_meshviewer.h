@@ -36,6 +36,9 @@ class CustomMeshViewer : public pmp::TrackballViewer
     //! this function handles keyboard events
     void keyboard(int key, int code, int action, int mod) override;
 
+    //! load mesh by dropping file onto the window
+    void drop(int count, const char** paths) override;
+
     //! get vertex closest to 3D position under the mouse cursor
     pmp::Vertex pick_vertex(int x, int y);
 

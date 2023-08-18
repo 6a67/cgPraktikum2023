@@ -142,6 +142,16 @@ void CustomMeshViewer::keyboard(int key, int code, int action, int mod)
     }
 }
 
+void CustomMeshViewer::drop(int count, const char** paths)
+{
+    for (int i = 0; i < count; ++i)
+    {
+        const std::filesystem::path filename(paths[i]);
+        const std::filesystem::path extension(filename.extension());
+        load_mesh(paths[i]);
+    }
+}
+
 //! get vertex closest to 3D position under the mouse cursor
 pmp::Vertex CustomMeshViewer::pick_vertex(int x, int y)
 {

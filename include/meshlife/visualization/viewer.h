@@ -99,6 +99,8 @@ class Viewer : public CustomMeshViewer
 
     pmp::Color hsv_to_rgb(float h, float s, float v);
 
+    void drop(int count, const char** paths) override;
+
     void retrieve_debug_info_for_selected_face();
     void select_debug_info_face(size_t face_idx);
 

@@ -473,6 +473,12 @@ pmp::Color Viewer::hsv_to_rgb(float h, float s, float v)
     return pmp::Color{r + m, g + m, b + m};
 }
 
+void Viewer::drop(int count, const char** paths)
+{
+    CustomMeshViewer::drop(count, paths);
+    set_mesh_properties();
+}
+
 void Viewer::read_mesh_from_file(std::string path)
 {
     std::cout << "Loading mesh from: " << path << std::endl;
