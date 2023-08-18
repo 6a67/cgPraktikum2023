@@ -88,7 +88,7 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
         std::string path = entry.path().string();
         if (path.find(".frag") != std::string::npos)
         {
-            std::cout << "Found fragment shader: " << path << std::endl;
+            // std::cout << "Found fragment shader: " << path << std::endl;
             shader_files_fragment_.push_back(path);
         }
     }
