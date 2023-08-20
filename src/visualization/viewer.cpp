@@ -365,6 +365,7 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
             break;
         case GLFW_KEY_6:
             mesh_.assign(pmp::icosphere(3));
+            set_mesh_scale(pmp::vec3(0.05f, 0.05f, 0.05f));
             break;
         case GLFW_KEY_7:
             mesh_.assign(pmp::quad_sphere(3));
@@ -382,6 +383,8 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
         // set_draw_mode("Hidden Line");
         set_mesh_properties();
         update_mesh();
+
+        position_ = pmp::vec3(0.0f, 0.0f, -0.4f);
 
         break;
     }
