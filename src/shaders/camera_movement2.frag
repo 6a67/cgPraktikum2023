@@ -37,7 +37,7 @@ vec3 rangeModWithOffset(vec3 position, vec3 offset, float radius) {
 	return rangeModWithOffset(position, offset, vec3(radius, radius, radius));
 }
 
-mat3 rot(float roll, float pitch, float yaw) {
+mat3 rot_rpy(float roll, float pitch, float yaw) {
 	float cr = cos(roll);
 	float sr = sin(roll);
 	float cp = cos(pitch);
@@ -54,8 +54,8 @@ float sdBox(vec3 p, vec3 b) {
 }
 
 // rotate around a given point
-mat4 rot(float roll, float pitch, float yaw, vec3 point) {
-	mat3 r = rot(roll, pitch, yaw);
+mat4 rot_rpy(float roll, float pitch, float yaw, vec3 point) {
+	mat3 r = rot_rpy(roll, pitch, yaw);
 	vec3 p = point - r * point;
 	return mat4(r[0], 0, r[1], 0, r[2], 0, p, 1);
 }
@@ -70,42 +70,42 @@ float sdMenger(vec3 p, float size, int iterations) {
 
 	if(MOD_TIME > 49 && MOD_TIME < 54) {
 		float alpha = ((MOD_TIME - 49) / 5.) * 3.1415 / 2.;
-		p = p * rot(0, 0, alpha);
+		p = p * rot_rpy(0, 0, alpha);
 	}
 
 	for(int iter = 0; iter < iterations; ++iter) {
 		if(MOD_TIME > 12 && MOD_TIME < 17) {
 			float alpha = ((MOD_TIME - 12) / 5.) * 3.1415 / 2.;
-			p = p * rot(0, 0, alpha);
+			p = p * rot_rpy(0, 0, alpha);
 		}
 
 		if(MOD_TIME > 32 && MOD_TIME < 37) {
 			float gamma = ((MOD_TIME - 32) / 5.) * 3.1415 / 2.;
-			p = p * rot(0, 0, gamma);
+			p = p * rot_rpy(0, 0, gamma);
 		}
 
 		if(MOD_TIME > 38 && MOD_TIME < 43) {
 			float beta = ((MOD_TIME - 38) / 5.) * 3.1415 / 2.;
-			p = p * rot(0, beta, 0);
+			p = p * rot_rpy(0, beta, 0);
 		}
 
 		if(MOD_TIME > 44 && MOD_TIME < 49) {
 			float alpha = ((MOD_TIME - 44) / 5.) * 3.1415 / 2.;
 			float gamma = 3.1415 - ((MOD_TIME - 44) / 5.) * 3.1415 / 2.;
-			p = p * rot(gamma, 0, alpha);
+			p = p * rot_rpy(gamma, 0, alpha);
 		}
 
-		if(MOD_TIME > 54 && MOD_TIME < 75) {
-			float alpha = ((MOD_TIME - 54) / 21.) * 3.1415 / 2.;
-			float gamma = 3.1415 - ((MOD_TIME - 54) / 21.) * 3.1415 / 2.;
-			float beta = ((MOD_TIME - 54) / 21.) * 3.1415 / 2.;
-			p = p * rot(gamma, beta, alpha);
+		if(MOD_TIME > 54 && MOD_TIME < 65) {
+			float alpha = ((MOD_TIME - 54) / 11.) * 3.1415 / 2.;
+			float gamma = 3.1415 - ((MOD_TIME - 54) / 11.) * 3.1415 / 2.;
+			float beta = ((MOD_TIME - 54) / 11.) * 3.1415 / 2.;
+			p = p * rot_rpy(gamma, beta, alpha);
 		}
 
 		// float beta = iTime * 0.15;
-		// p = p * rot(0, beta, 0);
+		// p = p * rot_rpy(0, beta, 0);
 		// float gamma = iTime * 0.05;
-		// p = p * rot(gamma, 0, 0);
+		// p = p * rot_rpy(gamma, 0, 0);
 
 		p = abs(p);
 		if(p.y > p.x)
@@ -337,7 +337,7 @@ vec3 cameraMovement(in vec3[3] points, float start, float end, bool smoothp, in 
 vec3 cameraRotate(in vec3 center, in vec3 viewIn) {
 	// rotate camera around center
 	float alpha = iTime * 3;
-	viewIn = (rot(0, alpha, 0, center) * vec4(viewIn, 0.)).xyz;
+	viewIn = (rot_rpy(0, alpha, 0, center) * vec4(viewIn, 0.)).xyz;
 	return viewIn;
 }
 
@@ -351,7 +351,7 @@ void main() {
 
 	vec3 ro = vec3(0, 10, 0);
 
-	vec3 rd = normalize(rot(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	vec3 rd = normalize(rot_rpy(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
 	vec3 viewOut;
 	mat3 rot;
 
@@ -372,19 +372,33 @@ void main() {
 	}
 
 	// follow
-	if(MOD_TIME >= 40 && MOD_TIME < 60) {
+	if(MOD_TIME >= 40 && MOD_TIME < 65) {
 		vec3 points[3] = vec3[](vec3(0, 20, 30), vec3(0, 20, 40), vec3(0, 20, 50));
 		ro = cameraMovement(points, 40, 60, false, rd, viewOut, rot);
 	}
 
+	// teleport camera back to origin
+	// if(MOD_TIME > 60) {
+	// 	vec3 points[3] = vec3[](vec3(0, 10, 0), vec3(0, 10, 0.01), vec3(0, 10, 0.02));
+	// 	ro = cameraMovement(points, 60, 80, false, rd, viewOut, rot);
+	// }
+
 	// move camera back to origin
-	if(MOD_TIME > 60) {
-		vec3 points[3] = vec3[](vec3(0, 10, 0), vec3(0, 10, 0.01), vec3(0, 10, 0.02));
-		ro = cameraMovement(points, 60, 80, false, rd, viewOut, rot);
+	if(MOD_TIME >= 65) {
+		vec3 points[3] = vec3[](vec3(0, 10, 50), vec3(0, 10, 0.02), vec3(0, 10, 0.01));
+		ro = cameraMovement(points, 65, 75, true, rd, viewOut, rot);
 	}
 
 	rd = normalize(viewOut);
 	ro = ro + rot * vec3(model_pos.x, model_pos.y, model_pos.z);
+
+	// invert right and view vector to move backwards
+	if(MOD_TIME >= 65) {
+		rd.x = -rd.x;
+		rd.z = -rd.z;
+		ro -= rot * vec3(model_pos.x, model_pos.y, model_pos.z);
+		ro += rot * vec3(-model_pos.x, model_pos.y, -model_pos.z);
+	}
 
 	float d = RayMarch(ro, rd);
 	vec3 p = ro + rd * d;
