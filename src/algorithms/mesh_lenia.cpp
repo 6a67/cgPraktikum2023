@@ -174,6 +174,7 @@ void MeshLenia::kernel_precompute()
 
 void MeshLenia::update_state(int num_steps)
 {
+
     for (int step = 0; step < num_steps; step++)
     {
         for (auto f : mesh_.faces())
@@ -189,6 +190,10 @@ void MeshLenia::update_state(int num_steps)
             new_state = last_state_[face] + (1.0 / p_T_) * new_state;
             new_state = std::clamp<float>(new_state, 0.0, 1.0);
             state_[face] = new_state;
+            // if a face does not have a neighbor/valid value, set it to 0
+            if (new_state != new_state) {
+                state_[face] = 0;
+            }
         }
     }
 }
