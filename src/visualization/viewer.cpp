@@ -34,6 +34,7 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     set_draw_mode("Hidden Line");
     set_draw_mode("Skybox only");
     set_draw_mode("Custom Shader");
+    set_draw_mode("Reflective Sphere");
 
     set_mesh_properties();
 
