@@ -98,6 +98,8 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     position_ = pmp::vec3(0.0f, 0.0f, -0.4f);
 
     set_mesh_scale(pmp::vec3(0.05f, 0.05f, 0.05f));
+
+    renderer_.set_reflectiveness(0.3f);
 }
 
 Viewer::~Viewer()
