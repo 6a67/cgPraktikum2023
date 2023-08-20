@@ -92,6 +92,11 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
             shader_files_fragment_.push_back(path);
         }
     }
+
+    // set default position for model
+    position_ = pmp::vec3(0.0f, 0.0f, -0.4f);
+
+    set_mesh_scale(pmp::vec3(0.05f, 0.05f, 0.05f));
 }
 
 Viewer::~Viewer()
