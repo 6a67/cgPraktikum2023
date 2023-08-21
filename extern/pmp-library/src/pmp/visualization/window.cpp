@@ -403,6 +403,8 @@ void Window::render_frame()
     // draw scene
     instance_->display();
 
+    instance_->after_display();
+
     // draw GUI
     if (instance_->show_imgui())
     {

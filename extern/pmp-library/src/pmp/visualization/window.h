@@ -33,6 +33,12 @@ class Window
     //! clears the buffers, calls the draw() method, and performs buffer swap
     virtual void display() = 0;
 
+    // This function is called right after display (before ImGui renders) and can be used to save the current frame to a
+    // file.
+    virtual void after_display()
+    {
+    }
+
     //! this function handles keyboard events
     virtual void keyboard(int /*key*/, int /*code*/, int /*action*/, int /*mods*/);
 

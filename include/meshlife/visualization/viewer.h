@@ -3,6 +3,7 @@
 #include "meshlife/algorithms/mesh_automaton.h"
 #include "meshlife/algorithms/mesh_lenia.h"
 #include "meshlife/visualization/custom_meshviewer.h"
+#include <bits/chrono.h>
 #include <chrono>
 #include <ctime>
 #include <pmp/stop_watch.h>
@@ -76,12 +77,30 @@ class Viewer : public CustomMeshViewer
 
     void on_close_callback() override;
 
+    void start_recording();
+
+    void stop_recording();
+
+    void delete_recorded_frames();
+
+    void convert_recorded_frames_to_video();
+
   private:
     MeshAutomaton* automaton_ = nullptr;
     bool simulation_running_ = false;
     char* modelpath_buf_;
     char* peak_string_;
     std::chrono::time_point<std::chrono::high_resolution_clock> clock_last_;
+
+    std::filesystem::path recordings_path_;
+    int recording_image_counter_ = 0;
+    int recording_frame_target_count_ = 0;
+    int recording_framerate_ = 60;
+    std::chrono::time_point<std::chrono::system_clock> recording_start_time_;
+    bool recording_create_video_ = false;
+    volatile bool recording_ffmpeg_is_converting_video_ = false;
+    std::thread thread_ffmpeg_;
+    unsigned char* recording_frame_data_ = nullptr;
 
     // Updates per second
     int UPS_ = 30;
@@ -92,6 +111,8 @@ class Viewer : public CustomMeshViewer
     // Debug data
     DebugData debug_data_;
 
+    bool recording_ = false;
+
     std::thread simulation_thread_;
     void simulation_thread_func();
     std::atomic<bool> ready_for_display_ = false;
@@ -100,9 +121,12 @@ class Viewer : public CustomMeshViewer
     pmp::Color hsv_to_rgb(float h, float s, float v);
 
     void drop(int count, const char** paths) override;
+    void after_display() override;
 
     void retrieve_debug_info_for_selected_face();
     void select_debug_info_face(size_t face_idx);
+
+    std::string seconds_to_string(int seconds);
 
     void start_simulation(bool single_step = false);
     void stop_simulation();

@@ -3,6 +3,7 @@
 #include <ctime>
 #include <filesystem>
 #include <format>
+#include <limits>
 #include <pmp/algorithms/decimation.h>
 #include <pmp/algorithms/remeshing.h>
 #include <pmp/algorithms/shapes.h>
@@ -11,6 +12,8 @@
 
 #include <imgui.h>
 #include <sstream>
+#include <stb_image_write.h>
+#include <thread>
 
 #include "meshlife/algorithms/mesh_lenia.h"
 #include "meshlife/stamps.h"
@@ -21,6 +24,8 @@
 #include "pmp/mat_vec.h"
 #include "pmp/surface_mesh.h"
 #include "pmp/types.h"
+
+#include "GLFW/glfw3.h"
 
 namespace meshlife
 {
@@ -100,6 +105,8 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     set_mesh_scale(pmp::vec3(0.05f, 0.05f, 0.05f));
 
     renderer_.set_reflectiveness(0.3f);
+
+    recordings_path_ = std::filesystem::current_path() / "recordings";
 }
 
 Viewer::~Viewer()
@@ -111,6 +118,71 @@ void Viewer::on_close_callback()
 {
     stop_simulation();
     file_watcher_disable();
+    if (thread_ffmpeg_.joinable())
+    {
+        thread_ffmpeg_.join();
+    }
+}
+
+void Viewer::start_recording()
+{
+    recording_frame_data_ = new unsigned char[3 * width() * height()];
+    recording_start_time_ = std::chrono::system_clock::now();
+    recording_image_counter_ = 0;
+    // pause itime because we will step manually for the recording and not rely on glfwGetTime()
+    renderer_.itime_pause();
+    renderer_.set_itime(0.0);
+    recording_ = true;
+    std::cout << "Recording started" << std::endl;
+}
+
+void Viewer::stop_recording()
+{
+    recording_ = false;
+    std::cout << "Recording stopped" << std::endl;
+
+    delete[] recording_frame_data_;
+    if (recording_create_video_)
+    {
+        std::cout << "Converting to video..." << std::endl;
+        recording_ffmpeg_is_converting_video_ = true;
+        thread_ffmpeg_ = std::thread(&Viewer::convert_recorded_frames_to_video, this);
+    }
+    else
+    {
+
+        std::cout << recording_frame_target_count_ << " Frames saved to " << recordings_path_ << '\n'
+                  << "Use ffmpeg to combine frames:\n"
+                     "ffmpeg -framerate 60 -pattern_type glob -i 'frame_*.png' -c:v libx264 -pix_fmt yuv420p out.mp4\n"
+                     "set framerate and pixel format accordingly (use 'ffmpeg -pix_fmts' for all possible formats)"
+                  << std::endl;
+    }
+}
+
+void Viewer::delete_recorded_frames()
+{
+    for (auto& filepath : std::filesystem::directory_iterator(recordings_path_))
+    {
+        std::string filename = filepath.path().filename().string();
+        // Check if file starts with 'frame_' and ends with '.png'
+        if (std::filesystem::is_regular_file(filepath) && filename.rfind("frame_") == 0
+            && filename.rfind(".png") == (filename.size() - 4))
+        {
+            std::filesystem::remove(filepath);
+        }
+    }
+}
+
+void Viewer::convert_recorded_frames_to_video()
+{
+    std::stringstream command;
+    command << "cd " << std::filesystem::absolute(recordings_path_) << " && "
+            << "ffmpeg -framerate " << recording_framerate_
+            << " -y -pattern_type glob -i 'frame_*.png' -c:v libx264 -pix_fmt yuv420p output.mp4\n";
+    std::cout << "Running: '" << command.str() << "'" << std::endl;
+
+    std::system(command.str().c_str());
+    recording_ffmpeg_is_converting_video_ = false;
 }
 
 std::filesystem::path Viewer::get_path_from_shader_type(ShaderType shader_type)
@@ -490,6 +562,45 @@ void Viewer::drop(int count, const char** paths)
     set_mesh_properties();
 }
 
+void Viewer::after_display()
+{
+    if (recording_)
+    {
+        // increment before so we start at frame 1
+        recording_image_counter_++;
+        std::stringstream filename;
+        filename << "frame_" << std::setw(6) << std::setfill('0') << recording_image_counter_ << ".png";
+        if (!std::filesystem::exists(recordings_path_))
+        {
+            if (!std::filesystem::create_directory(recordings_path_))
+            {
+                std::cerr << "Error: failed to create directory to store recordings" << std::endl;
+                return;
+            }
+            std::cout << "Created directory to store recordings at: " << std::filesystem::absolute(recordings_path_)
+                      << std::endl;
+        }
+
+        std::filesystem::path file = recordings_path_ / filename.str();
+        auto time = renderer_.get_itime();
+        // allocate buffer
+
+        // read framebuffer
+        glfwMakeContextCurrent(window_);
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        glReadPixels(0, 0, width(), height(), GL_RGB, GL_UNSIGNED_BYTE, recording_frame_data_);
+
+        // write to file
+        stbi_flip_vertically_on_write(true);
+        stbi_write_png(file.c_str(), width(), height(), 3, recording_frame_data_, 3 * width());
+
+        renderer_.set_itime(time + 1.0 / (double)recording_framerate_);
+
+        if ((recording_frame_target_count_ > 0) && (recording_image_counter_ >= recording_frame_target_count_))
+            stop_recording();
+    }
+}
+
 void Viewer::read_mesh_from_file(std::string path)
 {
     std::cout << "Loading mesh from: " << path << std::endl;
@@ -536,6 +647,14 @@ void Viewer::select_debug_info_face(size_t face_idx)
     }
 }
 
+std::string Viewer::seconds_to_string(int seconds)
+{
+    std::stringstream time;
+    time << std::setw(2) << std::setfill('0') << std::floor(seconds / 60) << ':' << std::setw(2) << std::setfill('0')
+         << (seconds % 60);
+    return time.str();
+}
+
 // Call this right after creating the object e.g. after using ImGui::Button(...);
 #define IMGUI_TOOLTIP_TEXT(TEXT)                                                                                       \
     do                                                                                                                 \
@@ -569,7 +688,143 @@ void Viewer::process_imgui()
         // Show mesh info in GUI via parent class
         CustomMeshViewer::process_imgui();
 
-        if (ImGui::CollapsingHeader("Mesh Transform Settings"))
+        if (ImGui::CollapsingHeader("Recording Settings"))
+        {
+            {
+                static int width = 800;
+                static int height = 600;
+                ImGui::BeginDisabled(recording_);
+                ImGui::InputInt("Window Width", &width, 0, 0);
+                ImGui::InputInt("Window Height", &height, 0, 0);
+                if (ImGui::Button("Set window size"))
+                {
+                    if (width > 0 && height > 0)
+                        glfwSetWindowSize(window_, width, height);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("720p"))
+                {
+                    glfwSetWindowSize(window_, 1024, 720);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("1080p"))
+                {
+                    glfwSetWindowSize(window_, 1920, 1080);
+                }
+                ImGui::SameLine();
+                ImGui::EndDisabled();
+
+                IMGUI_TOOLTIP_TEXT(
+                    "Sets the window size to the specified values (make sure the window is not in fullscreen mode)");
+            }
+
+            ImGui::Separator();
+
+            ImGui::BeginDisabled(recording_);
+            ImGui::Checkbox("Automatically convert frames to video (requires ffmpeg in path)",
+                            &recording_create_video_);
+            ImGui::EndDisabled();
+
+            IMGUI_TOOLTIP_TEXT("Attempts to automatically convert the frames to a video after stopping the recording. "
+                               "(See console for info on output file)")
+            ImGui::BeginDisabled(recording_);
+            ImGui::SliderInt("Recording framerate", &recording_framerate_, 1, 200);
+
+            if (ImGui::Button("30 FPs"))
+            {
+                recording_framerate_ = 30;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("60 FPs"))
+            {
+                recording_framerate_ = 60;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("120 FPS"))
+            {
+                recording_framerate_ = 120;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("144 FPS"))
+            {
+                recording_framerate_ = 144;
+            }
+
+            ImGui::EndDisabled();
+            IMGUI_TOOLTIP_TEXT("Framerate to record at. Determines the timesteps between the frames when recording.")
+
+            ImGui::BeginDisabled(recording_);
+            ImGui::InputInt("Recording target framecount", &recording_frame_target_count_, 0, 0);
+            ImGui::EndDisabled();
+            IMGUI_TOOLTIP_TEXT("Amount of frames to record. Use 0 for infinte (you have to manually stop recording)")
+            {
+                std::stringstream videotime;
+                int seconds = recording_frame_target_count_ / recording_framerate_;
+                videotime << "Video length: " << seconds_to_string(seconds);
+                ImGui::Text("%s", videotime.str().c_str());
+            }
+
+            if (recording_)
+            {
+                ImGui::Text("Frame: %d", recording_image_counter_);
+                {
+                    std::stringstream recordingtime;
+                    int seconds = recording_image_counter_ / recording_framerate_;
+                    recordingtime << "Time (Frames): " << seconds_to_string(seconds);
+                    ImGui::Text("%s", recordingtime.str().c_str());
+                }
+                {
+                    std::stringstream recordingtime;
+                    auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(
+                        std::chrono::system_clock::now() - recording_start_time_);
+                    recordingtime << "Elapsed Time since recoding: " << seconds_to_string(elapsed_time.count());
+                    ImGui::Text("%s", recordingtime.str().c_str());
+                }
+            }
+
+            if (ImGui::Button(recording_ ? "Stop recording" : "Start recording"))
+            {
+                if (recording_)
+                    stop_recording();
+                else
+                {
+                    if (std::filesystem::exists(recordings_path_ / "frame_000001.png"))
+                    {
+                        std::cout << "Frame files exist!!" << std::endl;
+                        ImGui::OpenPopup("Delete?");
+                    }
+                    else
+                    {
+                        start_recording();
+                    }
+                }
+            }
+            IMGUI_TOOLTIP_TEXT("Will reset iTime and starts to save every frame to the 'recordings' directory.")
+
+            ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+            ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+            if (ImGui::BeginPopupModal("Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text(
+                    "Frame files already exist in the output directory. Delete frame files and start recording?");
+                ImGui::Separator();
+                if (ImGui::Button("Yes", ImVec2(120, 0)))
+                {
+                    delete_recorded_frames();
+                    start_recording();
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SetItemDefaultFocus();
+                ImGui::SameLine();
+                if (ImGui::Button("No", ImVec2(120, 0)))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
+        else if (ImGui::CollapsingHeader("Mesh Transform Settings"))
         {
             {
                 std::stringstream position_text;
@@ -1176,6 +1431,23 @@ void Viewer::process_imgui()
                 }
             }
         }
+    }
+
+    if (!ImGui::IsPopupOpen("Creating_Video") && recording_ffmpeg_is_converting_video_)
+    {
+        ImGui::OpenPopup("Creating_Video");
+    }
+
+    if (ImGui::BeginPopupModal("Creating_Video", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Converting frames to video using ffmpeg, see console for info...");
+
+        ImGui::BeginDisabled(recording_ffmpeg_is_converting_video_);
+        if (ImGui::Button("Close", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
     }
 }
 
