@@ -807,7 +807,7 @@ void Viewer::process_imgui()
             ImGui::BeginDisabled(recording_);
             ImGui::InputInt("Recording target framecount", &recording_frame_target_count_, 0, 0);
             IMGUI_TOOLTIP_TEXT("Amount of frames to record. Use 0 for infinte (you have to manually stop recording)")
-            ImGui::SliderInt("Recording target buffer count", &recording_buffer_count_, 1, 50000);
+            ImGui::SliderInt("Recording target buffer count", &recording_buffer_count_, 1, 5000);
             IMGUI_TOOLTIP_TEXT(
                 "Amount of frames to buffer. Increasing this number directly corresponds with higher RAM usage.")
             ImGui::EndDisabled();
