@@ -7,6 +7,7 @@
 #include <chrono>
 #include <ctime>
 #include <pmp/stop_watch.h>
+#include <stack>
 #include <thread>
 
 namespace meshlife
@@ -77,9 +78,13 @@ class Viewer : public CustomMeshViewer
 
     void on_close_callback() override;
 
+    void write_frame_to_file(std::filesystem::path filename, int buffer_idx);
+
     void start_recording();
 
     void stop_recording();
+
+    void join_recording_buffer_threads();
 
     void delete_recorded_frames();
 
@@ -96,11 +101,14 @@ class Viewer : public CustomMeshViewer
     int recording_image_counter_ = 0;
     int recording_frame_target_count_ = 0;
     int recording_framerate_ = 60;
+    int recording_buffer_count_ = 100;
     std::chrono::time_point<std::chrono::system_clock> recording_start_time_;
     bool recording_create_video_ = false;
     volatile bool recording_ffmpeg_is_converting_video_ = false;
     std::thread thread_ffmpeg_;
-    unsigned char* recording_frame_data_ = nullptr;
+    std::vector<unsigned char> recording_frame_data_;
+    std::atomic<int> recording_buffer_used_ = 0;
+    std::stack<std::thread*> recording_buffer_threads_;
 
     // Updates per second
     int UPS_ = 30;

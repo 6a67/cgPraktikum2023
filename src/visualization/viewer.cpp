@@ -126,7 +126,22 @@ void Viewer::on_close_callback()
 
 void Viewer::start_recording()
 {
-    recording_frame_data_ = new unsigned char[3 * width() * height()];
+    size_t size = (size_t)3 * (size_t)width() * (size_t)height() * (size_t)recording_buffer_count_;
+    try
+    {
+        recording_frame_data_.resize(size);
+    }
+    catch (std::bad_alloc& e)
+    {
+        std::cerr << "Error: Not enough memory for buffer\n" << e.what() << std::endl;
+        return;
+    }
+    catch (std::length_error& e)
+    {
+        std::cerr << "Error: Not enough memory for buffer\n" << e.what() << std::endl;
+        return;
+    }
+
     recording_start_time_ = std::chrono::system_clock::now();
     recording_image_counter_ = 0;
     // pause itime because we will step manually for the recording and not rely on glfwGetTime()
@@ -141,7 +156,10 @@ void Viewer::stop_recording()
     recording_ = false;
     std::cout << "Recording stopped" << std::endl;
 
-    delete[] recording_frame_data_;
+    std::cout << "Waiting for files to be written to disk..." << std::endl;
+    join_recording_buffer_threads();
+    std::cout << "Frames have been written to disk." << std::endl;
+
     if (recording_create_video_)
     {
         std::cout << "Converting to video..." << std::endl;
@@ -156,6 +174,19 @@ void Viewer::stop_recording()
                      "ffmpeg -framerate 60 -pattern_type glob -i 'frame_*.png' -c:v libx264 -pix_fmt yuv420p out.mp4\n"
                      "set framerate and pixel format accordingly (use 'ffmpeg -pix_fmts' for all possible formats)"
                   << std::endl;
+    }
+}
+
+void Viewer::join_recording_buffer_threads()
+{
+    while (!recording_buffer_threads_.empty())
+    {
+        std::thread& thread = *recording_buffer_threads_.top();
+        recording_buffer_threads_.pop();
+        if (thread.joinable())
+        {
+            thread.join();
+        }
     }
 }
 
@@ -585,20 +616,40 @@ void Viewer::after_display()
         auto time = renderer_.get_itime();
         // allocate buffer
 
+        recording_buffer_used_++;
+
+        int buffer_idx = recording_buffer_used_ - 1;
         // read framebuffer
         glfwMakeContextCurrent(window_);
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        glReadPixels(0, 0, width(), height(), GL_RGB, GL_UNSIGNED_BYTE, recording_frame_data_);
+        // offset in bytes because buffer is vector of unsigned char
+        size_t offset = (size_t)buffer_idx * (size_t)width() * (size_t)height() * (size_t)3;
+        glReadnPixels(
+            0, 0, width(), height(), GL_RGB, GL_UNSIGNED_BYTE, width() * height() * 3, &recording_frame_data_[offset]);
 
-        // write to file
-        stbi_flip_vertically_on_write(true);
-        stbi_write_png(file.c_str(), width(), height(), 3, recording_frame_data_, 3 * width());
+        recording_buffer_threads_.emplace(new std::thread(&Viewer::write_frame_to_file, this, file, buffer_idx));
 
+        // TODO: This is not optimal but good enough (use something like a thread pool instead)
+        // if buffers are full, wait until they're completely empty again
+        if (recording_buffer_used_ == recording_buffer_count_)
+        {
+            join_recording_buffer_threads();
+            recording_buffer_used_ = 0;
+        }
         renderer_.set_itime(time + 1.0 / (double)recording_framerate_);
 
         if ((recording_frame_target_count_ > 0) && (recording_image_counter_ >= recording_frame_target_count_))
             stop_recording();
     }
+}
+
+void Viewer::write_frame_to_file(std::filesystem::path filename, int buffer_idx)
+{
+    // write to file
+    stbi_flip_vertically_on_write(true);
+    // offset in bytes because buffer is vector of unsigned char
+    size_t offset = (size_t)buffer_idx * (size_t)width() * (size_t)height() * (size_t)3;
+    stbi_write_png(filename.c_str(), width(), height(), 3, &recording_frame_data_[offset], 3 * width());
 }
 
 void Viewer::read_mesh_from_file(std::string path)
@@ -755,8 +806,19 @@ void Viewer::process_imgui()
 
             ImGui::BeginDisabled(recording_);
             ImGui::InputInt("Recording target framecount", &recording_frame_target_count_, 0, 0);
-            ImGui::EndDisabled();
             IMGUI_TOOLTIP_TEXT("Amount of frames to record. Use 0 for infinte (you have to manually stop recording)")
+            ImGui::SliderInt("Recording target buffer count", &recording_buffer_count_, 1, 50000);
+            IMGUI_TOOLTIP_TEXT(
+                "Amount of frames to buffer. Increasing this number directly corresponds with higher RAM usage.")
+            ImGui::EndDisabled();
+            {
+                std::stringstream ram_usage;
+                size_t bytes = (size_t)width() * (size_t)height() * (size_t)recording_buffer_count_ * (size_t)3;
+                ram_usage << "Buffer RAM usage: " << std::fixed << std::setprecision(2)
+                          << (bytes / 1024.0 / 1024.0 / 1024.0) << "GB";
+                ImGui::Text("%s", ram_usage.str().c_str());
+            }
+
             {
                 std::stringstream videotime;
                 int seconds = recording_frame_target_count_ / recording_framerate_;
@@ -766,6 +828,11 @@ void Viewer::process_imgui()
 
             if (recording_)
             {
+                {
+                    std::stringstream buffer_used;
+                    buffer_used << "Buffer used: " << recording_buffer_used_ << '/' << recording_buffer_count_;
+                    ImGui::Text("%s", buffer_used.str().c_str());
+                }
                 ImGui::Text("Frame: %d", recording_image_counter_);
                 {
                     std::stringstream recordingtime;
