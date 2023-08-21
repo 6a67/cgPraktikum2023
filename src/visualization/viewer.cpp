@@ -833,7 +833,7 @@ void Viewer::process_imgui()
                     buffer_used << "Buffer used: " << recording_buffer_used_ << '/' << recording_buffer_count_;
                     ImGui::Text("%s", buffer_used.str().c_str());
                 }
-                ImGui::Text("Frame: %d", recording_image_counter_);
+                ImGui::Text("Frame: %d/%d", recording_image_counter_, recording_frame_target_count_);
                 {
                     std::stringstream recordingtime;
                     int seconds = recording_image_counter_ / recording_framerate_;
