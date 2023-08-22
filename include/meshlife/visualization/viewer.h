@@ -2,6 +2,7 @@
 
 #include "meshlife/algorithms/mesh_automaton.h"
 #include "meshlife/algorithms/mesh_lenia.h"
+#include "meshlife/stamps.h"
 #include "meshlife/visualization/custom_meshviewer.h"
 #include <bits/chrono.h>
 #include <chrono>
@@ -95,6 +96,7 @@ class Viewer : public CustomMeshViewer
     bool simulation_running_ = false;
     char* modelpath_buf_;
     char* peak_string_;
+    stamps::Shapes selected_stamp_ = stamps::Shapes::s_none;
     std::chrono::time_point<std::chrono::high_resolution_clock> clock_last_;
 
     std::filesystem::path recordings_path_;
@@ -131,6 +133,8 @@ class Viewer : public CustomMeshViewer
 
     void drop(int count, const char** paths) override;
     void after_display() override;
+
+    pmp::Face get_face_under_cursor();
 
     void retrieve_debug_info_for_selected_face();
     void select_debug_info_face(size_t face_idx);

@@ -72,6 +72,8 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     add_help_item("S", "Step once in simulation");
     add_help_item("D", "Select face and retrieve debug info");
     add_help_item("O", "Reload custom shader from file");
+    add_help_item("C", "Rotate camera (for Debugging)");
+    add_help_item("B", "Place selected stamp on mesh");
 
     clock_last_ = std::chrono::high_resolution_clock::now();
 
@@ -88,7 +90,6 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     file_watcher_enable();
 
     // list all files in src/shaders folder
-
     for (const auto& entry : std::filesystem::directory_iterator(shaders_path_))
     {
         std::string path = entry.path().string();
@@ -396,12 +397,22 @@ void Viewer::set_mesh_properties()
         automaton_->allocate_needed_properties();
 }
 
-void Viewer::retrieve_debug_info_for_selected_face()
+pmp::Face Viewer::get_face_under_cursor()
 {
     double x, y;
     cursor_pos(x, y);
     pmp::Face face;
     find_face(x, y, face);
+    if (face.is_valid())
+    {
+        return face;
+    }
+    return pmp::Face();
+}
+
+void Viewer::retrieve_debug_info_for_selected_face()
+{
+    pmp::Face face = get_face_under_cursor();
     if (face.is_valid())
     {
         debug_data_.selected_face_idx_ = face.idx();
@@ -444,6 +455,48 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
             (CamDirection)(((int)renderer_.get_cam_direction() + 1) % (int)CamDirection::COUNT));
         std::cout << (int)renderer_.get_cam_direction() << " - "
                   << renderer_.direction_names_[(int)renderer_.get_cam_direction()];
+        break;
+    case GLFW_KEY_B:
+        if (auto* lenia = dynamic_cast<MeshLenia*>(automaton_))
+        {
+            pmp::Face f = get_face_under_cursor();
+            if (!f.is_valid())
+                break;
+
+            switch (selected_stamp_)
+            {
+            case stamps::Shapes::s_none:
+                break;
+            case stamps::Shapes::s_orbium:
+                lenia->place_stamp(f, stamps::orbium);
+                ready_for_display_ = true;
+                break;
+            case stamps::Shapes::s_smiley:
+                lenia->place_stamp(f, stamps::smiley);
+                ready_for_display_ = true;
+                break;
+            case stamps::Shapes::s_debug:
+                lenia->place_stamp(f, stamps::debug);
+                ready_for_display_ = true;
+                break;
+            case stamps::Shapes::s_geminium:
+                lenia->place_stamp(f, stamps::geminium);
+                ready_for_display_ = true;
+                break;
+            case stamps::Shapes::s_gyrorbium:
+                lenia->place_stamp(f, stamps::gyrorbium);
+                ready_for_display_ = true;
+                break;
+            case stamps::Shapes::s_velox:
+                lenia->place_stamp(f, stamps::velox);
+                ready_for_display_ = true;
+                break;
+            case stamps::Shapes::s_circle:
+                lenia->place_circle(f, 0.1, 0.3);
+                ready_for_display_ = true;
+                break;
+            }
+        }
         break;
     // num keys: load simple primitive meshes
     case GLFW_KEY_0:
@@ -1330,6 +1383,7 @@ void Viewer::process_imgui()
             if (ImGui::Button("Next"))
             {
                 automaton_->update_state(1);
+                ready_for_display_ = true;
             }
 
             ImGui::Text("Gome of Life Random");
@@ -1444,66 +1498,30 @@ void Viewer::process_imgui()
                     strcpy(peak_string_, s2.c_str());
                 }
 
-                if (ImGui::CollapsingHeader("Stamps"))
                 {
-                    static stamps::Shapes stamp;
                     std::stringstream label;
-                    label << "Stamp: " << stamps::shape_to_str(stamp);
+                    label << "Stamp: " << stamps::shape_to_str(selected_stamp_);
                     if (ImGui::BeginMenu(label.str().c_str()))
                     {
+                        if (ImGui::MenuItem("None"))
+                            selected_stamp_ = stamps::s_none;
                         if (ImGui::MenuItem("Orbium"))
-                            stamp = stamps::s_orbium;
+                            selected_stamp_ = stamps::s_orbium;
                         else if (ImGui::MenuItem("Smiley"))
-                            stamp = stamps::s_smiley;
+                            selected_stamp_ = stamps::s_smiley;
                         else if (ImGui::MenuItem("Debug"))
-                            stamp = stamps::s_debug;
+                            selected_stamp_ = stamps::s_debug;
                         else if (ImGui::MenuItem("Geminium"))
-                            stamp = stamps::s_geminium;
+                            selected_stamp_ = stamps::s_geminium;
                         else if (ImGui::MenuItem("Gyrorbium"))
-                            stamp = stamps::s_gyrorbium;
+                            selected_stamp_ = stamps::s_gyrorbium;
                         else if (ImGui::MenuItem("Velox"))
-                            stamp = stamps::s_velox;
+                            selected_stamp_ = stamps::s_velox;
                         else if (ImGui::MenuItem("Circle"))
-                            stamp = stamps::s_circle;
+                            selected_stamp_ = stamps::s_circle;
                         ImGui::EndMenu();
                     }
-
-                    if (ImGui::Button("Place Stamp (Select startface with 'D')"))
-                    {
-                        pmp::Face f;
-                        if (debug_data_.face_.is_valid())
-                            f = debug_data_.face_;
-                        switch (stamp)
-                        {
-                        case stamps::Shapes::s_none:
-                            break;
-                        case stamps::Shapes::s_orbium:
-                            lenia->place_stamp(f, stamps::orbium);
-                            break;
-                        case stamps::Shapes::s_smiley:
-                            lenia->place_stamp(f, stamps::smiley);
-                            break;
-                        case stamps::Shapes::s_debug:
-                            lenia->place_stamp(f, stamps::debug);
-                            break;
-                        case stamps::Shapes::s_geminium:
-                            lenia->place_stamp(f, stamps::geminium);
-                            break;
-                        case stamps::Shapes::s_gyrorbium:
-                            lenia->place_stamp(f, stamps::gyrorbium);
-                            break;
-                        case stamps::Shapes::s_velox:
-                            lenia->place_stamp(f, stamps::velox);
-                            break;
-                        case stamps::Shapes::s_circle:
-                            lenia->place_circle(f, 0.1, 0.3);
-                            break;
-                        }
-                        // cause the render to redraw the next draw frame
-                        ready_for_display_ = true;
-                    }
-                    IMGUI_TOOLTIP_TEXT(
-                        "Select a stamp and a face (with D) and then press this button to place the stamp");
+                    IMGUI_TOOLTIP_TEXT("Select a stamp and place on a face using the B key");
                 }
 
                 ImGui::Separator();
