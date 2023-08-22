@@ -15,7 +15,10 @@ CustomMeshViewer::CustomMeshViewer(const char* title, int width, int height, boo
 {
     // setup draw modes
     clear_draw_modes();
-    add_draw_mode("Fractal Mode With Mesh");
+    add_draw_mode("Points");
+    add_draw_mode("Hidden Line");
+    add_draw_mode("Smooth Shading");
+
     add_draw_mode("Skybox only");
     add_draw_mode("Skybox with model");
     add_draw_mode("Custom Shader");
