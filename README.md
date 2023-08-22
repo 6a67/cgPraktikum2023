@@ -48,23 +48,20 @@ hotspot
 ```
 hotspot takes the perf.data in the same directory automatically
 
-
-TODO:
-    - delta_x * delta_x durch area of face ersetzen
-        - testen, ob es auf 1 normiert wird
-        - kürzt sich weg?
-    - geodesics
-        - geodesics()
-            - mesh: bekommt property
-            - seeds: start vertex, ggf. dann duales netz nutzen
-            - maxdist: radius
-            - maxnum: number of neighbors
-            - neighbors: output vector
-    - load examples: orbium etc.
-    - K(n) kann precomputed werden
-
 # Fractals
 https://www.youtube.com/watch?v=svLzmFuSBhk
 https://www.youtube.com/watch?v=BNZtUB7yhX4
 https://www.youtube.com/watch?v=PGtv-dBi2wE
 https://www.youtube.com/watch?v=Cp5WWtMoeKg
+
+
+# Our changes to external code
+
+c23b003 only formatted the external code with clang-format, afterwards we changed stuff there.
+To see all changes to the external code since then use:
+(c2eb003~1 is the commit before the formatting, so the formatting changes are not included)
+`git diff 5bc325a..c2eb003~1 -- ./extern`
+
+To see all changes before the formatting use:
+`git diff c2eb003..main -- ./extern`
+
