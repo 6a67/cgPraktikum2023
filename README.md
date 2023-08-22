@@ -60,8 +60,8 @@ https://www.youtube.com/watch?v=Cp5WWtMoeKg
 c23b003 only formatted the external code with clang-format, afterwards we changed stuff there.
 To see all changes to the external code since then use:
 (c2eb003~1 is the commit before the formatting, so the formatting changes are not included)
-`git diff 5bc325a..c2eb003~1 -- ./extern`
+```git diff c2eb003..main -- ./extern```
 
 To see all changes before the formatting use:
-`git diff c2eb003..main -- ./extern`
+```git diff 5bc325a..c2eb003~1 -- ./extern```
 
