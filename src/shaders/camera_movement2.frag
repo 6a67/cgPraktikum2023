@@ -153,7 +153,7 @@ float GetDist(vec3 p) {
 	if(MOD_TIME > 10 && MOD_TIME < 15) {
 		boxSize = 4.5 + (MOD_TIME - 10) * 2 * 85.5 / 10;
 	}
-	if(MOD_TIME > 15) {
+	if(MOD_TIME >= 15) {
 		boxSize = 90;
 	}
 
