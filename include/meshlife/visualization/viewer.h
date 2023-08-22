@@ -109,6 +109,7 @@ class Viewer : public CustomMeshViewer
     std::vector<unsigned char> recording_frame_data_;
     std::atomic<int> recording_buffer_used_ = 0;
     std::stack<std::thread*> recording_buffer_threads_;
+    std::string recording_fileformat_ = ".png";
 
     // Updates per second
     int UPS_ = 30;

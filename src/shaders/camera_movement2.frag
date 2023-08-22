@@ -1,8 +1,8 @@
 #version 330
 
-#define MAX_STEPS 200
+#define MAX_STEPS 500
 #define MAX_DIST 150.
-#define SURF_DIST .01
+#define SURF_DIST .001
 
 #define MOD_TIME mod(iTime, 80.)
 

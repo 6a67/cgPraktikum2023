@@ -164,6 +164,11 @@ void Viewer::stop_recording()
     {
         std::cout << "Converting to video..." << std::endl;
         recording_ffmpeg_is_converting_video_ = true;
+        // make sure old thread is joined before replacing
+        if (thread_ffmpeg_.joinable())
+        {
+            thread_ffmpeg_.join();
+        }
         thread_ffmpeg_ = std::thread(&Viewer::convert_recorded_frames_to_video, this);
     }
     else
@@ -171,7 +176,9 @@ void Viewer::stop_recording()
 
         std::cout << recording_frame_target_count_ << " Frames saved to " << recordings_path_ << '\n'
                   << "Use ffmpeg to combine frames:\n"
-                     "ffmpeg -framerate 60 -pattern_type glob -i 'frame_*.png' -c:v libx264 -pix_fmt yuv420p out.mp4\n"
+                     "ffmpeg -framerate 60 -pattern_type glob -i 'frame_*"
+                  << recording_fileformat_
+                  << "' -c:v libx264 -pix_fmt yuv420p out.mp4\n"
                      "set framerate and pixel format accordingly (use 'ffmpeg -pix_fmts' for all possible formats)"
                   << std::endl;
     }
@@ -197,7 +204,7 @@ void Viewer::delete_recorded_frames()
         std::string filename = filepath.path().filename().string();
         // Check if file starts with 'frame_' and ends with '.png'
         if (std::filesystem::is_regular_file(filepath) && filename.rfind("frame_") == 0
-            && filename.rfind(".png") == (filename.size() - 4))
+            && (filename.rfind(".png") == (filename.size() - 4) || filename.rfind(".jpg") == (filename.size() - 4)))
         {
             std::filesystem::remove(filepath);
         }
@@ -208,8 +215,8 @@ void Viewer::convert_recorded_frames_to_video()
 {
     std::stringstream command;
     command << "cd " << std::filesystem::absolute(recordings_path_) << " && "
-            << "ffmpeg -framerate " << recording_framerate_
-            << " -y -pattern_type glob -i 'frame_*.png' -c:v libx264 -pix_fmt yuv420p output.mp4\n";
+            << "ffmpeg -framerate " << recording_framerate_ << " -y -pattern_type glob -i 'frame_*"
+            << recording_fileformat_ << "' -c:v libx264 -pix_fmt yuv420p output.mp4\n";
     std::cout << "Running: '" << command.str() << "'" << std::endl;
 
     std::system(command.str().c_str());
@@ -508,7 +515,6 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     }
 }
 
-
 void Viewer::do_processing()
 {
 
@@ -601,7 +607,7 @@ void Viewer::after_display()
         // increment before so we start at frame 1
         recording_image_counter_++;
         std::stringstream filename;
-        filename << "frame_" << std::setw(6) << std::setfill('0') << recording_image_counter_ << ".png";
+        filename << "frame_" << std::setw(6) << std::setfill('0') << recording_image_counter_ << recording_fileformat_;
         if (!std::filesystem::exists(recordings_path_))
         {
             if (!std::filesystem::create_directory(recordings_path_))
@@ -650,7 +656,14 @@ void Viewer::write_frame_to_file(std::filesystem::path filename, int buffer_idx)
     stbi_flip_vertically_on_write(true);
     // offset in bytes because buffer is vector of unsigned char
     size_t offset = (size_t)buffer_idx * (size_t)width() * (size_t)height() * (size_t)3;
-    stbi_write_png(filename.c_str(), width(), height(), 3, &recording_frame_data_[offset], 3 * width());
+    if (recording_fileformat_ == ".png")
+    {
+        stbi_write_png(filename.c_str(), width(), height(), 3, &recording_frame_data_[offset], 3 * width());
+    }
+    else
+    {
+        stbi_write_jpg(filename.c_str(), width(), height(), 3, &recording_frame_data_[offset], 90);
+    }
 }
 
 void Viewer::read_mesh_from_file(std::string path)
@@ -856,7 +869,8 @@ void Viewer::process_imgui()
                     stop_recording();
                 else
                 {
-                    if (std::filesystem::exists(recordings_path_ / "frame_000001.png"))
+                    if (std::filesystem::exists(recordings_path_ / "frame_000001.png")
+                        || std::filesystem::exists(recordings_path_ / "frame_000001.jpg"))
                     {
                         std::cout << "Frame files exist!!" << std::endl;
                         ImGui::OpenPopup("Delete?");
@@ -869,6 +883,25 @@ void Viewer::process_imgui()
             }
             IMGUI_TOOLTIP_TEXT("Will reset iTime and starts to save every frame to the 'recordings' directory.")
 
+            {
+                std::stringstream fileformat;
+                fileformat << "Fileformat: " << recording_fileformat_;
+
+                ImGui::SameLine();
+                if (ImGui::Button(fileformat.str().c_str()))
+                {
+                    if (recording_fileformat_ == ".png")
+                    {
+                        recording_fileformat_ = ".jpg";
+                    }
+                    else
+                    {
+                        recording_fileformat_ = ".png";
+                    }
+                }
+                IMGUI_TOOLTIP_TEXT(
+                    "Switches the file format used to save each frame. Jpg is smaller but has artifacts.")
+            }
             ImVec2 center = ImGui::GetMainViewport()->GetCenter();
             ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
@@ -1349,8 +1382,8 @@ void Viewer::process_imgui()
                 if (ImGui::Button("Clear State"))
                 {
                     lenia->clear_state();
-					// draw next frame
-					ready_for_display_ = true;
+                    // draw next frame
+                    ready_for_display_ = true;
                 }
                 ImGui::SliderFloat("Mu", &lenia->p_mu_, 0, 1);
                 ImGui::SliderFloat("Sigma", &lenia->p_sigma_, 0, 1);
@@ -1372,15 +1405,15 @@ void Viewer::process_imgui()
                 if (ImGui::Button("Visualize Kernel Shell"))
                 {
                     lenia->visualize_kernel_shell();
-					// draw next frame
-					ready_for_display_ = true;
+                    // draw next frame
+                    ready_for_display_ = true;
                 }
 
                 if (ImGui::Button("Visualize Kernel Skeleton"))
                 {
                     lenia->visualize_kernel_skeleton();
-					// draw next frame
-					ready_for_display_ = true;
+                    // draw next frame
+                    ready_for_display_ = true;
                 }
 
                 ImGui::InputText("Peaks: ", peak_string_, 300);
