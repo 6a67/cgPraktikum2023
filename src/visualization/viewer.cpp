@@ -1501,61 +1501,51 @@ void Viewer::process_imgui()
                         "Select a stamp and a face (with D) and then press this button to place the stamp");
                 }
 
+                ImGui::Separator();
+
                 // list from where presets can be selected
-                static const char* items[]
+                static const std::vector<std::string> items
                     = {"Glider Settings", "Geminium Settings", "Gyrorbium Settings", "Velox Settings"};
-                       
-                    static int item_current
-                    = 1;
-                if (ImGui::BeginCombo("Presets", items[item_current]))
-                {
-                    for (int n = 0; n < IM_ARRAYSIZE(items); n++)
-                    {
-                        bool is_selected = (item_current == n);
-                        if (ImGui::Selectable(items[n], is_selected))
-                            item_current = n;
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
-                }
 
-                if (ImGui::Button("Load preset"))
+                for (size_t i = 0; i < items.size(); i++)
                 {
-                    switch (item_current)
+                    if (ImGui::Button(items[i].c_str()))
                     {
-                    case 0:
-                        lenia->p_mu_ = 0.15;
-                        lenia->p_sigma_ = 0.017;
-                        lenia->p_beta_peaks_ = {1};
-                        lenia->p_T_ = 10;
-                        lenia->p_neighborhood_radius_ = 13 * lenia->average_edge_length_;
-                        break;
-                    case 1:
-                        lenia->p_mu_ = 0.26;
-                        lenia->p_sigma_ = 0.036;
-                        lenia->p_beta_peaks_ = {0.5, 1, 0.667};
-                        lenia->p_T_ = 10;
-                        lenia->p_neighborhood_radius_ = 18 * lenia->average_edge_length_;
-                        break;
-                    case 2:
-                        lenia->p_mu_ = 0.156;
-                        lenia->p_sigma_ = 0.0224;
-                        lenia->p_beta_peaks_ = {1};
-                        lenia->p_T_ = 10;
-                        lenia->p_neighborhood_radius_ = 13 * lenia->average_edge_length_;
-                        break;
-                    case 3:
-                        lenia->p_mu_ = 0.31;
-                        lenia->p_sigma_ = 0.048;
-                        lenia->p_beta_peaks_ = {0.5, 1};
-                        
-                        lenia->p_T_ = 10;
-                        lenia->p_neighborhood_radius_ = 10 * lenia->average_edge_length_;
-                        break;
-                    }
+                        switch (i)
+                        {
+                        case 0:
+                            lenia->p_mu_ = 0.15;
+                            lenia->p_sigma_ = 0.017;
+                            lenia->p_beta_peaks_ = {1};
+                            lenia->p_T_ = 10;
+                            lenia->p_neighborhood_radius_ = 13 * lenia->average_edge_length_;
+                            break;
+                        case 1:
+                            lenia->p_mu_ = 0.26;
+                            lenia->p_sigma_ = 0.036;
+                            lenia->p_beta_peaks_ = {0.5, 1, 0.667};
+                            lenia->p_T_ = 10;
+                            lenia->p_neighborhood_radius_ = 18 * lenia->average_edge_length_;
+                            break;
+                        case 2:
+                            lenia->p_mu_ = 0.156;
+                            lenia->p_sigma_ = 0.0224;
+                            lenia->p_beta_peaks_ = {1};
+                            lenia->p_T_ = 10;
+                            lenia->p_neighborhood_radius_ = 13 * lenia->average_edge_length_;
+                            break;
+                        case 3:
+                            lenia->p_mu_ = 0.31;
+                            lenia->p_sigma_ = 0.048;
+                            lenia->p_beta_peaks_ = {0.5, 1};
 
-                    lenia->allocate_needed_properties();
+                            lenia->p_T_ = 10;
+                            lenia->p_neighborhood_radius_ = 10 * lenia->average_edge_length_;
+                            break;
+                        }
+
+                        lenia->allocate_needed_properties();
+                    }
                 }
             }
         }
