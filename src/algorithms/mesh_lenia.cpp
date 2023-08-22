@@ -384,6 +384,8 @@ std::set<pmp::Face> get_neighbors(const pmp::SurfaceMesh& mesh, const pmp::Face&
     return neighbors;
 }
 
+
+
 // TODO: Add option for custom rotation
 void MeshLenia::place_stamp(pmp::Face f, const std::vector<std::vector<float>>& stamp)
 {
@@ -430,6 +432,17 @@ void MeshLenia::place_stamp(pmp::Face f, const std::vector<std::vector<float>>& 
     if (placement_error)
     {
         std::cerr << "Error: Could not place stamp correctly, run into boundary" << std::endl;
+    }
+}
+
+void MeshLenia::place_circle(pmp::Face f, float inner_radius, float outer_radius) {
+    for(auto nf: mesh_.faces()) {
+        pmp::Point center = pmp::centroid(mesh_, f);
+        pmp::Point face_center = pmp::centroid(mesh_, nf);
+        float dist = pmp::distance(center, face_center);
+        if(dist > inner_radius && dist < outer_radius) {
+            state_[nf] = 1;
+        }
     }
 }
 

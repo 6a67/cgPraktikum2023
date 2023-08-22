@@ -1463,6 +1463,8 @@ void Viewer::process_imgui()
                             stamp = stamps::s_gyrorbium;
                         else if (ImGui::MenuItem("Velox"))
                             stamp = stamps::s_velox;
+                        else if (ImGui::MenuItem("Circle"))
+                            stamp = stamps::s_circle;
                         ImGui::EndMenu();
                     }
 
@@ -1492,6 +1494,9 @@ void Viewer::process_imgui()
                             break;
                         case stamps::Shapes::s_velox:
                             lenia->place_stamp(f, stamps::velox);
+                            break;
+                        case stamps::Shapes::s_circle:
+                            lenia->place_circle(f, 0.1, 0.3);
                             break;
                         }
                         // cause the render to redraw the next draw frame

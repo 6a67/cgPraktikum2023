@@ -17,6 +17,7 @@ enum Shapes
     s_geminium,
     s_gyrorbium,
     s_velox,
+    s_circle,
 };
 inline std::string shape_to_str(Shapes shape)
 {
@@ -42,6 +43,9 @@ inline std::string shape_to_str(Shapes shape)
         break;
     case Shapes::s_velox:
         return "Velox";
+        break;
+    case Shapes::s_circle:
+        return "Circle";
         break;
     }
     return "????";

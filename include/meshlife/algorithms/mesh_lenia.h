@@ -37,6 +37,8 @@ class MeshLenia : public MeshAutomaton
 
     void place_stamp(pmp::Face f, const std::vector<std::vector<float>>& stamp);
 
+    void place_circle(pmp::Face f, float inner_radius, float outer_radius);
+
     typedef std::tuple<pmp::Face, float, float> Neighbor;
     typedef std::vector<Neighbor> Neighbors;
     typedef std::vector<Neighbors> NeighborMap;
