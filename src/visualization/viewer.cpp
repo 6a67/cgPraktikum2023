@@ -147,6 +147,8 @@ void Viewer::start_recording()
     // pause itime because we will step manually for the recording and not rely on glfwGetTime()
     renderer_.itime_pause();
     renderer_.set_itime(0.0);
+    // Disable vsync for recording since we step manually
+    glfwSwapInterval(0);
     recording_ = true;
     std::cout << "Recording started" << std::endl;
 }
@@ -154,6 +156,10 @@ void Viewer::start_recording()
 void Viewer::stop_recording()
 {
     recording_ = false;
+
+    // Enable vsync again
+    glfwSwapInterval(1);
+
     std::cout << "Recording stopped" << std::endl;
 
     std::cout << "Waiting for files to be written to disk..." << std::endl;
@@ -1496,8 +1502,11 @@ void Viewer::process_imgui()
                 }
 
                 // list from where presets can be selected
-                static const char* items[] = {"Glider Settings", "Geminium Settings", "Gyrorbium Settings", "Velox Settings"};
-                static int item_current = 1;
+                static const char* items[]
+                    = {"Glider Settings", "Geminium Settings", "Gyrorbium Settings", "Velox Settings"};
+                       
+                    static int item_current
+                    = 1;
                 if (ImGui::BeginCombo("Presets", items[item_current]))
                 {
                     for (int n = 0; n < IM_ARRAYSIZE(items); n++)
@@ -1539,7 +1548,8 @@ void Viewer::process_imgui()
                     case 3:
                         lenia->p_mu_ = 0.31;
                         lenia->p_sigma_ = 0.048;
-                        lenia->p_beta_peaks_ = {0.5,1};
+                        lenia->p_beta_peaks_ = {0.5, 1};
+                        
                         lenia->p_T_ = 10;
                         lenia->p_neighborhood_radius_ = 10 * lenia->average_edge_length_;
                         break;
