@@ -169,6 +169,15 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
             GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
         }
     }
+    else if (draw_mode == "No Shading")
+    {
+
+        phong_shader_.set_uniform("use_lighting", false);
+        if (mesh_.n_faces())
+        {
+            GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
+        }
+    }
 
     // draw feature edges
     if (n_features_)

@@ -18,6 +18,7 @@ CustomMeshViewer::CustomMeshViewer(const char* title, int width, int height, boo
     add_draw_mode("Points");
     add_draw_mode("Hidden Line");
     add_draw_mode("Smooth Shading");
+    add_draw_mode("No Shading");
 
     add_draw_mode("Skybox only");
     add_draw_mode("Skybox with model");
