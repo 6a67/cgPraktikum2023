@@ -508,6 +508,7 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
     }
 }
 
+
 void Viewer::do_processing()
 {
 
@@ -1371,11 +1372,15 @@ void Viewer::process_imgui()
                 if (ImGui::Button("Visualize Kernel Shell"))
                 {
                     lenia->visualize_kernel_shell();
+					// draw next frame
+					ready_for_display_ = true;
                 }
 
                 if (ImGui::Button("Visualize Kernel Skeleton"))
                 {
                     lenia->visualize_kernel_skeleton();
+					// draw next frame
+					ready_for_display_ = true;
                 }
 
                 ImGui::InputText("Peaks: ", peak_string_, 300);
