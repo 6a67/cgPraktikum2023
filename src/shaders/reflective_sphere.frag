@@ -66,7 +66,7 @@ void main()
             RV = dot(R, V);
             if (RV > 0.0)
             {
-                rgb += vec3( specular * pow(RV, shininess) );
+                // rgb += vec3( specular * pow(RV, shininess) );
             }
         }
 
@@ -79,7 +79,7 @@ void main()
              RV = dot(R, V);
              if (RV > 0.0)
              {
-                 rgb += vec3( specular * pow(RV, shininess) );
+                //  rgb += vec3( specular * pow(RV, shininess) );
              }
          }
 
@@ -94,6 +94,8 @@ void main()
     {
         rgb = color;
     }
+
+    rgb += shininess * 0.00001 + specular * 0.00001;
 
     // if (use_texture) rgb *= texture(mytexture, v2f_tex).xyz;
     if (use_srgb)    rgb  = pow(clamp(rgb, 0.0, 1.0), vec3(0.45));
