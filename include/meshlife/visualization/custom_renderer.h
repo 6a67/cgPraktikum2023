@@ -110,6 +110,16 @@ class CustomRenderer
         pmp::vec3(1.0, 0.0, 1.0),
     };
 
+    // material properties
+    pmp::vec3 front_color_, back_color_;
+    float ambient_, diffuse_, specular_, shininess_, alpha_;
+    bool use_srgb_;
+    bool use_colors_;
+    float crease_angle_;
+    float point_size_;
+    float reflectiveness_;
+    bool use_lighting_ = true;
+
   private:
     const pmp::SurfaceMesh& mesh_;
 
@@ -152,15 +162,6 @@ class CustomRenderer
 
         -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, -1.0f,
         1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  1.0f,  -1.0f, 1.0f};
-
-    // material properties
-    pmp::vec3 front_color_, back_color_;
-    float ambient_, diffuse_, specular_, shininess_, alpha_;
-    bool use_srgb_;
-    bool use_colors_;
-    float crease_angle_;
-    float point_size_;
-    float reflectiveness_;
 
     // OpenGL buffers
     GLuint MESH_VAO_ = 0;

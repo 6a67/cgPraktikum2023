@@ -127,7 +127,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
     phong_shader_.set_uniform("specular", specular_);
     phong_shader_.set_uniform("shininess", shininess_);
     phong_shader_.set_uniform("alpha", alpha_);
-    phong_shader_.set_uniform("use_lighting", true);
+    phong_shader_.set_uniform("use_lighting", use_lighting_);
     phong_shader_.set_uniform("use_texture", false);
     phong_shader_.set_uniform("use_srgb", false);
     phong_shader_.set_uniform("show_texture_layout", false);
@@ -225,7 +225,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         phong_shader_.set_uniform("specular", specular_);
         phong_shader_.set_uniform("shininess", shininess_);
         phong_shader_.set_uniform("alpha", alpha_);
-        phong_shader_.set_uniform("use_lighting", true);
+        phong_shader_.set_uniform("use_lighting", use_lighting_);
         phong_shader_.set_uniform("use_texture", false);
         phong_shader_.set_uniform("use_srgb", false);
         phong_shader_.set_uniform("show_texture_layout", false);
@@ -308,7 +308,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         reflective_sphere_shader_.set_uniform("specular", specular_);
         reflective_sphere_shader_.set_uniform("shininess", shininess_);
         reflective_sphere_shader_.set_uniform("alpha", alpha_);
-        reflective_sphere_shader_.set_uniform("use_lighting", true);
+        reflective_sphere_shader_.set_uniform("use_lighting", use_lighting_);
         // reflective_sphere_shader_.set_uniform("use_texture", false);
         reflective_sphere_shader_.set_uniform("use_srgb", false);
         reflective_sphere_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);

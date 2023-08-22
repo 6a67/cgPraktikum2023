@@ -55,6 +55,7 @@ void CustomMeshViewer::load_mesh(const char* filename)
 
     // compute face & vertex normals, update face indices
     update_mesh();
+    position_ = pmp::vec3(0, 0, -0.5);
 
     filename_ = filename;
 

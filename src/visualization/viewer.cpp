@@ -492,7 +492,9 @@ void Viewer::keyboard(int key, int scancode, int action, int mods)
                 ready_for_display_ = true;
                 break;
             case stamps::Shapes::s_circle:
-                lenia->place_circle(f, 0.1, 0.3);
+                lenia->place_circle(f,
+                                    stamp_circle_inner_ * lenia->average_edge_length_,
+                                    stamp_circle_outer_ * lenia->average_edge_length_);
                 ready_for_display_ = true;
                 break;
             }
@@ -1129,6 +1131,16 @@ void Viewer::process_imgui()
                 }
             }
             ImGui::Separator();
+
+            ImGui::ColorEdit3("Front Color", renderer_.front_color_.data());
+            ImGui::ColorEdit3("Back Color", renderer_.back_color_.data());
+            ImGui::SliderFloat("Ambient", &renderer_.ambient_, 0, 1);
+            ImGui::SliderFloat("Diffuse", &renderer_.diffuse_, 0, 1);
+            ImGui::SliderFloat("Specular", &renderer_.specular_, 0, 1);
+            ImGui::SliderFloat("shininess", &renderer_.shininess_, 0, 200);
+            ImGui::SliderFloat("alpha", &renderer_.alpha_, 0, 1);
+            ImGui::Checkbox("Use Lighting", &renderer_.use_lighting_);
+            ImGui::Checkbox("Use Vertex Color", &renderer_.use_colors_);
         }
 
         ImGui::Spacing();
@@ -1500,7 +1512,6 @@ void Viewer::process_imgui()
 
                 {
                     std::stringstream label;
-                    label << "Stamp: " << stamps::shape_to_str(selected_stamp_);
                     if (ImGui::BeginMenu(label.str().c_str()))
                     {
                         if (ImGui::MenuItem("None"))
@@ -1522,6 +1533,12 @@ void Viewer::process_imgui()
                         ImGui::EndMenu();
                     }
                     IMGUI_TOOLTIP_TEXT("Select a stamp and place on a face using the B key");
+                }
+
+                if (selected_stamp_ == stamps::s_circle)
+                {
+                    ImGui::SliderFloat("Inner radius", &stamp_circle_inner_, 0, 50);
+                    ImGui::SliderFloat("Outer radius", &stamp_circle_outer_, 0, 50);
                 }
 
                 ImGui::Separator();

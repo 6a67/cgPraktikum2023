@@ -264,8 +264,9 @@ void TrackballViewer::set_scene(const vec3& center, float radius)
 void TrackballViewer::view_all()
 {
     vec4 c = vec4(center_, 1.0);
-    vec4 t = get_modelview_matrix() * c;
-    translate(vec3(-t[0], -t[1], -t[2] - 2.5 * radius_));
+    vec4 t = rotation_matrix_ * c;
+    position_ = vec3();
+    translate(vec3(0, 0, -t[2] - 2.5 * radius_));
 }
 
 bool TrackballViewer::pick(vec3& result)
@@ -390,7 +391,7 @@ void TrackballViewer::zoom(int, int y)
 {
     float dy = y - last_point_2d_[1];
     float h = height();
-    translate(vec3(0.0, 0.0, radius_ * dy * 3.0 / h));
+    translate(vec3(0.0, 0.0, radius_ * dy * 0.2 / h));
 }
 
 void TrackballViewer::translate(const vec3& t)
