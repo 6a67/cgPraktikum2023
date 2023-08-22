@@ -17,7 +17,7 @@ CustomRenderer::CustomRenderer(const pmp::SurfaceMesh& mesh, GLFWwindow* window)
     ambient_ = 0.1;
     diffuse_ = 0.8;
     specular_ = 0.6;
-    shininess_ = 100.0;
+    shininess_ = 1.0;
     alpha_ = 1.0;
     use_srgb_ = false;
     use_colors_ = true;
