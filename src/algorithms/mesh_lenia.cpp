@@ -191,7 +191,8 @@ void MeshLenia::update_state(int num_steps)
             new_state = std::clamp<float>(new_state, 0.0, 1.0);
             state_[face] = new_state;
             // if a face does not have a neighbor/valid value, set it to 0
-            if (new_state != new_state) {
+            if (new_state != new_state)
+            {
                 state_[face] = 0;
             }
         }
@@ -204,6 +205,15 @@ void MeshLenia::init_state_random()
     for (pmp::Face f : mesh_.faces())
     {
         state_[f] = (float)rand() / RAND_MAX;
+    }
+};
+
+void MeshLenia::clear_state()
+{
+    // make random faces alive
+    for (pmp::Face f : mesh_.faces())
+    {
+        state_[f] = 0;
     }
 };
 

@@ -1345,6 +1345,12 @@ void Viewer::process_imgui()
             ImGui::Spacing();
             if (ImGui::CollapsingHeader("Lenia Parameters"))
             {
+                if (ImGui::Button("Clear State"))
+                {
+                    lenia->clear_state();
+					// draw next frame
+					ready_for_display_ = true;
+                }
                 ImGui::SliderFloat("Mu", &lenia->p_mu_, 0, 1);
                 ImGui::SliderFloat("Sigma", &lenia->p_sigma_, 0, 1);
                 ImGui::SliderInt("T", &lenia->p_T_, 1, 50);

@@ -14,6 +14,8 @@ class MeshLenia : public MeshAutomaton
     /// Initialize the state randomly, must be defined when inheriting
     void init_state_random() override;
 
+    void clear_state();
+
     /// Update the current state by computing \p num_steps timesteps
     void update_state(int num_steps) override;
 
