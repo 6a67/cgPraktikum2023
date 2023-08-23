@@ -1098,6 +1098,12 @@ void Viewer::process_imgui()
             IMGUI_TOOLTIP_TEXT(
                 "(Only applies in 'Skybox' draw mode, swaps between rendered shader texture and debug texture)");
 
+            if (ImGui::Button("Store current cubemap to file"))
+            {
+                renderer_.store_skybox_to_file_ = !renderer_.store_skybox_to_file_;
+            }
+            IMGUI_TOOLTIP_TEXT("(Only applies in 'Skybox' draw mode, stores the current cubemap loaded to a file)");
+
             ImGui::Separator();
 
             for (size_t i = 0; i < n_draw_modes_; i++)

@@ -5,6 +5,7 @@
 #include "pmp/surface_mesh.h"
 
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 namespace meshlife
 
@@ -967,6 +968,28 @@ void CustomRenderer::draw_skybox(pmp::mat4 projection_matrix, pmp::mat4 view_mat
     else
         GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubeTexture_));
 
+    if (store_skybox_to_file_)
+    {
+        int width = use_picture_cubemap_ ? skybox_img_width_ : cubemap_size_;
+        int height = use_picture_cubemap_ ? skybox_img_height_ : cubemap_size_;
+        for (int i = 0; i < 6; i++)
+        {
+            // allocate buffer
+            auto* data = new unsigned char[3 * width * height];
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            // glReadPixels(0, 0, cubemap_size_, cubemap_size_, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+            // write to file
+            stbi_flip_vertically_on_write(true);
+            std::string name = "rendererd_cubemap_" + std::to_string(i) + ".png";
+            stbi_write_png(name.c_str(), width, height, 3, data, 3 * width);
+
+            delete[] data;
+        }
+        store_skybox_to_file_ = false;
+    }
+
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 36));
     GL_CHECK(glBindVertexArray(0));
 
@@ -984,6 +1007,8 @@ unsigned int CustomRenderer::load_cubemap(std::vector<std::string> faces)
     for (unsigned int i = 0; i < faces.size(); i++)
     {
         unsigned char* data = stbi_load((assets_path / "skybox" / faces[i]).c_str(), &width, &height, &nr_channels, 0);
+        skybox_img_width_ = width;
+        skybox_img_height_ = height;
         if (data)
         {
             glTexImage2D(
