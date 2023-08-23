@@ -131,6 +131,7 @@ void Renderer::load_texture(const char* filename, GLint format, GLint min_filter
 
     // free memory
     stbi_image_free(img);
+    stbi_set_flip_vertically_on_load(false);
 
     texture_mode_ = TextureMode::Other;
 }
