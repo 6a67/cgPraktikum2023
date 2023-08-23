@@ -976,7 +976,8 @@ void Viewer::process_imgui()
                 ImGui::EndPopup();
             }
         }
-        else if (ImGui::CollapsingHeader("Mesh Transform Settings"))
+
+        if (ImGui::CollapsingHeader("Mesh Transform Settings"))
         {
             {
                 std::stringstream position_text;
