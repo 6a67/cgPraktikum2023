@@ -120,6 +120,8 @@ class CustomRenderer
     float reflectiveness_;
     bool use_lighting_ = true;
 
+    bool store_skybox_to_file_ = false;
+
   private:
     const pmp::SurfaceMesh& mesh_;
 
@@ -188,6 +190,9 @@ class CustomRenderer
     GLuint g_depthbuffer_ = 0;
     int g_cubeTexUnit_ = 0;
     unsigned int cubemap_texture_ = 0;
+
+    int skybox_img_width_ = 0;
+    int skybox_img_height_ = 0;
 
     // OpenGL shader
     pmp::Shader simple_shader_;
