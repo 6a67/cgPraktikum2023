@@ -70,7 +70,8 @@ void CustomMeshViewer::update_mesh()
     // update scene center and radius, but don't update camera view
     pmp::BoundingBox bb = bounds(mesh_);
     center_ = (pmp::vec3)bb.center();
-    center_ = pmp::vec3(center_[0] * mesh_size_x_, center_[1] * mesh_size_y_, center_[2] * mesh_size_z_);
+    center_ = pmp::vec3(
+        center_[0] * renderer_.mesh_size_x_, center_[1] * renderer_.mesh_size_y_, center_[2] * renderer_.mesh_size_z_);
     radius_ = 0.5f * bb.size();
 
     // re-compute face and vertex normals
