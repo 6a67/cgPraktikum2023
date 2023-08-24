@@ -16,6 +16,7 @@
 #include <thread>
 
 #include "meshlife/algorithms/mesh_lenia.h"
+#include "meshlife/paths.h"
 #include "meshlife/stamps.h"
 #include "meshlife/visualization/custom_renderer.h"
 #include "meshlife/visualization/viewer.h"
@@ -54,17 +55,6 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     std::string("./../assets/monkey.obj").copy(modelpath_buf_, 299);
     modelpath_buf_[299] = '\0';
 
-    shaders_path_ = std::filesystem::current_path() / "shaders";
-    if (!std::filesystem::exists(shaders_path_))
-    {
-        std::cout << "Could not find shaders folder in current directory! Using ../src/shaders" << std::endl;
-        shaders_path_ = std::filesystem::current_path() / ".." / "src" / "shaders";
-    }
-    else
-    {
-        std::cout << "Found shaders folder in current directory! Using ./shaders" << std::endl;
-    }
-
     peak_string_ = new char[300];
 
     add_help_item("T", "Toggle Simulation");
@@ -77,8 +67,8 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
 
     clock_last_ = std::chrono::high_resolution_clock::now();
 
-    selected_shader_path_vertex_ = shaders_path_ / PATH_SIMPLE_SHADER_VERTEX_;
-    selected_shader_path_fragment_ = shaders_path_ / PATH_SIMPLE_SHADER_FRAGMENT_;
+    selected_shader_path_vertex_ = shaders_path / PATH_SIMPLE_SHADER_VERTEX_;
+    selected_shader_path_fragment_ = shaders_path / PATH_SIMPLE_SHADER_FRAGMENT_;
 
     for (size_t i = 0; i < (size_t)ShaderType::COUNT; i++)
         last_modified_shader_files_.push_back(
@@ -90,7 +80,7 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     file_watcher_enable();
 
     // list all files in src/shaders folder
-    for (const auto& entry : std::filesystem::directory_iterator(shaders_path_))
+    for (const auto& entry : std::filesystem::directory_iterator(shaders_path))
     {
         std::string path = entry.path().string();
         if (path.find(".frag") != std::string::npos)
@@ -235,24 +225,24 @@ std::filesystem::path Viewer::get_path_from_shader_type(ShaderType shader_type)
     switch (shader_type)
     {
     case ShaderType::SimpleVert:
-        return shaders_path_ / selected_shader_path_vertex_;
+        return shaders_path / selected_shader_path_vertex_;
     case ShaderType::SimpleFrag:
-        return shaders_path_ / selected_shader_path_fragment_;
+        return shaders_path / selected_shader_path_fragment_;
 
     case ShaderType::SkyboxVert:
-        return shaders_path_ / "skybox.vert";
+        return shaders_path / "skybox.vert";
     case ShaderType::SkyboxFrag:
-        return shaders_path_ / "skybox.frag";
+        return shaders_path / "skybox.frag";
 
     case ShaderType::ReflectiveSphereVert:
-        return shaders_path_ / "reflective_sphere.vert";
+        return shaders_path / "reflective_sphere.vert";
     case ShaderType::ReflectiveSphereFrag:
-        return shaders_path_ / "reflective_sphere.frag";
+        return shaders_path / "reflective_sphere.frag";
 
     case ShaderType::PhongVert:
-        return shaders_path_ / "phong.vert";
+        return shaders_path / "phong.vert";
     case ShaderType::PhongFrag:
-        return shaders_path_ / "phong.frag";
+        return shaders_path / "phong.frag";
 
     case ShaderType::COUNT:
         throw std::runtime_error("Invalid shader type");

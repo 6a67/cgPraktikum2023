@@ -147,8 +147,6 @@ class Viewer : public CustomMeshViewer
     void file_watcher_func();
     std::thread file_watcher_thread_;
 
-    std::filesystem::path shaders_path_;
-
     volatile bool watch_shader_file_ = false;
     void file_watcher_enable();
     void file_watcher_disable();

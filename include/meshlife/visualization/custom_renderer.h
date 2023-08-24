@@ -142,7 +142,7 @@ class CustomRenderer
     std::chrono::high_resolution_clock::time_point last_time_;
 
     std::vector<std::string> skybox_names_
-        = {"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
+        = {"right.png", "left.png", "top.png", "bottom.png", "front.png", "back.png"};
 
     float skybox_Vertices_[108] = { // positions
         -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,

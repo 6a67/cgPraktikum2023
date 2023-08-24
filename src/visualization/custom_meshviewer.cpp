@@ -1,5 +1,6 @@
 #include "meshlife/visualization/custom_meshviewer.h"
 #include "imgui.h"
+#include "meshlife/paths.h"
 #include "pmp/algorithms/utilities.h"
 #include "pmp/bounding_box.h"
 #include "pmp/io/io.h"
@@ -30,7 +31,8 @@ CustomMeshViewer::CustomMeshViewer(const char* title, int width, int height, boo
     icon.height = 256;
     icon.width = 256;
     // load image as char array
-    icon.pixels = stbi_load("../icon.png", &icon.width, &icon.height, 0, 4);
+    std::cout << assets_path << std::endl;
+    icon.pixels = stbi_load((assets_path / "icon.png").c_str(), &icon.width, &icon.height, 0, 4);
 
     glfwSetWindowIcon(window_, 1, &icon);
 }

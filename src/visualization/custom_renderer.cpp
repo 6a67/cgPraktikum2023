@@ -1,5 +1,6 @@
 #include "meshlife/visualization/custom_renderer.h"
 #include "gl_helper.h"
+#include "meshlife/paths.h"
 #include "pmp/algorithms/normals.h"
 #include "pmp/surface_mesh.h"
 
@@ -982,11 +983,11 @@ unsigned int CustomRenderer::load_cubemap(std::vector<std::string> faces)
     int width, height, nr_channels;
     for (unsigned int i = 0; i < faces.size(); i++)
     {
-        unsigned char* data = stbi_load(("../" + faces[i]).c_str(), &width, &height, &nr_channels, 0);
+        unsigned char* data = stbi_load((assets_path / "skybox" / faces[i]).c_str(), &width, &height, &nr_channels, 0);
         if (data)
         {
             glTexImage2D(
-                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
             stbi_image_free(data);
         }
         else
