@@ -93,12 +93,21 @@ class CustomRenderer
 
     };
     const std::vector<pmp::vec3> view_rotations_ = {
-        pmp::vec3(0, degree_to_rad(90), degree_to_rad(180)),
+        pmp::vec3(0, degree_to_rad(-90), degree_to_rad(0)),
+        pmp::vec3(0, degree_to_rad(90), degree_to_rad(0)),
+        pmp::vec3(degree_to_rad(-90), 0, degree_to_rad(0)),
+        pmp::vec3(degree_to_rad(90), 0, degree_to_rad(0)),
+        pmp::vec3(0, degree_to_rad(0), degree_to_rad(0)),
+        pmp::vec3(0, degree_to_rad(180), degree_to_rad(0)),
+    };
+
+    const std::vector<pmp::vec3> texture_rotations_ = {
         pmp::vec3(0, degree_to_rad(-90), degree_to_rad(180)),
-        pmp::vec3(degree_to_rad(90), 0, degree_to_rad(180)),
-        pmp::vec3(degree_to_rad(-90), 0, degree_to_rad(180)),
-        pmp::vec3(0, degree_to_rad(0), degree_to_rad(180)),
+        pmp::vec3(0, degree_to_rad(90), degree_to_rad(180)),
+        pmp::vec3(degree_to_rad(90), 0, degree_to_rad(0)),
+        pmp::vec3(degree_to_rad(-90), 0, degree_to_rad(0)),
         pmp::vec3(0, degree_to_rad(180), degree_to_rad(180)),
+        pmp::vec3(0, degree_to_rad(0), degree_to_rad(180)),
     };
 
     const std::vector<pmp::vec3> colors_ = {
@@ -121,6 +130,12 @@ class CustomRenderer
     bool use_lighting_ = true;
 
     bool store_skybox_to_file_ = false;
+    bool offset_skybox_ = false;
+
+    float mesh_size_uniform_ = 0.05f; // 1.0f;
+    float mesh_size_x_ = 0.05f;       // 1.0f;
+    float mesh_size_y_ = 0.05f;       // 1.0f;
+    float mesh_size_z_ = 0.05f;       // 1.0f;
 
   private:
     const pmp::SurfaceMesh& mesh_;

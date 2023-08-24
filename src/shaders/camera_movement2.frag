@@ -341,8 +341,11 @@ vec3 cameraRotate(in vec3 center, in vec3 viewIn) {
 	return viewIn;
 }
 
-in vec3 v2f_viewRotation;
+uniform vec3 viewRotation;
 uniform vec3 model_pos;
+uniform bool draw_face;
+uniform vec3 textureRotation;
+
 
 void main() {
 	vec2 uv = (texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5) / window_height;
@@ -350,8 +353,13 @@ void main() {
 	// vec3 ro = vec3(0, 10, (sin(iTime * 0.2)) * 10 + 10);
 
 	vec3 ro = vec3(0, 10, 0);
+	vec3 rd;
+	if(draw_face) {
+	  rd = normalize(rot_rpy(textureRotation.x, textureRotation.y, textureRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	}else{
+	  rd = normalize(rot_rpy(viewRotation.x, viewRotation.y, viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	}
 
-	vec3 rd = normalize(rot_rpy(v2f_viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
 	vec3 viewOut;
 	mat3 rot;
 
@@ -411,12 +419,10 @@ void main() {
 
 	float near = 0.2;
 	float far = 90.;
-	float z = ((1. / p.z) - ( 1. / near))/((1./far) - (1./near));
-	gl_FragDepth = z;
+	float dz = ((1. / d) - ( 1. / near))/((1./far) - (1./near));
+	gl_FragDepth = dz;
 
 	// gl_FragColor = vec4(col, 1.0);
-	out_Color = vec4(p.z / 90,0,0, 1.0);
-	out_Color = vec4(z,z,z, 1.0);
 	out_Color = vec4(light, 1.0);
 	// out_Color = vec4(texcoords,0.,1.);
 }

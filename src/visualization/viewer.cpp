@@ -1017,39 +1017,40 @@ void Viewer::process_imgui()
 
             if (ImGui::Button("Reset Mesh scale"))
             {
-                mesh_size_uniform_ = 1.0;
-                mesh_size_x_ = 1.0;
-                mesh_size_y_ = 1.0;
-                mesh_size_z_ = 1.0;
+                renderer_.mesh_size_uniform_ = 1.0;
+                renderer_.mesh_size_x_ = 1.0;
+                renderer_.mesh_size_y_ = 1.0;
+                renderer_.mesh_size_z_ = 1.0;
                 set_mesh_scale(1.0);
                 update_mesh();
             }
 
-            if (ImGui::SliderFloat("Mesh scale Uniformly:", &mesh_size_uniform_, 0.01, 40))
+            if (ImGui::SliderFloat("Mesh scale Uniformly:", &renderer_.mesh_size_uniform_, 0.01, 40))
             {
-                pmp::vec3 scaling = pmp::vec3(mesh_size_uniform_, mesh_size_uniform_, mesh_size_uniform_);
-                mesh_size_x_ = mesh_size_uniform_;
-                mesh_size_y_ = mesh_size_uniform_;
-                mesh_size_z_ = mesh_size_uniform_;
+                pmp::vec3 scaling = pmp::vec3(
+                    renderer_.mesh_size_uniform_, renderer_.mesh_size_uniform_, renderer_.mesh_size_uniform_);
+                renderer_.mesh_size_x_ = renderer_.mesh_size_uniform_;
+                renderer_.mesh_size_y_ = renderer_.mesh_size_uniform_;
+                renderer_.mesh_size_z_ = renderer_.mesh_size_uniform_;
                 set_mesh_scale(scaling);
                 update_mesh();
             }
 
-            if (ImGui::SliderFloat("Mesh scale X:", &mesh_size_x_, 0.01, 40))
+            if (ImGui::SliderFloat("Mesh scale X:", &renderer_.mesh_size_x_, 0.01, 40))
             {
-                pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
+                pmp::vec3 scaling = pmp::vec3(renderer_.mesh_size_x_, renderer_.mesh_size_y_, renderer_.mesh_size_z_);
                 set_mesh_scale(scaling);
                 update_mesh();
             }
-            if (ImGui::SliderFloat("Mesh scale Y:", &mesh_size_y_, 0.01, 40))
+            if (ImGui::SliderFloat("Mesh scale Y:", &renderer_.mesh_size_y_, 0.01, 40))
             {
-                pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
+                pmp::vec3 scaling = pmp::vec3(renderer_.mesh_size_x_, renderer_.mesh_size_y_, renderer_.mesh_size_z_);
                 set_mesh_scale(scaling);
                 update_mesh();
             }
-            if (ImGui::SliderFloat("Mesh scale Z:", &mesh_size_z_, 0.01, 40))
+            if (ImGui::SliderFloat("Mesh scale Z:", &renderer_.mesh_size_z_, 0.01, 40))
             {
-                pmp::vec3 scaling = pmp::vec3(mesh_size_x_, mesh_size_y_, mesh_size_z_);
+                pmp::vec3 scaling = pmp::vec3(renderer_.mesh_size_x_, renderer_.mesh_size_y_, renderer_.mesh_size_z_);
                 set_mesh_scale(scaling);
                 update_mesh();
             }
@@ -1104,6 +1105,14 @@ void Viewer::process_imgui()
                 renderer_.store_skybox_to_file_ = !renderer_.store_skybox_to_file_;
             }
             IMGUI_TOOLTIP_TEXT("(Only applies in 'Skybox' draw mode, stores the current cubemap loaded to a file)");
+
+            if (ImGui::Button(renderer_.offset_skybox_ ? "Offset skybox forward (Debug): ON"
+                                                       : "Offset skybox forward (Debug): OFF"))
+            {
+                renderer_.offset_skybox_ = !renderer_.offset_skybox_;
+            }
+            IMGUI_TOOLTIP_TEXT(
+                "(Only applies in 'Skybox' draw mode, offsets the skybox cube forward to look at it from the outside)");
 
             ImGui::Separator();
 

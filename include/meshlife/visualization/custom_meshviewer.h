@@ -50,11 +50,6 @@ class CustomMeshViewer : public pmp::TrackballViewer
   protected:
     pmp::SurfaceMesh mesh_;
 
-    float mesh_size_uniform_ = 0.05f; // 1.0f;
-    float mesh_size_x_ = 0.05f; //1.0f;
-    float mesh_size_y_ = 0.05f; //1.0f;
-    float mesh_size_z_ = 0.05f; //1.0f;
-
     CustomRenderer renderer_;
 
     std::string filename_; //!< the current file
