@@ -88,7 +88,7 @@ float sdMenger(vec3 p, float size, int iterations) {
 		size /= 3.;
 
 	}
-	return sdSphere(p, vec3(size).x);
+	return sdBox(p, vec3(size));
 }
 
 float sdBoxFrame(vec3 p, vec3 b, float e) {
