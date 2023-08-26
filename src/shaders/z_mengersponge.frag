@@ -74,6 +74,11 @@ mat4 rot(float roll, float pitch, float yaw, vec3 point) {
 float GetDist(vec3 p) {
 	// vec4 s = vec4(0, 1, sin(iTime) * 6, 1);
 
+	// comment for inf cubes
+	// p.x = rangeMod(p.x, -10, 10);
+	// p.y = rangeMod(p.y, 4, 16);
+	// p.z = rangeMod(p.z, 14, 26);
+
 	// float planeDist = p.y;
 	float d = MAX_DIST;
 
