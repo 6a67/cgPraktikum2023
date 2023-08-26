@@ -155,15 +155,15 @@ void TrackballViewer::display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // adjust clipping planes to tightly fit bounding sphere
-    vec4 mc(center_, 1.0);
-    vec4 ec = get_modelview_matrix() * mc;
-    float z = -ec[2];
-    near_ = 0.01 * radius_;
-    far_ = 10.0 * radius_;
+    // vec4 mc(center_, 1.0);
+    // vec4 ec = get_modelview_matrix() * mc;
+    // float z = -ec[2];
+    // near_ = 0.01 * radius_;
+    // far_ = 10.0 * radius_;
     fovy_ = 45.0;
-    near_ = std::max(0.001f * radius_, z - radius_);
-    far_ = std::max(0.002f * radius_, z + radius_);
-    near_ = 0.01;
+    // near_ = std::max(0.001f * radius_, z - radius_);
+    // far_ = std::max(0.002f * radius_, z + radius_);
+    near_ = 0.2;
     far_ = 90;
 
     // update projection matrix

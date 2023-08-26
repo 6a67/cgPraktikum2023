@@ -1,7 +1,5 @@
 
 #version 330
-#define MAX_DIST 150
-#define FAR_PLANE (MAX_DIST - MAX_DIST * 0.3)
 
 precision mediump float;
 
@@ -101,5 +99,4 @@ void main()
     if (use_srgb)    rgb  = pow(clamp(rgb, 0.0, 1.0), vec3(0.45));
 
     f_color = vec4(rgb, alpha);
-	gl_FragDepth = v2f_pos.z / FAR_PLANE;
 }

@@ -416,8 +416,15 @@ void main() {
 	// TODO: We need to subtract the correct camera z position here so the depth is correct 
 	// Maybe p.z already includes this camera z offset? need to ask Jona
 	// gl_FragDepth = clamp((-ro.z + p.z) / (MAX_DIST - MAX_DIST * 0.4), 0., 0.999);
-	gl_FragDepth = clamp(p.z / (MAX_DIST - MAX_DIST * 0.4), 0., 0.999);
+
+	float near = 0.2;
+	float far = 90.;
+	float z = ((1. / p.z) - ( 1. / near))/((1./far) - (1./near));
+	gl_FragDepth = z;
+
 	// gl_FragColor = vec4(col, 1.0);
+	out_Color = vec4(p.z / 90,0,0, 1.0);
+	out_Color = vec4(z,z,z, 1.0);
 	out_Color = vec4(light, 1.0);
 	// out_Color = vec4(texcoords,0.,1.);
 }
