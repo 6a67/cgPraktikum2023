@@ -220,7 +220,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
 
         // Draw model with reflection shader
         reflective_sphere_shader_.use();
-        reflective_sphere_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
+        reflective_sphere_shader_.set_uniform("projection_matrix", projection_matrix);
         reflective_sphere_shader_.set_uniform("modelview_matrix", mv_matrix);
         reflective_sphere_shader_.set_uniform("normal_matrix", n_matrix);
         reflective_sphere_shader_.set_uniform("point_size", point_size_);
@@ -344,13 +344,44 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
         GL_CHECK(glViewport(0, 0, wsize_, hsize_));
 
+        //        // get the rotation matrix from the view_matrix
+        //        //
+        //        https://stackoverflow.com/questions/17325696/how-to-get-the-camera-rotation-matrix-out-of-the-model-view-matrix
+        //        pmp::mat4 rotation_matrix = pmp::mat4(modelview_matrix);
+        //        rotation_matrix(0, 3) = rotation_matrix(1, 3) = rotation_matrix(2, 3) = rotation_matrix(3, 0)
+        //            = rotation_matrix(3, 1) = rotation_matrix(3, 2) = 0.;
+        //        rotation_matrix(3, 3) = 1;
+
+        //        // clang-format off
+        // // remove scaling from matrix
+        // rotation_matrix = rotation_matrix *
+        //   pmp::mat4(
+        //          1 / mesh_size_x_, 0, 0, 0,
+        //          0, 1 / mesh_size_y_, 0, 0,
+        //          0, 0, 1 / mesh_size_z_, 0,
+        //          0, 0, 0, 1);
+        //        // clang-format on
+
+        //        // apply offset for debugging
+        //        pmp::mat4 view_matrix = pmp::translation_matrix(model_pos) * rotation_matrix;
+
         // Draw model with reflection shader
         reflective_sphere_shader_.use();
-        reflective_sphere_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-        reflective_sphere_shader_.set_uniform("modelview_matrix", mv_matrix);
+        reflective_sphere_shader_.set_uniform("projection_matrix", projection_matrix);
+        reflective_sphere_shader_.set_uniform("modelview_matrix", modelview_matrix);
         reflective_sphere_shader_.set_uniform("normal_matrix", n_matrix);
         reflective_sphere_shader_.set_uniform("point_size", point_size_);
         reflective_sphere_shader_.set_uniform("reflectiveness", reflectiveness_);
+
+        // clang-format off
+        pmp::mat4 viewmat = pmp::mat4(
+            pmp::vec4(-1, 0, 0, 0), 
+            pmp::vec4(0, 1, 0, 0), 
+            pmp::vec4(0, 0, -1, 0), 
+            pmp::vec4(0, 0, 0, 1));
+        // clang-format on
+
+        reflective_sphere_shader_.set_uniform("view", viewmat);
 
         reflective_sphere_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
         reflective_sphere_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
@@ -1041,7 +1072,23 @@ void CustomRenderer::draw_skybox(pmp::mat4 projection_matrix, pmp::mat4 view_mat
         view_matrix = pmp::translation_matrix(pmp::vec3(0, 0, -5)) * rotation_matrix;
     }
 
-    skybox_shader_.set_uniform("view", view_matrix);
+    if (offset_skybox_)
+    {
+        skybox_shader_.set_uniform("view", view_matrix);
+    }
+    else
+    {
+        // clang-format off
+		pmp::mat4 view = pmp::mat4(
+			pmp::vec4(-1, 0, 0, 0), 
+			pmp::vec4(0, 1, 0, 0), 
+			pmp::vec4(0, 0, -1, 0), 
+			pmp::vec4(0, 0, 0, 1));
+        // clang-format on
+        skybox_shader_.set_uniform("view", view);
+    }
+
+    skybox_shader_.set_uniform("offsetSkybox", offset_skybox_);
     GL_CHECK(glViewport(0, 0, wsize_, hsize_));
     GL_CHECK(glDepthFunc(GL_LEQUAL));
     GL_CHECK(glBindVertexArray(skybox_VAO_));
