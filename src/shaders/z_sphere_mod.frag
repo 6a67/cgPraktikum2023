@@ -51,9 +51,10 @@ float GetDist(vec3 p) {
 	float sphereDist = 0;
 	float d = MAX_DIST;
 
+	sphereDist = length(p - s.xyz) - s.w;
 
 	// inf in all directions
-	sphereDist = length(rangeModWithOffset(p,s.xyz, vec3(4, 4, 5)) - s.xyz) - s.w;
+	// sphereDist = length(rangeModWithOffset(p,s.xyz, vec3(4, 4, 5)) - s.xyz) - s.w;
 
 	// individual inf
 	// p.x = rangeMod(p.x, s.x - 4., s.x + 4.);
