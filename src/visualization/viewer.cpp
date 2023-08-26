@@ -761,6 +761,7 @@ void Viewer::select_debug_info_face(size_t face_idx)
     {
         debug_data_.face_ = pmp::Face();
     }
+    ready_for_display_ = true;
 }
 
 std::string Viewer::seconds_to_string(int seconds)
