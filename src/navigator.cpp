@@ -11,7 +11,7 @@ QuadMeshNavigator::QuadMeshNavigator(pmp::SurfaceMesh mesh) : mesh_(mesh)
 {
     if (!mesh.is_quad_mesh())
     {
-        throw std::runtime_error("Mesh is not a quad mesh");
+        std::cerr << "Mesh is not a quad mesh" << std::endl;
     }
 
     current_face_ = *mesh_.faces_begin();
