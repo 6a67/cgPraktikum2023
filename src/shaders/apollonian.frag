@@ -359,7 +359,7 @@ void main() {
 	vec3 light = GetLight(p);
 	light = pow(light, vec3(.4545));	// gamma correction
 
-	float near = 0.2;
+	float near = 0.01;
 	float far = 90.;
 	float dz = ((1. / d) - ( 1. / near))/((1./far) - (1./near));
 	gl_FragDepth = dz;

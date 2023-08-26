@@ -417,7 +417,7 @@ void main() {
 	// Maybe p.z already includes this camera z offset? need to ask Jona
 	// gl_FragDepth = clamp((-ro.z + p.z) / (MAX_DIST - MAX_DIST * 0.4), 0., 0.999);
 
-	float near = 0.2;
+	float near = 0.01;
 	float far = 90.;
 	float dz = ((1. / d) - ( 1. / near))/((1./far) - (1./near));
 	gl_FragDepth = dz;
