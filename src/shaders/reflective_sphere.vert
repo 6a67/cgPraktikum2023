@@ -13,9 +13,12 @@ out vec4 v2f_pos;
 
 uniform mat4 modelview_projection_matrix;
 uniform mat4 modelview_matrix;
+uniform mat4 projection_matrix;
 uniform mat3 normal_matrix;
 uniform float point_size;
 uniform bool show_texture_layout;
+
+uniform mat4 view;
 
 void main()
 {
@@ -23,12 +26,12 @@ void main()
     v2f_tex      = v_tex;
 
     vec4 pos     = show_texture_layout ? vec4(v_tex, 0.0, 1.0) : v_position;
-
-    v2f_view     = -(modelview_matrix * pos).xyz;
+	
+    v2f_view     = (view * modelview_matrix * pos).xyz;
     v2f_color    = v_color;
 
     gl_PointSize = point_size;
-    gl_Position  = modelview_projection_matrix * pos;
+    gl_Position  = projection_matrix * modelview_matrix * pos;
 	v2f_pos = gl_Position;
 }
 

@@ -345,6 +345,7 @@ uniform vec3 viewRotation;
 uniform vec3 model_pos;
 uniform bool draw_face;
 uniform vec3 textureRotation;
+uniform float fovX;
 
 
 void main() {
@@ -353,11 +354,18 @@ void main() {
 	// vec3 ro = vec3(0, 10, (sin(iTime * 0.2)) * 10 + 10);
 
 	vec3 ro = vec3(0, 10, 0);
+
+	// calculate ray plane distance for correct fov
+	float zDist = (0.5 * window_width) / tan(radians(fovX / 2.0));
+	vec2 xy = texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5;
+	vec4 dir = vec4(xy, zDist, 0.0);
+
 	vec3 rd;
+	// draw_face is only true when we draw the cubemap faces with this shader
 	if(draw_face) {
-	  rd = normalize(rot_rpy(textureRotation.x, textureRotation.y, textureRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	  rd = normalize(rot_rpy(textureRotation.x, textureRotation.y, textureRotation.z, ro) * dir).xyz;
 	}else{
-	  rd = normalize(rot_rpy(viewRotation.x, viewRotation.y, viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	  rd = normalize(rot_rpy(viewRotation.x, viewRotation.y, viewRotation.z, ro) * dir).xyz;
 	}
 
 	vec3 viewOut;
@@ -422,7 +430,5 @@ void main() {
 	float dz = ((1. / d) - ( 1. / near))/((1./far) - (1./near));
 	gl_FragDepth = dz;
 
-	// gl_FragColor = vec4(col, 1.0);
 	out_Color = vec4(light, 1.0);
-	// out_Color = vec4(texcoords,0.,1.);
 }

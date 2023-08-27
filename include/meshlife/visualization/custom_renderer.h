@@ -132,6 +132,8 @@ class CustomRenderer
     bool store_skybox_to_file_ = false;
     bool offset_skybox_ = false;
 
+    float fovX_ = 90;
+
     float mesh_size_uniform_ = 0.05f; // 1.0f;
     float mesh_size_x_ = 0.05f;       // 1.0f;
     float mesh_size_y_ = 0.05f;       // 1.0f;

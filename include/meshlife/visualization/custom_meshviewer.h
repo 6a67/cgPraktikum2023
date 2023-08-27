@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <mutex>
 
 #include "custom_renderer.h"
 #include "meshlife/shadertype.h"
@@ -55,6 +56,8 @@ class CustomMeshViewer : public pmp::TrackballViewer
     std::string filename_; //!< the current file
 
     float crease_angle_;
+
+    std::mutex mutex_;
 
     // maps the shader type to a boolean indicating whether it needs to be reloaded before the next draw call
     std::map<ShaderType, bool> shader_reload_required_map_;

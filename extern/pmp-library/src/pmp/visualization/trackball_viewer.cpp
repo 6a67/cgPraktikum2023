@@ -113,6 +113,11 @@ inline float degree_to_rad(float degree)
     return degree * (M_PI / 180.0);
 }
 
+inline float radians_to_degree(float radians)
+{
+    return radians * (180.0 / M_PI);
+}
+
 void TrackballViewer::rotate_to_point()
 {
     std::vector<vec3> view_directions = {
@@ -160,7 +165,11 @@ void TrackballViewer::display()
     // float z = -ec[2];
     // near_ = 0.01 * radius_;
     // far_ = 10.0 * radius_;
-    fovy_ = 45.0;
+
+    // we want to set the fovY depending on the fovX
+    // fovX is set by a slider in the GUI
+    fovy_ = 2. * atan(tan(degree_to_rad(fovx_ * 0.5)) * ((double)width() / (double)height()));
+    fovy_ = radians_to_degree(fovy_);
     // near_ = std::max(0.001f * radius_, z - radius_);
     // far_ = std::max(0.002f * radius_, z + radius_);
     near_ = 0.01;
@@ -428,7 +437,8 @@ mat4 TrackballViewer::get_modelview_matrix() const
     scale_matrix(1, 1) = scale_[1];
     scale_matrix(2, 2) = scale_[2];
 
-    return translation_matrix(position_) * rotation_matrix_ * translation_matrix(-center_) * scale_matrix;
+    // return translation_matrix(position_) * rotation_matrix_ * translation_matrix(-center_) * scale_matrix;
+    return translation_matrix(position_) * rotation_matrix_ * scale_matrix;
 }
 
 } // namespace pmp

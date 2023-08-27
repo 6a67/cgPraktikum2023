@@ -51,7 +51,7 @@ float GetDist(vec3 p) {
 	float d = MAX_DIST;
 
 	float radius = 10.0;
-	vec4 s = vec4( 0.0, 1, radius * sin(iTime * 0.2) , 1);
+	vec4 s = vec4( 6.0, 1, radius * sin(iTime * 0.2) , 1);
 	//sphereDist = length(rangeModWithOffset(p,s.xyz, vec3(4, 4, 5)) - s.xyz) - s.w;
 
 	//s = vec4(0, 1, 3, 1);
@@ -158,6 +158,7 @@ in vec3 v2f_viewRotation;
 uniform vec3 viewRotation;
 uniform vec3 textureRotation;
 uniform bool draw_face;
+uniform float fovX;
 
 layout(location = 0) out vec4 color;
 
@@ -170,11 +171,17 @@ void main() {
 
 	vec3 ro = vec3(0,1,0) + model_pos;
 	
+	// calculate ray plane distance for correct fov
+	float zDist = (0.5 * window_width) / tan(radians(fovX / 2.0));
+	vec2 xy = texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5;
+	vec4 dir = vec4(xy, zDist, 0.0);
+
 	vec3 rd;
+	// draw_face is only true when we draw the cubemap faces with this shader
 	if(draw_face) {
-	  rd = normalize(rot(textureRotation.x, textureRotation.y, textureRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	  rd = normalize(rot(textureRotation.x, textureRotation.y, textureRotation.z, ro) * dir).xyz;
 	}else{
-	  rd = normalize(rot(viewRotation.x, viewRotation.y, viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	  rd = normalize(rot(viewRotation.x, viewRotation.y, viewRotation.z, ro) * dir).xyz;
 	}
 
 	float d = RayMarch(ro, rd);
@@ -189,8 +196,9 @@ void main() {
 	float near = 0.01;
 	float far = 90.;
 	float z = ((1. / p.z) - ( 1. / near))/((1./far) - (1./near));
+	// clamp value to prevent weird artifacts 
+	z = clamp(z, 0, 0.9999999);
 	gl_FragDepth = z;
-
 	color = vec4(col, 1.0);
 	// color = vec4(1.0,0.0,0.0, 1.0);
 

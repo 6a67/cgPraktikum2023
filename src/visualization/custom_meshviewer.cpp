@@ -81,6 +81,7 @@ void CustomMeshViewer::update_mesh()
 //! draw the scene in different draw modes
 void CustomMeshViewer::draw(const std::string& draw_mode)
 {
+    mutex_.lock();
     // Reload shaders if necessary
     if (shader_reload_required_map_[ShaderType::SimpleVert] || shader_reload_required_map_[ShaderType::SimpleFrag])
         renderer_.load_simple_shader();
@@ -94,6 +95,7 @@ void CustomMeshViewer::draw(const std::string& draw_mode)
 
     if (shader_reload_required_map_[ShaderType::PhongVert] || shader_reload_required_map_[ShaderType::PhongFrag])
         renderer_.load_phong_shader();
+    mutex_.unlock();
 
     // draw mesh
     renderer_.draw(projection_matrix_, get_modelview_matrix(), draw_mode);
@@ -185,7 +187,9 @@ pmp::Vertex CustomMeshViewer::pick_vertex(int x, int y)
 
 void CustomMeshViewer::notify_shader_reload_required(ShaderType shader_typ)
 {
+    mutex_.lock();
     shader_reload_required_map_[shader_typ] = true;
+    mutex_.unlock();
 }
 
 } // namespace meshlife

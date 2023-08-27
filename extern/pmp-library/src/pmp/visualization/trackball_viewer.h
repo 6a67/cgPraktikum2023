@@ -115,6 +115,7 @@ class TrackballViewer : public Window
 
     //! projection parameters
     float near_, far_, fovy_;
+    float fovx_ = 90;
 
     //! OpenGL matrices
     mat4 projection_matrix_;
