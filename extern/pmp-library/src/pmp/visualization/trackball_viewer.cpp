@@ -184,12 +184,12 @@ void TrackballViewer::mouse(int /*button*/, int action, int /*mods*/)
         last_point_ok_ = map_to_sphere(last_point_2d_, last_point_3d_);
 
         // set rotation center
-        if (ctrl_pressed())
-        {
-            double x, y;
-            cursor_pos(x, y);
-            fly_to(x, y);
-        }
+        // if (ctrl_pressed())
+        // {
+        //     double x, y;
+        //     cursor_pos(x, y);
+        //     fly_to(x, y);
+        // }
     }
 
     // mouse release

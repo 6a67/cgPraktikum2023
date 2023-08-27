@@ -88,7 +88,7 @@ float sdMenger(vec3 p, float size, int iterations) {
 		size /= 3.;
 
 	}
-	return sdSphere(p, vec3(size).x);
+	return sdBox(p, vec3(size));
 }
 
 float sdBoxFrame(vec3 p, vec3 b, float e) {
@@ -156,8 +156,8 @@ vec3 GetLight(vec3 p) {
 
 	// phong lighting
 	vec3 lightPos = vec3(0, 100, 0);
-	// lightPos.xz += vec2(sin(4.58), cos(4.58)) * 2.;
-	lightPos.y += sin(4.58 * 0.5) * 80.;
+	lightPos.xz += vec2(sin(iTime), cos(iTime)) * 2.;
+	lightPos.y += sin(iTime * 0.5) * 80.;
 
 	float red = 0.5 + (sin(4.58 * 0.1) + 1) * 0.5;
 	float green = 0.5 + (cos(4.58 * 0.1) + 1) * 0.5;

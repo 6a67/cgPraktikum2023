@@ -211,20 +211,25 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
     else if (draw_mode == "Skybox with model")
     {
         render_skybox_faces_to_texture(model_pos);
-
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClearDepth(1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        GL_CHECK(glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE));
-        GL_CHECK(glViewport(0, 0, wsize_, hsize_));
+        draw_skybox(projection_matrix, view);
 
         // Draw model with reflection shader
         reflective_sphere_shader_.use();
         reflective_sphere_shader_.set_uniform("projection_matrix", projection_matrix);
-        reflective_sphere_shader_.set_uniform("modelview_matrix", mv_matrix);
+        reflective_sphere_shader_.set_uniform("modelview_matrix", modelview_matrix);
         reflective_sphere_shader_.set_uniform("normal_matrix", n_matrix);
         reflective_sphere_shader_.set_uniform("point_size", point_size_);
         reflective_sphere_shader_.set_uniform("reflectiveness", reflectiveness_);
+
+        // clang-format off
+        pmp::mat4 viewmat = pmp::mat4(
+            pmp::vec4(-1, 0, 0, 0), 
+            pmp::vec4(0, 1, 0, 0), 
+            pmp::vec4(0, 0, -1, 0), 
+            pmp::vec4(0, 0, 0, 1));
+        // clang-format on
+
+        reflective_sphere_shader_.set_uniform("view", viewmat);
 
         reflective_sphere_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
         reflective_sphere_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
@@ -239,7 +244,6 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         // reflective_sphere_shader_.set_uniform("use_texture", false);
         reflective_sphere_shader_.set_uniform("use_srgb", false);
         reflective_sphere_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
-
         reflective_sphere_shader_.set_uniform("show_texture_layout", false);
 
         GL_CHECK(glBindVertexArray(MESH_VAO_));
@@ -257,51 +261,6 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         reflective_sphere_shader_.disable();
         GL_CHECK(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
         GL_CHECK(glBindVertexArray(0));
-
-        draw_skybox(projection_matrix, view);
-
-        // // // setup shader
-        // phong_shader_.use();
-        // phong_shader_.set_uniform("modelview_projection_matrix", mvp_matrix);
-        // phong_shader_.set_uniform("modelview_matrix", mv_matrix);
-        // phong_shader_.set_uniform("normal_matrix", n_matrix);
-        // phong_shader_.set_uniform("point_size", point_size_);
-        // phong_shader_.set_uniform("light1", vec3(1.0, 1.0, 1.0));
-        // phong_shader_.set_uniform("light2", vec3(-1.0, 1.0, 1.0));
-        // phong_shader_.set_uniform("front_color", front_color_);
-        // phong_shader_.set_uniform("back_color", back_color_);
-        // phong_shader_.set_uniform("ambient", ambient_);
-        // phong_shader_.set_uniform("diffuse", diffuse_);
-        // phong_shader_.set_uniform("specular", specular_);
-        // phong_shader_.set_uniform("shininess", shininess_);
-        // phong_shader_.set_uniform("alpha", alpha_);
-        // phong_shader_.set_uniform("use_lighting", use_lighting_);
-        // phong_shader_.set_uniform("use_texture", false);
-        // phong_shader_.set_uniform("use_srgb", false);
-        // phong_shader_.set_uniform("show_texture_layout", false);
-        // phong_shader_.set_uniform("use_vertex_color", has_vertex_colors_ && use_colors_);
-
-        // GL_CHECK(glBindVertexArray(MESH_VAO_));
-        // GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, MESH_vertex_buffer_));
-
-        // if (mesh_.n_faces())
-        // {
-        //     // draw faces
-        //     GL_CHECK(glDepthRange(0.01, 1.0));
-        //     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, n_vertices_));
-        //     GL_CHECK(glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE));
-
-        //     // overlay edges
-        //     GL_CHECK(glDepthRange(0.0, 1.0));
-        //     GL_CHECK(glDepthFunc(GL_LEQUAL));
-        //     phong_shader_.set_uniform("front_color", vec3(0.1, 0.1, 0.1));
-        //     phong_shader_.set_uniform("back_color", vec3(0.1, 0.1, 0.1));
-        //     phong_shader_.set_uniform("use_lighting", false);
-        //     phong_shader_.set_uniform("use_vertex_color", false);
-        //     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, MESH_edge_buffer_));
-        //     GL_CHECK(glDrawElements(GL_LINES, n_edges_, GL_UNSIGNED_INT, nullptr));
-        //     GL_CHECK(glDepthFunc(GL_LESS));
-        // }
     }
     else if (draw_mode == "Custom Shader")
     {
@@ -1070,11 +1029,12 @@ void CustomRenderer::draw_skybox(pmp::mat4 projection_matrix, pmp::mat4 view_mat
     if (offset_skybox_)
     {
         view_matrix = pmp::translation_matrix(pmp::vec3(0, 0, -5)) * rotation_matrix;
-    }
-
-    if (offset_skybox_)
-    {
         skybox_shader_.set_uniform("view", view_matrix);
+
+        // remove front facing faces so we can look into the cube
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        glFrontFace(GL_CW);
     }
     else
     {
@@ -1123,6 +1083,13 @@ void CustomRenderer::draw_skybox(pmp::mat4 projection_matrix, pmp::mat4 view_mat
 
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 36));
     GL_CHECK(glBindVertexArray(0));
+    if (offset_skybox_)
+    {
+        // reset back to default values
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
+        glDisable(GL_CULL_FACE);
+    }
 
     GL_CHECK(glDepthFunc(GL_LESS));
     skybox_shader_.disable();

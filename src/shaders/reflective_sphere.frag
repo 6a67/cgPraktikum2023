@@ -81,7 +81,7 @@ void main()
              }
          }
 
-		 vec3 Re  = reflect(V, N);
+		 vec3 Re  = -reflect(V, N);
 		 vec4 reflection = texture(cubetexture,vec3(Re.x, Re.y, Re.z));
 		 // rgb = mix(rgb, reflection.xyz, 0.3 * alive);
 		 rgb = mix(rgb, reflection.xyz, reflectiveness);

@@ -95,7 +95,7 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
 
     set_mesh_scale(pmp::vec3(0.05f, 0.05f, 0.05f));
 
-    renderer_.set_reflectiveness(0.3f);
+    renderer_.set_reflectiveness(0.7f);
 
     recordings_path_ = std::filesystem::current_path() / "recordings";
 }
@@ -761,6 +761,7 @@ void Viewer::select_debug_info_face(size_t face_idx)
     {
         debug_data_.face_ = pmp::Face();
     }
+    ready_for_display_ = true;
 }
 
 std::string Viewer::seconds_to_string(int seconds)
@@ -1060,7 +1061,7 @@ void Viewer::process_imgui()
 
         if (ImGui::CollapsingHeader("Shader Settings"))
         {
-            static float reflectiveness = 0.3f;
+            static float reflectiveness = 0.7f;
             if (ImGui::SliderFloat("Reflectiveness", &reflectiveness, 0.0, 1.0f))
             {
                 renderer_.set_reflectiveness(reflectiveness);

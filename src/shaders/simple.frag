@@ -61,14 +61,14 @@ float GetDist(vec3 p) {
 
 	// float box1 = sdBox(p - vec3(-7, 3, 0) - s.xyz, vec3(1,2,1));
 	float box1 = sdBox(p - s.xyz, vec3(1,2,1));
-	float box2 = sdBox(p - vec3(-16,10,15), vec3(10,1,1));
+	// float box2 = sdBox(p - vec3(-16,10,15), vec3(10,1,1));
 	// float box3 = sdBox(p - vec3(0, -20, 0), vec3(2,1,1));
 	// float box4 = sdBox(p - vec3(0, 20, 0), vec3(4,1,1));
 	// float box5 = sdBox(p - vec3(0, -7, -40), vec3(12,0.8,12));
 	// float box6 = sdBox(p - vec3(0, 5, 20), vec3(1,1,10));
 
 	d = min(d, box1);
-	d = min(d, box2);
+	// d = min(d, box2);
 	// d = min(d, box3);
 	// d = min(d, box4);
 	// d = min(d, box5);
@@ -168,17 +168,13 @@ void main() {
 
 	vec3 col = vec3(0);
 
-	vec3 ro = vec3(0);
+	vec3 ro = vec3(0,1,0) + model_pos;
+	
+	vec3 rd;
 	if(draw_face) {
-	  ro = model_pos;
-	} else{
-	  ro = vec3(0,1,0) + model_pos;
-	}
-	vec3 rd = vec3(0);
-	if(draw_face) {
-	  rd = normalize(( rot(textureRotation.x, textureRotation.y, textureRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0)).xyz);
+	  rd = normalize(rot(textureRotation.x, textureRotation.y, textureRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
 	}else{
-	  rd = normalize(( rot(viewRotation.x, v2f_viewRotation.y, v2f_viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0)).xyz);
+	  rd = normalize(rot(viewRotation.x, viewRotation.y, viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
 	}
 
 	float d = RayMarch(ro, rd);
@@ -190,7 +186,10 @@ void main() {
 
 	col = pow(col, vec3(.4545));	// gamma correction
 	
-	gl_FragDepth = p.z / MAX_DIST;
+	float near = 0.01;
+	float far = 90.;
+	float z = ((1. / p.z) - ( 1. / near))/((1./far) - (1./near));
+	gl_FragDepth = z;
 	color = vec4(col, 1.0);
 	// color = vec4(1.0,0.0,0.0, 1.0);
 
