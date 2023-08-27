@@ -94,7 +94,7 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     for (const auto& entry : std::filesystem::directory_iterator(assets_path))
     {
         std::string path = entry.path().string();
-        if (path.find(".obj") != std::string::npos)
+        if (path.find(".obj") != std::string::npos || path.find(".stl") != std::string::npos)
         {
             // std::cout << "Found fragment shader: " << path << std::endl;
             model_files_.push_back(path);
