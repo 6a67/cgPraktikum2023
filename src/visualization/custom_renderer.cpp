@@ -1043,14 +1043,7 @@ void CustomRenderer::draw_skybox(pmp::mat4 projection_matrix, pmp::mat4 view_mat
     }
     else
     {
-        // clang-format off
-		pmp::mat4 view = pmp::mat4(
-			pmp::vec4(-1, 0, 0, 0), 
-			pmp::vec4(0, 1, 0, 0), 
-			pmp::vec4(0, 0, -1, 0), 
-			pmp::vec4(0, 0, 0, 1));
-        // clang-format on
-        skybox_shader_.set_uniform("view", view);
+        skybox_shader_.set_uniform("view", view_matrix);
     }
 
     GL_CHECK(glViewport(0, 0, wsize_, hsize_));
