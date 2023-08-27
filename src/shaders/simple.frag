@@ -177,6 +177,7 @@ void main() {
 	vec4 dir = vec4(xy, zDist, 0.0);
 
 	vec3 rd;
+	// draw_face is only true when we draw the cubemap faces with this shader
 	if(draw_face) {
 	  rd = normalize(rot(textureRotation.x, textureRotation.y, textureRotation.z, ro) * dir).xyz;
 	}else{
