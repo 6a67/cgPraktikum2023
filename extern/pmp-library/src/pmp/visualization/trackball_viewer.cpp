@@ -176,7 +176,7 @@ void TrackballViewer::display()
     far_ = 90;
 
     // update projection matrix
-    projection_matrix_ = perspective_matrix(fovy_, (float)width() / (float)height(), near_, far_);
+    projection_matrix_ = perspective_matrix(fovy_ / 2, (float)width() / (float)height(), near_, far_);
 
     // draw the scene in current draw mode
     if (draw_mode_ < draw_mode_names_.size())
