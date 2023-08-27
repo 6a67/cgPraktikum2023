@@ -195,6 +195,8 @@ void main() {
 	float near = 0.01;
 	float far = 90.;
 	float z = ((1. / p.z) - ( 1. / near))/((1./far) - (1./near));
+	// clamp value to prevent weird artifacts 
+	z = clamp(z, 0, 0.9999999);
 	gl_FragDepth = z;
 	color = vec4(col, 1.0);
 	// color = vec4(1.0,0.0,0.0, 1.0);

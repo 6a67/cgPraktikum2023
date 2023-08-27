@@ -264,6 +264,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
     }
     else if (draw_mode == "Custom Shader")
     {
+        // cyan background
         GL_CHECK(glClearColor(0.0f, 0.8f, 1.0f, 1.0f));
         GL_CHECK(glClearDepth(1.0f));
         GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -275,8 +276,9 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         simple_shader_.set_uniform("draw_face", true);
         simple_shader_.set_uniform("fovX", fovX_);
 
-        vec3 rotation = view_rotations_[(int)cam_direction_];
-        vec3 texture_rotation = texture_rotations_[(int)cam_direction_];
+        // pass in inverted view directions
+        vec3 rotation = texture_rotations_[(int)cam_direction_];
+        vec3 texture_rotation = view_rotations_[(int)cam_direction_];
 
         // todo: inverting this will also "flip" left/right view direction,
         // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
@@ -298,6 +300,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
     {
         render_skybox_faces_to_texture(model_pos);
 
+        // black background
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -382,10 +385,8 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         simple_shader_.set_uniform("window_height", hsize_);
         simple_shader_.set_uniform("iTime", (float)itime_);
 
+        // we don't want to rotate here
         vec3 rotation = vec3(0, 0, 0);
-        // todo: inverting this will also "flip" left/right view direction,
-        // the x,y coords for the shader are still inverted because it gets the unflipped view matrix
-        // rotation[2] = 0; // set z rotation to 0 so we don't flip the image
         simple_shader_.set_uniform("viewRotation", rotation);
         simple_shader_.set_uniform("textureRotation", rotation);
         simple_shader_.set_uniform("model_pos", vec3(0, 0, 0));
