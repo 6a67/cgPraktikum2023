@@ -156,7 +156,7 @@ class CustomRenderer
 
     double itime_ = 0;
 
-    bool itime_paused_ = false;
+    bool itime_paused_ = true;
 
     std::chrono::high_resolution_clock::time_point last_time_;
 
