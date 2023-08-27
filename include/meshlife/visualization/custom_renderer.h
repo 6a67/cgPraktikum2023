@@ -37,7 +37,7 @@ class CustomRenderer
     ~CustomRenderer();
 
     // TODO: Implement these with proper functions or something
-    bool use_picture_cubemap_ = true;
+    bool use_picture_cubemap_ = false;
 
     //! Draw the mesh.
     void draw(const pmp::mat4& projection_matrix, const pmp::mat4& modelview_matrix, const std::string& draw_mode);
