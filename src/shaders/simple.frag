@@ -158,6 +158,7 @@ in vec3 v2f_viewRotation;
 uniform vec3 viewRotation;
 uniform vec3 textureRotation;
 uniform bool draw_face;
+uniform float fovX;
 
 layout(location = 0) out vec4 color;
 
@@ -170,11 +171,16 @@ void main() {
 
 	vec3 ro = vec3(0,1,0) + model_pos;
 	
+	// calculate ray plane distance for correct fov
+	float zDist = (0.5 * window_width) / tan(radians(fovX / 2.0));
+	vec2 xy = texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5;
+	vec4 dir = vec4(xy, zDist, 0.0);
+
 	vec3 rd;
 	if(draw_face) {
-	  rd = normalize(rot(textureRotation.x, textureRotation.y, textureRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	  rd = normalize(rot(textureRotation.x, textureRotation.y, textureRotation.z, ro) * dir).xyz;
 	}else{
-	  rd = normalize(rot(viewRotation.x, viewRotation.y, viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	  rd = normalize(rot(viewRotation.x, viewRotation.y, viewRotation.z, ro) * dir).xyz;
 	}
 
 	float d = RayMarch(ro, rd);

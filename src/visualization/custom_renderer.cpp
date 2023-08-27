@@ -273,6 +273,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         simple_shader_.set_uniform("window_height", hsize_);
         simple_shader_.set_uniform("iTime", (float)itime_);
         simple_shader_.set_uniform("draw_face", true);
+        simple_shader_.set_uniform("fovX", fovX_);
 
         vec3 rotation = view_rotations_[(int)cam_direction_];
         vec3 texture_rotation = texture_rotations_[(int)cam_direction_];
@@ -389,6 +390,7 @@ void CustomRenderer::draw(const pmp::mat4& projection_matrix,
         simple_shader_.set_uniform("textureRotation", rotation);
         simple_shader_.set_uniform("model_pos", vec3(0, 0, 0));
         simple_shader_.set_uniform("draw_face", false);
+        simple_shader_.set_uniform("fovX", fovX_);
 
         GLuint empty_vao = 0;
         GL_CHECK(glGenVertexArrays(1, &empty_vao));
@@ -949,6 +951,8 @@ void CustomRenderer::draw_face(int face_side, pmp::vec3 model_pos)
     simple_shader_.set_uniform("textureRotation", texture_rotations_[face_side]);
     simple_shader_.set_uniform("model_pos", model_pos);
     simple_shader_.set_uniform("draw_face", true);
+    // FOV is always set to 90 degrees for cubemap faces
+    simple_shader_.set_uniform("fovX", 90.0f);
 
     // Render on the whole framebuffer, complete from the lower left corner to the upper right corner
     GLuint empty_vao = 0;

@@ -1114,6 +1114,9 @@ void Viewer::process_imgui()
             IMGUI_TOOLTIP_TEXT(
                 "(Only applies in 'Skybox' draw mode, offsets the skybox cube forward to look at it from the outside)");
 
+            ImGui::SliderFloat("FOVX", &fovx_, 0.0, 360.0f);
+            renderer_.fovX_ = fovx_;
+
             ImGui::Separator();
 
             for (size_t i = 0; i < n_draw_modes_; i++)

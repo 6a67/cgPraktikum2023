@@ -345,6 +345,7 @@ uniform vec3 viewRotation;
 uniform vec3 model_pos;
 uniform bool draw_face;
 uniform vec3 textureRotation;
+uniform float fovX;
 
 
 void main() {
@@ -357,7 +358,9 @@ void main() {
 	if(draw_face) {
 	  rd = normalize(rot_rpy(textureRotation.x, textureRotation.y, textureRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
 	}else{
-	  rd = normalize(rot_rpy(viewRotation.x, viewRotation.y, viewRotation.z, ro) * vec4(uv.x, uv.y, 0.5, 0.0)).xyz;
+	  float zDist = (0.5 * window_width) / tan(radians(fovX / 2.0));
+	  vec2 xy = texcoords * vec2(window_width, window_height) - vec2(window_width, window_height) * .5;
+	  rd = normalize(rot_rpy(viewRotation.x, viewRotation.y, viewRotation.z, ro) * vec4(xy, zDist, 0.0)).xyz;
 	}
 
 	vec3 viewOut;
