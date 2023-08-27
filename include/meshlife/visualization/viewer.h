@@ -165,6 +165,8 @@ class Viewer : public CustomMeshViewer
     std::vector<std::string> shader_files_fragment_;
     float stamp_circle_inner_ = 0.0;
     float stamp_circle_outer_ = 10.0;
+
+    std::vector<std::string> model_files_;
 };
 
 } // namespace meshlife

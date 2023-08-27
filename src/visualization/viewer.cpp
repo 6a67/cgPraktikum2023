@@ -90,6 +90,17 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
         }
     }
 
+    // list all files in src/shaders folder
+    for (const auto& entry : std::filesystem::directory_iterator(assets_path))
+    {
+        std::string path = entry.path().string();
+        if (path.find(".obj") != std::string::npos)
+        {
+            // std::cout << "Found fragment shader: " << path << std::endl;
+            model_files_.push_back(path);
+        }
+    }
+
     // set default position for model
     position_ = pmp::vec3(0.0f, 0.0f, -0.4f);
 
@@ -978,6 +989,9 @@ void Viewer::process_imgui()
             }
         }
 
+        ImGui::Spacing();
+        ImGui::Spacing();
+
         if (ImGui::CollapsingHeader("Mesh Transform Settings"))
         {
             {
@@ -1620,6 +1634,22 @@ void Viewer::process_imgui()
                 {
                     selected_shader_path_fragment_ = sh;
                     reload_shader();
+                }
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (ImGui::CollapsingHeader("Load Models"))
+        {
+            for (auto& sh : model_files_)
+            {
+                std::string name = sh.substr(sh.find_last_of("/\\") + 1);
+                if (ImGui::Button(name.c_str()))
+                {
+                    const char* path = {sh.c_str()};
+                    drop(1, &path);
                 }
             }
         }
