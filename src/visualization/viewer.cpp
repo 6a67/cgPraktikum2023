@@ -1054,6 +1054,13 @@ void Viewer::process_imgui()
                 set_mesh_scale(scaling);
                 update_mesh();
             }
+
+            if (ImGui::Button(rotate_around_center_ ? "Rotate around Center: ON" : "Rotate around Center: OFF"))
+            {
+                rotate_around_center_ = !rotate_around_center_;
+            }
+            IMGUI_TOOLTIP_TEXT(
+                "Whether or not the mesh should rotate around its calculated center point or around the model origin");
         }
 
         ImGui::Spacing();

@@ -129,6 +129,7 @@ class TrackballViewer : public Window
     bool last_point_ok_;
 
     int counter_ = 0;
+    bool rotate_around_center_ = true;
 };
 
 } // namespace pmp

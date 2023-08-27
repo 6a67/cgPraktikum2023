@@ -437,7 +437,12 @@ mat4 TrackballViewer::get_modelview_matrix() const
     scale_matrix(1, 1) = scale_[1];
     scale_matrix(2, 2) = scale_[2];
 
-    // return translation_matrix(position_) * rotation_matrix_ * translation_matrix(-center_) * scale_matrix;
+    if (rotate_around_center_)
+    {
+        return translation_matrix(center_) * translation_matrix(position_) * rotation_matrix_
+               * translation_matrix(-center_) * scale_matrix;
+    }
+
     return translation_matrix(position_) * rotation_matrix_ * scale_matrix;
 }
 
