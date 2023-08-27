@@ -1048,7 +1048,6 @@ void CustomRenderer::draw_skybox(pmp::mat4 projection_matrix, pmp::mat4 view_mat
         skybox_shader_.set_uniform("view", view);
     }
 
-    skybox_shader_.set_uniform("offsetSkybox", offset_skybox_);
     GL_CHECK(glViewport(0, 0, wsize_, hsize_));
     GL_CHECK(glDepthFunc(GL_LEQUAL));
     GL_CHECK(glBindVertexArray(skybox_VAO_));

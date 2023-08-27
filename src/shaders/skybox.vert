@@ -5,7 +5,6 @@ out vec3 texcoord;
 
 uniform mat4 projection;
 uniform mat4 view;
-uniform bool offsetSkybox;
 
 void main()
 {
