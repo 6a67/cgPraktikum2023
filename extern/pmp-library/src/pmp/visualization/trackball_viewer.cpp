@@ -168,7 +168,7 @@ void TrackballViewer::display()
 
     // we want to set the fovY depending on the fovX
     // fovX is set by a slider in the GUI
-    fovy_ = 2. * atan(tan(degree_to_rad(fovx_ * 0.5)) * ((double)width() / (double)height()));
+    fovy_ = 2. * atan(tan(degree_to_rad(fovx_ * 0.5)) * ((double)height() / (double)width()));
     fovy_ = radians_to_degree(fovy_);
     // near_ = std::max(0.001f * radius_, z - radius_);
     // far_ = std::max(0.002f * radius_, z + radius_);
@@ -176,7 +176,7 @@ void TrackballViewer::display()
     far_ = 90;
 
     // update projection matrix
-    projection_matrix_ = perspective_matrix(fovy_ / 2, (float)width() / (float)height(), near_, far_);
+    projection_matrix_ = perspective_matrix(fovy_, (float)width() / (float)height(), near_, far_);
 
     // draw the scene in current draw mode
     if (draw_mode_ < draw_mode_names_.size())
