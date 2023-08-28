@@ -109,6 +109,8 @@ Viewer::Viewer(const char* title, int width, int height) : CustomMeshViewer(titl
     renderer_.set_reflectiveness(0.7f);
 
     recordings_path_ = std::filesystem::current_path() / "recordings";
+
+    glfwSwapInterval(vsync_ ? 1 : 0);
 }
 
 Viewer::~Viewer()
@@ -160,7 +162,7 @@ void Viewer::stop_recording()
     recording_ = false;
 
     // Enable vsync again
-    glfwSwapInterval(1);
+    glfwSwapInterval(vsync_ ? 1 : 0);
 
     std::cout << "Recording stopped" << std::endl;
 
@@ -1137,6 +1139,14 @@ void Viewer::process_imgui()
 
             ImGui::SliderFloat("FOVX", &fovx_, 0.0, 360.0f);
             renderer_.fovX_ = fovx_;
+
+            if (ImGui::Button(vsync_ ? "VSYNC: ON" : "VSYNC: OFF"))
+            {
+                vsync_ = !vsync_;
+                glfwSwapInterval(vsync_ ? 1 : 0);
+            }
+            IMGUI_TOOLTIP_TEXT(
+                "(Only applies in 'Skybox' draw mode, offsets the skybox cube forward to look at it from the outside)");
 
             ImGui::Separator();
 

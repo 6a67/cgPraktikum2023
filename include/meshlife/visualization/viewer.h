@@ -123,6 +123,7 @@ class Viewer : public CustomMeshViewer
     DebugData debug_data_;
 
     bool recording_ = false;
+    bool vsync_ = true;
 
     std::thread simulation_thread_;
     void simulation_thread_func();
